@@ -1,0 +1,9 @@
+plotly
+tabulate
+kaleido
+langchain_google_genai
+pandas
+langchain
+langchain_experimental
+langchain_core
+
