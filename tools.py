@@ -65,7 +65,7 @@ def get_agent_tools(df: pd.DataFrame):
         # Create a prompt to guide the LLM
         prompt = f"""
         You are a data visualization expert. Based on the user's query and the following
-        DataFrame sample, generate a single, valid Plotly JSON object for a chart.
+        DataFrame sample, generate a single or multiple (which suits the best for query), valid Plotly JSON object for a chart.Give meaning full legend, title to the chart and use differnt colors for multiple entities.
         
         DataFrame Sample (first 5 rows):
         {df.head().to_string()}  # <-- The DataFrame is available here

@@ -6,7 +6,7 @@ def main():
     Main function to load data, create the agent, and start the chat loop.
     """
     # Load the CSV data
-    csv_file_path = "test.csv"
+    csv_file_path = "test2.csv"
     try:
         df = pd.read_csv(csv_file_path)
     except FileNotFoundError:
