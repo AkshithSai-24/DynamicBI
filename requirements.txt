@@ -6,3 +6,4 @@ pandas
 langchain
 langchain_experimental
 langchain_core
+litellm

@@ -9,7 +9,7 @@ def main():
     # Load your test CSV
     df = pd.read_csv("test2.csv")
 
-    orchestrator = create_orchestrator_agent(df, verbose=False)
+    orchestrator = create_orchestrator_agent(df, verbose=True)
 
     while True:
         user_query = input("User: ")
