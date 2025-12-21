@@ -1,9 +1,5 @@
+pandas 
 plotly
-tabulate
-kaleido
-langchain_google_genai
-pandas
-langchain
-langchain_experimental
-langchain_core
-litellm
+langchain_ollama
+langgraph
+matplotlib
