@@ -4,8 +4,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
+from dotenv import load_dotenv
 from langchain_ollama import OllamaLLM
 from langgraph.graph import StateGraph, END
+
+load_dotenv()
 
 
 
@@ -145,7 +148,7 @@ def create_bar_chart(state: AgentState) -> AgentState:
 
     output_path = "dynamic_chart.png"
     plt.savefig(output_path)
-    plt.show()
+    plt.close()
 
     return {
         **state,
@@ -197,13 +200,13 @@ def create_line_chart(state: AgentState) -> AgentState:
     output_path = "dynamic_line_chart.png"
     plt.tight_layout()
     plt.savefig(output_path, bbox_inches="tight")
-    plt.show()
+    plt.close()
 
     return {**state, "line_chart_path": os.path.abspath(output_path)}
 
 # Build LangGraph
 
-def build_graph():
+def build_graph(csv_path: str, user_query: str):
     graph = StateGraph(AgentState)
 
     graph.add_node("load_csv", load_csv)
@@ -219,7 +222,14 @@ def build_graph():
     graph.add_edge("create_bar_chart", "create_line_chart")
     graph.add_edge("create_line_chart", END)
 
-    return graph.compile()
+    app =  graph.compile()
+    result = app.invoke({
+        "csv_path": csv_path,
+        "user_query": user_query
+    })
+    print("\nPandas Expression:\n", result["pandas_expression"])
+    print("\nExecution Result:\n", result["execution_result"])
+    return "dynamic_line_chart.png",result["execution_result"]
 
 
 
@@ -227,15 +237,15 @@ def build_graph():
 
 if __name__ == "__main__":
     csv_path = "test2.csv"
-    user_query = "Calculate the total discount for each product type."
+    user_query = "what are the total sales by city? "
 
-    app = build_graph()
+    app = build_graph(csv_path, user_query)
 
-    result = app.invoke({
+    '''result = app.invoke({
         "csv_path": csv_path,
         "user_query": user_query
-    })
+    })'''
 
-    print("\nPandas Expression:\n", result["pandas_expression"])
-    print("\nExecution Result:\n", result["execution_result"])
+
+    
     print("\nChart saved \n")
