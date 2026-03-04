@@ -2,250 +2,635 @@ from typing import TypedDict, Any
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import seaborn as sns
 import os
+import warnings
+import re
+# Creating various visual for sql and csv 
+from sqlalchemy import create_engine, inspect
 
-from dotenv import load_dotenv
-from langchain_ollama import OllamaLLM
 from langgraph.graph import StateGraph, END
+from langchain_ollama import OllamaLLM
+from sklearn.ensemble import IsolationForest
 
-load_dotenv()
+warnings.filterwarnings("ignore")
 
 
-
-# State Definition
+# =====================================================
+# STATE
+# =====================================================
 
 class AgentState(TypedDict):
-    csv_path: str
-    user_query: str
-    df_columns: list
-    pandas_expression: str
-    execution_result: Any
-    chart_path: str
+
+    source_type: str
+    source_path: str
+
     _df: pd.DataFrame
+    engine: Any
+    table_name: str
+
+    anomalies: pd.DataFrame
 
 
+# =====================================================
+# SQL CLEANER
+# =====================================================
 
-# Node 1: Load CSV
 
-def load_csv(state: AgentState) -> AgentState:
-    df = pd.read_csv(state["csv_path"])
+def extract_python(text):
+    """
+    Extract executable python code from LLM output.
+    Removes markdown blocks and explanations.
+    """
+
+    # extract ```python ``` blocks
+    code_blocks = re.findall(r"```python(.*?)```", text, re.DOTALL | re.IGNORECASE)
+
+    if code_blocks:
+        return code_blocks[0].strip()
+
+    # fallback extraction
+    lines = text.split("\n")
+
+    code_lines = []
+
+    for line in lines:
+
+        line = line.strip()
+
+        if (
+            line.startswith("result")
+            or "df." in line
+            or "=" in line
+            or "groupby" in line
+        ):
+            code_lines.append(line)
+
+    return "\n".join(code_lines)
+def extract_sql(text):
+
+    sql_blocks = re.findall(r"```sql(.*?)```", text, re.DOTALL | re.IGNORECASE)
+
+    if sql_blocks:
+        return sql_blocks[0].strip()
+
+    select_match = re.search(r"(SELECT .*?;)", text, re.IGNORECASE | re.DOTALL)
+
+    if select_match:
+        return select_match.group(1)
+
+    return text.strip()
+
+
+# =====================================================
+# LOAD DATA
+# =====================================================
+
+def load_data_agent(state: AgentState):
+
+    source_type = state["source_type"]
+    path = state["source_path"]
+
+    # CSV SOURCE
+    if source_type == "csv":
+
+        df = pd.read_csv(path)
+
+        print("\nCSV dataset loaded")
+
+        return {**state, "_df": df}
+
+    # DATABASE SOURCE (generic using SQLAlchemy inspect)
+
+    engine = create_engine(path)
+
+    inspector = inspect(engine)
+
+    tables = inspector.get_table_names()
+
+    if not tables:
+        raise Exception("No tables found in database")
+
+    table = tables[0]
+
+    df = pd.read_sql(f"SELECT * FROM {table}", engine)
+
+    print(f"\nDatabase table '{table}' loaded")
+
     return {
         **state,
         "_df": df,
-        "df_columns": df.columns.tolist()
+        "engine": engine,
+        "table_name": table
     }
 
 
+# =====================================================
+# DATASET VISUALIZATION
+# =====================================================
 
-# Node 2: Generate Pandas Expression
+def dataset_visualization_agent(state):
 
-def generate_pandas_expression(state: AgentState) -> AgentState:
-    llm = OllamaLLM(model="mistral", temperature=0)
+    df = state["_df"]
+
+    os.makedirs("dashboard", exist_ok=True)
+
+    numeric_cols = df.select_dtypes(include=np.number).columns
+    categorical_cols = df.select_dtypes(exclude=np.number).columns
+
+    for col in numeric_cols:
+
+        plt.figure(figsize=(6,4))
+
+        sns.histplot(df[col], kde=True)
+
+        plt.title(col)
+
+        plt.tight_layout()
+
+        plt.savefig(f"dashboard/hist_{col}.png")
+
+        plt.close()
+
+    for col in categorical_cols:
+
+        if df[col].nunique() < 20:
+
+            counts = df[col].value_counts()
+
+            plt.figure(figsize=(6,4))
+
+            sns.barplot(x=counts.index, y=counts.values)
+
+            plt.xticks(rotation=45)
+
+            plt.tight_layout()
+
+            plt.savefig(f"dashboard/bar_{col}.png")
+
+            plt.close()
+
+    numeric_df = df[numeric_cols].replace([np.inf,-np.inf],np.nan).dropna()
+
+    numeric_df = numeric_df.loc[:, numeric_df.std()!=0]
+
+    if numeric_df.shape[1] > 1:
+
+        corr = numeric_df.corr()
+
+        plt.figure(figsize=(8,6))
+
+        sns.heatmap(corr, annot=True, cmap="coolwarm")
+
+        plt.tight_layout()
+
+        plt.savefig("dashboard/correlation_heatmap.png")
+
+        plt.close()
+
+    print("Dataset visualizations created")
+
+    return state
+
+
+# =====================================================
+# ANOMALY DETECTION
+# =====================================================
+
+def anomaly_detection_agent(state):
+
+    df = state["_df"]
+
+    numeric_cols = df.select_dtypes(include=np.number).columns
+
+    X = df[numeric_cols].fillna(0)
+
+    model = IsolationForest(contamination=0.05)
+
+    df["anomaly"] = model.fit_predict(X)
+
+    anomalies = df[df["anomaly"] == -1]
+
+    anomalies.to_csv("dashboard/anomalies.csv", index=False)
+
+    print(f"Detected {len(anomalies)} anomalies")
+
+    return {**state, "anomalies": anomalies}
+
+
+# =====================================================
+# ANOMALY VISUALIZATION
+# =====================================================
+
+def anomaly_visualization_agent(state):
+
+    df = state["_df"]
+    anomalies = state["anomalies"]
+
+    numeric_cols = df.select_dtypes(include=np.number).columns
+
+    if len(numeric_cols) < 2:
+        return state
+
+    x = numeric_cols[0]
+    y = numeric_cols[1]
+
+    plt.figure(figsize=(6,5))
+
+    plt.scatter(df[x], df[y], alpha=0.3)
+
+    plt.scatter(anomalies[x], anomalies[y], color="red")
+
+    plt.tight_layout()
+
+    plt.savefig("dashboard/anomaly_visual.png")
+
+    plt.close()
+
+    print("Anomaly visualization created")
+
+    return state
+
+
+# =====================================================
+# INSIGHT AGENT
+# =====================================================
+
+def insight_agent(state):
+
+    df = state["_df"]
+
+    summary = df.describe().to_string()
+
+    llm = OllamaLLM(model="mistral")
 
     prompt = f"""
-You are an expert pandas developer.
+Generate 5 business insights from this dataset summary.
 
-CSV Columns:
-{state["df_columns"]}
-
-User Query:
-{state["user_query"]}
-
-Rules:
-- Return ONLY a valid pandas expression
-- Assume dataframe name is df
-- Do NOT use markdown
-- Do NOT explain
-- Do NOT assign to variables
-- Do NOT print
-- Expression must be directly executable
-
-Example:
-df.groupby("region")["sales"].sum()
+{summary}
 """
 
-    return {
-        **state,
-        "pandas_expression": llm.invoke(prompt).strip()
-    }
+    insights = llm.invoke(prompt)
+
+    with open("dashboard/insights.txt","w") as f:
+        f.write(insights)
+
+    print("Insights generated")
+
+    return state
 
 
+# =====================================================
+# DASHBOARD AGENT
+# =====================================================
 
-# Node 3: Execute Pandas Expression
+def dashboard_agent(state):
 
-def execute_pandas_expression(state: AgentState) -> AgentState:
-    df = state["_df"]
-    expr = state["pandas_expression"]
+    charts = os.listdir("dashboard")
 
-    try:
-        result = eval(expr, {"__builtins__": {}}, {"df": df, "pd": pd})
-    except Exception as e:
-        result = f"Execution Error: {e}"
+    chart_html = ""
 
-    return {
-        **state,
-        "execution_result": result
-    }
+    for c in charts:
+
+        if c.endswith(".png"):
+
+            chart_html += f'<img src="{c}" width="400">'
+
+    insights = ""
+
+    if os.path.exists("dashboard/insights.txt"):
+
+        with open("dashboard/insights.txt") as f:
+
+            insights = f.read()
+
+    html = f"""
+<html>
+<body>
+
+<h1>AI BI Dashboard</h1>
+
+<h2>Insights</h2>
+<pre>{insights}</pre>
+
+<h2>Anomalies</h2>
+<p>See anomalies.csv</p>
+
+<h2>Charts</h2>
+
+{chart_html}
+
+</body>
+</html>
+"""
+
+    with open("dashboard/dashboard.html","w") as f:
+
+        f.write(html)
+
+    print("\nDashboard generated → dashboard/dashboard.html")
+
+    return state
 
 
+# =====================================================
+# BUILD LANGGRAPH
+# =====================================================
 
-# Node 4: Dynamic Bar Chart Generator Agent
+def build_graph():
 
-def create_bar_chart(state: AgentState) -> AgentState:
-    data = state["execution_result"]
-
-    if not isinstance(data, (pd.Series, pd.DataFrame)):
-        return {
-            **state,
-            "chart_path": "Chart not generated (non-plotable output)"
-        }
-
-    if isinstance(data, pd.DataFrame):
-        if data.shape[1] == 1:
-            data = data.iloc[:, 0]
-        else:
-            data = data.sum(axis=1)
-
-    categories = data.index.astype(str)
-    values = data.values
-
-    max_idx = np.argmax(values)
-    min_idx = np.argmin(values)
-
-    ylabel = "Value"
-    title = f"{state['user_query']}"
-
-    plt.figure(figsize=(10, 6))
-    bars = plt.bar(categories, values)
-
-    # Highlight max & min
-    bars[max_idx].set_color("green")
-    bars[min_idx].set_color("red")
-    bars[max_idx].set_linewidth(3)
-    bars[min_idx].set_linewidth(3)
-
-    # Annotations
-    '''
-    plt.annotate(
-        f"Highest: {values[max_idx]} ({categories[max_idx]})",
-        xy=(max_idx, values[max_idx]),
-        xytext=(max_idx, values[max_idx] * 1.05),
-        arrowprops=dict(arrowstyle="->")
-    )
-
-    plt.annotate(
-        f"Lowest: {values[min_idx]} ({categories[min_idx]})",
-        xy=(min_idx, values[min_idx]),
-        #xytext=(min_idx, values[min_idx] * 0.95),
-        arrowprops=dict(arrowstyle="->")
-    )
-    '''
-    plt.xlabel("Category")
-    plt.ylabel(ylabel)
-    plt.title(title)
-    plt.xticks(rotation=45, ha="right")
-    plt.tight_layout()
-
-    output_path = "dynamic_chart.png"
-    plt.savefig(output_path)
-    plt.close()
-
-    return {
-        **state,
-        "chart_path": os.path.abspath(output_path)
-    }
-
-def create_line_chart(state: AgentState) -> AgentState:
-    data = state["execution_result"]
-
-    if not isinstance(data, (pd.Series, pd.DataFrame)):
-        return {**state, "line_chart_path": "Not generated"}
-
-    
-
-    categories = data.index.astype(str)
-    values = data.values
-
-    max_idx = int(np.argmax(values))
-    min_idx = int(np.argmin(values))
-
-    fig, ax = plt.subplots(figsize=(11, 6))
-
-    ax.plot(categories, values, marker="o", linewidth=2)
-
-    ax.scatter(categories[max_idx], values[max_idx], s=120)
-    ax.scatter(categories[min_idx], values[min_idx], s=120)
-
-    ax.set_title(f"{state['user_query']} (Line Chart)")
-    ax.set_xlabel("Category")
-    ax.set_ylabel("Value")
-    ax.tick_params(axis="x", rotation=45)
-
-    plt.subplots_adjust(right=0.72)
-
-    annotation_text = (
-        f"HIGHEST\n{categories[max_idx]} : {values[max_idx]}\n\n"
-        f"LOWEST\n{categories[min_idx]} : {values[min_idx]}"
-    )
-
-    ax.text(
-        1.02,
-        0.5,
-        annotation_text,
-        transform=ax.transAxes,
-        verticalalignment="center",
-        bbox=dict(boxstyle="round,pad=0.6", facecolor="whitesmoke")
-    )
-
-    output_path = "dynamic_line_chart.png"
-    plt.tight_layout()
-    plt.savefig(output_path, bbox_inches="tight")
-    plt.close()
-
-    return {**state, "line_chart_path": os.path.abspath(output_path)}
-
-# Build LangGraph
-
-def build_graph(csv_path: str, user_query: str):
     graph = StateGraph(AgentState)
 
-    graph.add_node("load_csv", load_csv)
-    graph.add_node("generate_pandas_expression", generate_pandas_expression)
-    graph.add_node("execute_pandas_expression", execute_pandas_expression)
-    graph.add_node("create_bar_chart", create_bar_chart)
-    graph.add_node("create_line_chart", create_line_chart)
+    graph.add_node("load_data", load_data_agent)
+    graph.add_node("visualize", dataset_visualization_agent)
+    graph.add_node("anomaly_detect", anomaly_detection_agent)
+    graph.add_node("anomaly_visual", anomaly_visualization_agent)
+    graph.add_node("insights", insight_agent)
+    graph.add_node("dashboard", dashboard_agent)
 
-    graph.set_entry_point("load_csv")
-    graph.add_edge("load_csv", "generate_pandas_expression")
-    graph.add_edge("generate_pandas_expression", "execute_pandas_expression")
-    graph.add_edge("execute_pandas_expression", "create_bar_chart")
-    graph.add_edge("create_bar_chart", "create_line_chart")
-    graph.add_edge("create_line_chart", END)
+    graph.set_entry_point("load_data")
 
-    app =  graph.compile()
-    result = app.invoke({
-        "csv_path": csv_path,
-        "user_query": user_query
-    })
-    print("\nPandas Expression:\n", result["pandas_expression"])
-    print("\nExecution Result:\n", result["execution_result"])
-    return "dynamic_line_chart.png",result["execution_result"]
+    graph.add_edge("load_data","visualize")
+    graph.add_edge("visualize","anomaly_detect")
+    graph.add_edge("anomaly_detect","anomaly_visual")
+    graph.add_edge("anomaly_visual","insights")
+    graph.add_edge("insights","dashboard")
+    graph.add_edge("dashboard",END)
+
+    return graph.compile()
+
+#=====================
+# Auto Visualization Agent
+#=====================
+
+def auto_visualize(result, query):
+
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    import os
+
+    os.makedirs("dashboard", exist_ok=True)
+
+    if isinstance(result, pd.Series):
+        result = result.reset_index()
+
+    if not isinstance(result, pd.DataFrame):
+        return
+
+    cols = result.columns
+
+    numeric_cols = result.select_dtypes(include="number").columns
+    cat_cols = result.select_dtypes(exclude="number").columns
+
+    plt.figure(figsize=(6,4))
+
+    # =========================
+    # Histogram
+    # =========================
+
+    if len(cols) == 1 and len(numeric_cols) == 1:
+
+        sns.histplot(result[numeric_cols[0]], kde=True)
+
+        chart = "histogram"
+
+    # =========================
+    # Pie Chart
+    # =========================
+
+    elif len(cat_cols) == 1 and len(numeric_cols) == 1 and len(result) <= 10:
+
+        result.set_index(cat_cols[0])[numeric_cols[0]].plot.pie(autopct='%1.1f%%')
+
+        chart = "pie"
+
+    # =========================
+    # Line Chart (time series)
+    # =========================
+
+    elif "date" in cols[0].lower() or "time" in cols[0].lower():
+
+        plt.plot(result[cols[0]], result[cols[1]])
+
+        chart = "line"
+
+    # =========================
+    # Scatter Plot
+    # =========================
+
+    elif len(numeric_cols) >= 2 and len(result.columns) >= 2:
+
+        sns.scatterplot(x=result[numeric_cols[0]], y=result[numeric_cols[1]])
+
+        chart = "scatter"
+
+    # =========================
+    # Default → Bar Chart
+    # =========================
+
+    else:
+
+        x = result.iloc[:,0]
+        y = result.iloc[:,1]
+
+        plt.bar(x,y)
+
+        chart = "bar"
+
+    plt.title(query)
+
+    plt.tight_layout()
+
+    path = "dashboard/query_visual.png"
+
+    plt.savefig(path)
+
+    plt.close()
+
+    print(f"\nVisualization ({chart}) saved → {path}")
+# =====================================================
+# QUERY LOOP
+# =====================================================
+
+def query_loop(state):
+
+    df = state["_df"]
+    engine = state.get("engine")
+    table = state.get("table_name")
+
+    source_type = state["source_type"]
+
+    llm = OllamaLLM(model="mistral")
+
+    while True:
+
+        query = input("\nAsk a query (type exit): ")
+
+        if query.lower() == "exit":
+            break
+
+        # ==================================================
+        # CSV / PANDAS MODE
+        # ==================================================
+
+        if source_type == "csv":
+
+            prompt = f"""
+You are a pandas expert.
+
+Dataset columns:
+{df.columns.tolist()}
+
+User question:
+{query}
+
+Return ONLY executable python code.
+
+Rules:
+- dataframe name is df
+- final output must be stored in variable result
+- do not include explanations
+- do not include markdown
+"""
+
+            raw_code = llm.invoke(prompt)
+
+            code = extract_python(raw_code)
+
+            print("\nGenerated Code:\n", code)
+
+            try:
+
+                local_vars = {"df": df, "pd": pd}
+
+                exec(code, {}, local_vars)
+
+                result = local_vars.get("result")
+
+                if result is None:
+                    raise Exception("No result variable returned")
+
+                print("\nQuery Result:\n", result)
+
+            except Exception as e:
+
+                print("\nExecution Error:", e)
+
+                continue
 
 
+        # ==================================================
+        # SQL DATABASE MODE
+        # ==================================================
 
-# Run
+        else:
+
+            dialect = engine.dialect.name
+
+            schema = f"""
+Table: {table}
+Columns: {df.columns.tolist()}
+SQL Dialect: {dialect}
+"""
+
+            prompt = f"""
+You are an expert SQL developer.
+
+Database schema:
+{schema}
+
+User question:
+{query}
+
+Rules:
+- Write SQL compatible with {dialect}
+- Do NOT use unsupported functions
+- Return ONLY SQL
+"""
+
+            raw_sql = llm.invoke(prompt)
+
+            sql = extract_sql(raw_sql)
+
+            print("\nGenerated SQL:\n", sql)
+
+            try:
+
+                result = pd.read_sql(sql, engine)
+
+                print("\nQuery Result:\n", result)
+
+            except Exception as e:
+
+                print("\nSQL failed. Retrying generation...")
+
+                retry_prompt = f"""
+The following SQL failed for {dialect}:
+
+{sql}
+
+Error:
+{e}
+
+Rewrite the SQL query correctly for {dialect}.
+
+Schema:
+{schema}
+
+User question:
+{query}
+
+Return ONLY corrected SQL.
+"""
+
+                fixed_sql = extract_sql(llm.invoke(retry_prompt))
+
+                print("\nRetry SQL:\n", fixed_sql)
+
+                try:
+
+                    result = pd.read_sql(fixed_sql, engine)
+
+                    print("\nQuery Result:\n", result)
+
+                except Exception as e2:
+
+                    print("\nSQL Execution Error:", e2)
+
+                    continue
+
+
+        # ==================================================
+        # VISUALIZATION INTELLIGENCE AGENT
+        # ==================================================
+
+        try:
+
+            auto_visualize(result, query)
+
+        except Exception as viz_error:
+
+            print("\nVisualization Error:", viz_error)
+
+
+# =====================================================
+# RUN
+# =====================================================
 
 if __name__ == "__main__":
-    csv_path = "test2.csv"
-    user_query = "what are the total sales by city? "
 
-    app = build_graph(csv_path, user_query)
+    source_type = input("Enter source type (csv/sqlite/postgres/mysql): ")
 
-    '''result = app.invoke({
-        "csv_path": csv_path,
-        "user_query": user_query
-    })'''
+    source_path = input("Enter file path or connection string: ")
 
+    app = build_graph()
 
-    
-    print("\nChart saved \n")
+    state = app.invoke({
+        "source_type": source_type,
+        "source_path": source_path
+    })
+
+    print("\nDashboard ready. Ask questions.")
+
+    query_loop(state)

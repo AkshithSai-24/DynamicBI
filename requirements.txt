@@ -3,3 +3,12 @@ plotly
 langchain_ollama
 langgraph
 matplotlib
+numpy
+seaborn
+scikit-learn
+streamlit
+sqlalchemy
+psycopg2-binary
+pymysql
+langchain
+watchdog
