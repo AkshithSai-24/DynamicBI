@@ -12,3 +12,6 @@ psycopg2-binary
 pymysql
 langchain
 watchdog
+openpyxl
+pystan 
+prophet
