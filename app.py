@@ -4,7 +4,7 @@ import tempfile
 import os
 
 
-from main import build_graph   
+from main_full import build_graph   
 
 
 st.set_page_config(

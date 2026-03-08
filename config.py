@@ -1,0 +1,4 @@
+
+LLM_MODEL = "mistral"
+DASHBOARD_FOLDER = "dashboard"
+FORECAST_PERIOD = 10
