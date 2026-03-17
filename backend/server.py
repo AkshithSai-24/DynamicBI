@@ -25,7 +25,7 @@ import pandas as pd
 BASE_DIR = Path(__file__).parent
 sys.path.insert(0, str(BASE_DIR))
 
-app = FastAPI(title="NeuralBI API")
+app = FastAPI(title="Dynamic BI Backend")
 
 app.add_middleware(
     CORSMiddleware,
@@ -85,22 +85,58 @@ def _patch_load_agent():
             return {**state, "_df": df, "source_type": "excel"}
 
         # Database (sqlite / postgres / mysql)
-        engine = create_engine(path)
-        inspector = sa_inspect(engine)
-        tables = inspector.get_table_names()
-        if not tables:
-            raise Exception("No tables found in database.")
-        table = state.get("_db_table") or tables[0]
-        print(f"[load_data] DB table='{table}'")
-        df = pd.read_sql(f"SELECT * FROM {table}", engine)
-        return {
-            **state,
-            "_df": df,
-            "engine": engine,
-            "table_name": table,
-            "source_type": "sql",
-            "_available_tables": tables,
-        }
+        if source_type in ("sqlite", "postgres", "mysql"):
+            engine = create_engine(path)
+            inspector = sa_inspect(engine)
+            tables = inspector.get_table_names()
+            if not tables:
+                raise Exception("No tables found in database.")
+            table = state.get("_db_table") or tables[0]
+            print(f"[load_data] DB table='{table}'")
+            df = pd.read_sql(f"SELECT * FROM {table}", engine)
+            return {
+                **state,
+                "_df": df,
+                "engine": engine,
+                "table_name": table,
+                "source_type": "sql",
+                "_available_tables": tables,
+            }
+
+        # MongoDB headless path
+        if source_type == "mongodb":
+            from pymongo import MongoClient
+            import certifi
+            client = MongoClient(path, tlsCAFile=certifi.where())
+            db_name = state.get("_mongo_database")
+            if not db_name:
+                all_dbs = [d for d in client.list_database_names()
+                           if d not in ("admin", "local", "config")]
+                db_name = all_dbs[0] if all_dbs else None
+            if not db_name:
+                raise Exception("No usable MongoDB database found.")
+            db = client[db_name]
+            col_name = state.get("_mongo_collection")
+            if not col_name:
+                cols = db.list_collection_names()
+                col_name = cols[0] if cols else None
+            if not col_name:
+                raise Exception("No collections found in MongoDB database.")
+            print(f"[load_data] MongoDB db='{db_name}' collection='{col_name}'")
+            data = list(db[col_name].find())
+            df = pd.json_normalize(data)
+            if "_id" in df.columns:
+                df.drop("_id", axis=1, inplace=True)
+            return {
+                **state,
+                "_df": df,
+                "mongo_client": client,
+                "database_name": db_name,
+                "collection_name": col_name,
+                "source_type": "mongodb",
+            }
+
+        raise Exception(f"Unsupported source_type in headless agent: {source_type}")
 
     mod.load_data_agent = load_data_agent_headless
 
@@ -279,9 +315,14 @@ def _schedule(background_tasks: BackgroundTasks, job_id: str, initial_state: dic
 
 # ── Request models ────────────────────────────────────────────────────────────
 
+class DbInspectRequest(BaseModel):
+    connection_string: str
+
+
 class DbConnectRequest(BaseModel):
     connection_string: str
-    table: str | None = None      # optional — defaults to first table in DB
+    database: str | None = None   # for MongoDB: database name
+    table: str | None = None      # SQL table name OR MongoDB collection name
 
 
 class QueryRequest(BaseModel):
@@ -289,6 +330,50 @@ class QueryRequest(BaseModel):
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
+
+@app.post("/api/db/inspect")
+async def inspect_database(body: DbInspectRequest):
+    """
+    Given a connection string, return the list of databases/tables/collections
+    WITHOUT starting the pipeline. The frontend uses this to present a picker UI.
+
+    Response shape:
+      SQL:     { "type": "sql",     "tables": ["orders", "users", ...] }
+      MongoDB: { "type": "mongodb", "databases": ["mydb", ...],
+                 "collections": { "mydb": ["col1", "col2"], ... } }
+    """
+    conn = body.connection_string.strip()
+    conn_lower = conn.lower()
+
+    # ── SQL databases ──────────────────────────────────────────────────────────
+    if any(k in conn_lower for k in ("sqlite", "postgres", "postgresql", "mysql")):
+        try:
+            from sqlalchemy import create_engine, inspect as sa_inspect
+            engine = create_engine(conn)
+            inspector = sa_inspect(engine)
+            tables = inspector.get_table_names()
+            engine.dispose()
+            return {"type": "sql", "tables": tables}
+        except Exception as exc:
+            raise HTTPException(400, f"Could not connect: {exc}")
+
+    # ── MongoDB ────────────────────────────────────────────────────────────────
+    if "mongodb" in conn_lower:
+        try:
+            from pymongo import MongoClient
+            import certifi
+            client = MongoClient(conn, tlsCAFile=certifi.where(), serverSelectionTimeoutMS=6000)
+            client.server_info()   # force connection — raises if unreachable
+            raw_dbs = client.list_database_names()
+            databases = [d for d in raw_dbs if d not in ("admin", "local", "config")]
+            collections = {db: client[db].list_collection_names() for db in databases}
+            client.close()
+            return {"type": "mongodb", "databases": databases, "collections": collections}
+        except Exception as exc:
+            raise HTTPException(400, f"Could not connect to MongoDB: {exc}")
+
+    raise HTTPException(400, "Unsupported connection string. Use SQLite, PostgreSQL, MySQL, or MongoDB.")
+
 
 @app.post("/api/upload")
 async def upload_file(
@@ -325,26 +410,32 @@ async def connect_database(
     body: DbConnectRequest,
 ):
     """
-    Provide a database connection string.
-    Supported formats:
-      sqlite:///path/to/file.db
-      postgresql://user:pass@host:port/dbname
-      mysql+pymysql://user:pass@host:port/dbname
+    Start the pipeline for a database / MongoDB source.
+    Call /api/db/inspect first to let the user pick database + table/collection,
+    then POST here with the chosen values.
 
-    The graph's load_data_agent will connect, inspect tables, and load data.
-    Optionally pass a table name; otherwise the first table is used.
+    SQL body:     { connection_string, table }
+    MongoDB body: { connection_string, database, table }   (table = collection name)
     """
     conn = body.connection_string.strip()
-    if not any(k in conn.lower() for k in ("sqlite", "postgres", "postgresql", "mysql")):
-        raise HTTPException(400, "Unsupported connection string. Use SQLite, PostgreSQL, or MySQL.")
+    conn_lower = conn.lower()
+
+    if not any(k in conn_lower for k in ("sqlite", "postgres", "postgresql", "mysql", "mongodb")):
+        raise HTTPException(400, "Unsupported connection string.")
 
     job_id = str(uuid.uuid4())
     _init_job(job_id, conn)
-    _schedule(background_tasks, job_id, {
-        "source_path": conn,
-        "_db_table":   body.table,   # None → first table
-    })
 
+    initial_state: dict = {"source_path": conn}
+
+    if "mongodb" in conn_lower:
+        # For MongoDB, pass database name and collection name via state
+        initial_state["_mongo_database"]   = body.database
+        initial_state["_mongo_collection"] = body.table
+    else:
+        initial_state["_db_table"] = body.table   # None → first table
+
+    _schedule(background_tasks, job_id, initial_state)
     return {"job_id": job_id, "connection": conn}
 
 

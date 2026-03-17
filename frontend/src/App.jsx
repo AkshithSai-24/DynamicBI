@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
-const API = "https://wwvmn2d1-8000.inc1.devtunnels.ms/";
+const API = "http://127.0.0.1:8000";
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
 const fmt = (v) => {
@@ -350,13 +350,33 @@ function Lightbox({ chart, onClose }) {
 }
 
 // ─── Input bar ────────────────────────────────────────────────────────────────
+// DB panel steps:
+//   "conn"   → user types connection string, clicks Inspect
+//   "picking" → loading spinner while /api/db/inspect runs
+//   "table"  → user picks database (MongoDB only) + table/collection from list
 function InputBar({ onSend, onFileSelect, onDbConnect, disabled, placeholder, showSourceButtons }) {
   const [text, setText] = useState("");
+  // DB panel state
   const [dbMode, setDbMode] = useState(false);
+  const [dbStep, setDbStep] = useState("conn");   // "conn" | "picking" | "table"
   const [dbConn, setDbConn] = useState("");
-  const [dbTable, setDbTable] = useState("");
+  const [dbInspectError, setDbInspectError] = useState("");
+  const [dbType, setDbType] = useState("");        // "sql" | "mongodb"
+  const [dbDatabases, setDbDatabases] = useState([]);
+  const [dbCollections, setDbCollections] = useState({});
+  const [dbTables, setDbTables] = useState([]);
+  const [selectedDb, setSelectedDb] = useState("");
+  const [selectedTable, setSelectedTable] = useState("");
+
   const fileRef = useRef();
-  const textRef = useRef();
+
+  const resetDb = () => {
+    setDbStep("conn"); setDbConn(""); setDbInspectError("");
+    setDbType(""); setDbDatabases([]); setDbCollections({});
+    setDbTables([]); setSelectedDb(""); setSelectedTable("");
+  };
+
+  const closeDb = () => { setDbMode(false); resetDb(); };
 
   const submit = () => {
     const v = text.trim();
@@ -378,11 +398,65 @@ function InputBar({ onSend, onFileSelect, onDbConnect, disabled, placeholder, sh
     e.target.value = "";
   };
 
-  const submitDb = () => {
+  // Step 1 → call /api/db/inspect
+  const handleInspect = async () => {
     if (!dbConn.trim()) return;
-    onDbConnect(dbConn.trim(), dbTable.trim() || null);
-    setDbConn(""); setDbTable(""); setDbMode(false);
+    setDbInspectError("");
+    setDbStep("picking");
+    try {
+      const r = await fetch(`${API}/api/db/inspect`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ connection_string: dbConn.trim() }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.detail || "Inspection failed");
+      setDbType(d.type);
+      if (d.type === "sql") {
+        setDbTables(d.tables || []);
+        setSelectedTable(d.tables?.[0] || "");
+      } else {
+        setDbDatabases(d.databases || []);
+        setDbCollections(d.collections || {});
+        const firstDb = d.databases?.[0] || "";
+        setSelectedDb(firstDb);
+        setSelectedTable(d.collections?.[firstDb]?.[0] || "");
+      }
+      setDbStep("table");
+    } catch (err) {
+      setDbInspectError(err.message);
+      setDbStep("conn");
+    }
   };
+
+  // Step 2 → launch pipeline
+  const handleLaunch = () => {
+    if (!selectedTable) return;
+    const database = dbType === "mongodb" ? selectedDb : undefined;
+    onDbConnect(dbConn.trim(), selectedTable, database);
+    closeDb();
+  };
+
+  // When selected DB changes in MongoDB mode, update collection list
+  const handleDbChange = (db) => {
+    setSelectedDb(db);
+    const cols = dbCollections[db] || [];
+    setSelectedTable(cols[0] || "");
+  };
+
+  const selectStyle = {
+    background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 9,
+    padding: "9px 13px", color: "var(--text)", fontSize: 13, outline: "none",
+    width: "100%", cursor: "pointer",
+  };
+
+  const chipStyle = (active) => ({
+    padding: "5px 12px", borderRadius: 100, fontSize: 12, cursor: "pointer",
+    border: `1px solid ${active ? "var(--accent)" : "var(--border)"}`,
+    background: active ? "var(--accent)18" : "var(--surface2)",
+    color: active ? "var(--accent)" : "var(--muted)",
+    transition: "all 0.15s", fontFamily: "var(--mono)",
+  });
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -391,52 +465,161 @@ function InputBar({ onSend, onFileSelect, onDbConnect, disabled, placeholder, sh
       {dbMode && (
         <div style={{
           background: "var(--surface)", border: "1px solid var(--border)",
-          borderRadius: 14, padding: "14px 16px",
-          display: "flex", flexDirection: "column", gap: 10,
+          borderRadius: 14, padding: "16px 16px",
+          display: "flex", flexDirection: "column", gap: 12,
           animation: "msgIn 0.22s ease both",
         }}>
-          <p style={{ fontSize: 11, color: "var(--muted)", fontFamily: "var(--mono)", letterSpacing: 1 }}>DATABASE CONNECTION</p>
-          <input value={dbConn} onChange={e => setDbConn(e.target.value)}
-            placeholder="postgresql://user:pass@host:5432/db  or  sqlite:///file.db"
-            style={{
-              background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 9,
-              padding: "10px 13px", color: "var(--text)", fontSize: 13,
-              fontFamily: "var(--mono)", outline: "none", width: "100%",
-            }}
-            onFocus={e => e.target.style.borderColor = "var(--accent)"}
-            onBlur={e => e.target.style.borderColor = "var(--border)"}
-          />
-          <input value={dbTable} onChange={e => setDbTable(e.target.value)}
-            placeholder="table name (optional — uses first table)"
-            style={{
-              background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: 9,
-              padding: "10px 13px", color: "var(--text)", fontSize: 13, outline: "none", width: "100%",
-            }}
-            onFocus={e => e.target.style.borderColor = "var(--accent2)"}
-            onBlur={e => e.target.style.borderColor = "var(--border)"}
-          />
-          <div style={{ display: "flex", gap: 8 }}>
-            {["sqlite:///data.db", "postgresql://user:pass@localhost:5432/db", "mysql+pymysql://user:pass@localhost/db"].map(ex => (
-              <button key={ex} onClick={() => setDbConn(ex)} style={{
-                padding: "4px 10px", borderRadius: 100, fontSize: 10,
-                border: "1px solid var(--border)", background: "transparent",
-                color: "var(--accent)", cursor: "pointer", fontFamily: "var(--mono)",
-              }}>{ex.split("://")[0]}</button>
-            ))}
+
+          {/* ── Step label ── */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <p style={{ fontSize: 11, color: "var(--muted)", fontFamily: "var(--mono)", letterSpacing: 1 }}>
+              {dbStep === "conn" ? "DATABASE CONNECTION" : dbStep === "picking" ? "CONNECTING…" : "SELECT TABLE / COLLECTION"}
+            </p>
+            {/* Step dots */}
+            <div style={{ display: "flex", gap: 5 }}>
+              {["conn", "table"].map((s, i) => (
+                <div key={s} style={{
+                  width: 6, height: 6, borderRadius: "50%",
+                  background: dbStep === s || (dbStep === "picking" && i === 0) ? "var(--accent)" : "var(--border)",
+                  transition: "background 0.2s",
+                }} />
+              ))}
+            </div>
           </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={submitDb} disabled={!dbConn.trim()} style={{
-              flex: 1, padding: "10px", borderRadius: 9, border: "none",
-              background: "linear-gradient(135deg, var(--accent), var(--accent2))",
-              color: "#0a0f1a", fontWeight: 700, cursor: "pointer", fontSize: 13,
-              fontFamily: "var(--sans)", opacity: dbConn.trim() ? 1 : 0.4,
-            }}>Connect & Analyse</button>
-            <button onClick={() => setDbMode(false)} style={{
-              padding: "10px 16px", borderRadius: 9, border: "1px solid var(--border)",
-              background: "transparent", color: "var(--muted)", cursor: "pointer", fontSize: 13,
-              fontFamily: "var(--sans)",
-            }}>Cancel</button>
-          </div>
+
+          {/* ── Step 1: connection string ── */}
+          {(dbStep === "conn" || dbStep === "picking") && (<>
+            <input value={dbConn} onChange={e => setDbConn(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && handleInspect()}
+              placeholder="postgresql://user:pass@host:5432/db  ·  sqlite:///file.db  ·  mongodb+srv://..."
+              disabled={dbStep === "picking"}
+              style={{
+                background: "var(--surface2)", border: `1px solid ${dbInspectError ? "var(--accent3)" : "var(--border)"}`,
+                borderRadius: 9, padding: "10px 13px", color: "var(--text)", fontSize: 13,
+                fontFamily: "var(--mono)", outline: "none", width: "100%",
+                opacity: dbStep === "picking" ? 0.5 : 1,
+              }}
+              onFocus={e => e.target.style.borderColor = "var(--accent)"}
+              onBlur={e => e.target.style.borderColor = dbInspectError ? "var(--accent3)" : "var(--border)"}
+            />
+            {dbInspectError && (
+              <p style={{ fontSize: 12, color: "var(--accent3)", fontFamily: "var(--mono)", marginTop: -4 }}>
+                ⚠ {dbInspectError}
+              </p>
+            )}
+            {/* Quick-fill examples */}
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {[
+                ["sqlite", "sqlite:///data.db"],
+                ["postgres", "postgresql://user:pass@localhost:5432/db"],
+                ["mysql", "mysql+pymysql://user:pass@localhost/db"],
+                ["mongodb", "mongodb+srv://user:pass@cluster.mongodb.net/"],
+              ].map(([label, ex]) => (
+                <button key={label} onClick={() => setDbConn(ex)} style={chipStyle(dbConn.startsWith(ex.slice(0, 6)))}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={handleInspect} disabled={!dbConn.trim() || dbStep === "picking"} style={{
+                flex: 1, padding: "10px", borderRadius: 9, border: "none",
+                background: "linear-gradient(135deg, var(--accent), var(--accent2))",
+                color: "#0a0f1a", fontWeight: 700, cursor: "pointer", fontSize: 13,
+                fontFamily: "var(--sans)", opacity: dbConn.trim() && dbStep !== "picking" ? 1 : 0.4,
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+              }}>
+                {dbStep === "picking" ? (
+                  <><span style={{ display: "inline-block", animation: "spin 0.8s linear infinite" }}>⟳</span> Connecting…</>
+                ) : "Inspect Database →"}
+              </button>
+              <button onClick={closeDb} style={{
+                padding: "10px 16px", borderRadius: 9, border: "1px solid var(--border)",
+                background: "transparent", color: "var(--muted)", cursor: "pointer", fontSize: 13,
+                fontFamily: "var(--sans)",
+              }}>Cancel</button>
+            </div>
+          </>)}
+
+          {/* ── Step 2: pick database + table/collection ── */}
+          {dbStep === "table" && (<>
+
+            {/* MongoDB: pick database first */}
+            {dbType === "mongodb" && dbDatabases.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <p style={{ fontSize: 11, color: "var(--muted)", fontFamily: "var(--mono)", letterSpacing: 0.8 }}>
+                  DATABASE — {dbDatabases.length} found
+                </p>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {dbDatabases.map(db => (
+                    <button key={db} onClick={() => handleDbChange(db)} style={chipStyle(selectedDb === db)}>
+                      {db}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* SQL / MongoDB: pick table or collection */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <p style={{ fontSize: 11, color: "var(--muted)", fontFamily: "var(--mono)", letterSpacing: 0.8 }}>
+                {dbType === "mongodb" ? `COLLECTIONS in ${selectedDb}` : "TABLES"} — {(dbType === "mongodb" ? dbCollections[selectedDb] : dbTables)?.length ?? 0} found
+              </p>
+              {/* Chip list if ≤ 12 items, otherwise dropdown */}
+              {(() => {
+                const items = dbType === "mongodb" ? (dbCollections[selectedDb] || []) : dbTables;
+                if (items.length === 0) return (
+                  <p style={{ fontSize: 12, color: "var(--accent3)", fontFamily: "var(--mono)" }}>No tables found.</p>
+                );
+                if (items.length <= 12) return (
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", maxHeight: 120, overflowY: "auto" }}>
+                    {items.map(t => (
+                      <button key={t} onClick={() => setSelectedTable(t)} style={chipStyle(selectedTable === t)}>
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                );
+                return (
+                  <select value={selectedTable} onChange={e => setSelectedTable(e.target.value)} style={selectStyle}>
+                    {items.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                );
+              })()}
+            </div>
+
+            {/* Summary bar */}
+            <div style={{
+              background: "var(--surface2)", borderRadius: 8, padding: "8px 12px",
+              fontSize: 12, fontFamily: "var(--mono)", color: "var(--muted)",
+              display: "flex", alignItems: "center", gap: 6,
+            }}>
+              <span style={{ color: "var(--accent)" }}>✓</span>
+              {dbType === "mongodb"
+                ? <><span style={{ color: "var(--text)" }}>{selectedDb}</span> / <span style={{ color: "var(--accent2)" }}>{selectedTable}</span></>
+                : <span style={{ color: "var(--accent2)" }}>{selectedTable}</span>
+              }
+            </div>
+
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={() => { setDbStep("conn"); setDbInspectError(""); }} style={{
+                padding: "10px 14px", borderRadius: 9, border: "1px solid var(--border)",
+                background: "transparent", color: "var(--muted)", cursor: "pointer", fontSize: 13,
+                fontFamily: "var(--sans)",
+              }}>← Back</button>
+              <button onClick={handleLaunch} disabled={!selectedTable} style={{
+                flex: 1, padding: "10px", borderRadius: 9, border: "none",
+                background: "linear-gradient(135deg, var(--accent), var(--accent2))",
+                color: "#0a0f1a", fontWeight: 700, cursor: "pointer", fontSize: 13,
+                fontFamily: "var(--sans)", opacity: selectedTable ? 1 : 0.4,
+              }}>Run Analysis →</button>
+              <button onClick={closeDb} style={{
+                padding: "10px 14px", borderRadius: 9, border: "1px solid var(--border)",
+                background: "transparent", color: "var(--muted)", cursor: "pointer", fontSize: 13,
+                fontFamily: "var(--sans)",
+              }}>Cancel</button>
+            </div>
+          </>)}
+
         </div>
       )}
 
@@ -463,7 +646,7 @@ function InputBar({ onSend, onFileSelect, onDbConnect, disabled, placeholder, sh
               onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.color = "var(--accent)"; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--muted)"; }}
             >📁</button>
-            <button onClick={() => setDbMode(m => !m)} title="Connect database" style={{
+            <button onClick={() => dbMode ? closeDb() : setDbMode(true)} title="Connect database" style={{
               width: 34, height: 34, borderRadius: 9,
               border: `1px solid ${dbMode ? "var(--accent)" : "var(--border)"}`,
               background: dbMode ? "var(--accent)18" : "var(--surface2)",
@@ -478,7 +661,6 @@ function InputBar({ onSend, onFileSelect, onDbConnect, disabled, placeholder, sh
 
         {/* Text input */}
         <input
-          ref={textRef}
           value={text}
           onChange={e => setText(e.target.value)}
           onKeyDown={handleKey}
@@ -724,10 +906,13 @@ export default function App() {
     launchPipeline(sid, "/api/upload", fd, file.name, "file", true);
   }, [activeId, addMessage, launchPipeline]);
 
-  const handleDb = useCallback((conn, table) => {
+  const handleDb = useCallback((conn, table, database) => {
     const sid = activeId;
-    addMessage(sid, { role: "user", type: "text", payload: { text: `Connect: ${conn}${table ? ` · table: ${table}` : ""}` } });
-    launchPipeline(sid, "/api/connect", { connection_string: conn, table }, conn, "db", false);
+    const label = database
+      ? `Connect: ${conn} · db: ${database} · ${table}`
+      : `Connect: ${conn}${table ? ` · table: ${table}` : ""}`;
+    addMessage(sid, { role: "user", type: "text", payload: { text: label } });
+    launchPipeline(sid, "/api/connect", { connection_string: conn, table, database: database || null }, conn, "db", false);
   }, [activeId, addMessage, launchPipeline]);
 
   // ── NL query ───────────────────────────────────────────────────────────────
@@ -903,6 +1088,9 @@ export default function App() {
         @keyframes typingBounce {
           0%, 100% { transform: translateY(0); opacity: 0.4; }
           50%       { transform: translateY(-4px); opacity: 1; }
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
         }
       `}</style>
 

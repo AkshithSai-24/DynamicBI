@@ -1,23 +1,23 @@
- **Business Insights:**
+ Business Insights:
 
-1. **Customer Preference Analysis:** Analyzing the most popular product categories can help identify the items that are selling the best. The 'Product_Category' column shows eight unique categories, with the top three making up approximately 70% of total sales. This information could be used to prioritize inventory management and marketing efforts.
+1. Age Demographic Trend: The average age of customers is 35.008 years old, indicating a relatively young customer base. This could be an opportunity to target marketing efforts towards younger generations and explore products that may appeal more to this demographic.
 
-2. **Age Group Analysis:** The average age of customers is around 35 years old. Analyzing trends among different age groups (e.g., younger vs older) can provide insights into potential target markets for promotions or product development.
+2. Popular Payment Methods: With only five unique payment methods, there might be room for expansion in offering additional payment options to cater to a wider range of customers' preferences.
 
-3. **City Distribution:** With ten unique cities represented in the data, it's essential to understand customer distribution across regions. This information can help in targeted marketing and understanding local preferences.
+3. Discount Usage: The average discount amount used per order is $5.21, which suggests that price-sensitive shopping behaviors are present among customers. Offering more promotions or deals could help attract and retain customers who are seeking cost savings.
 
-4. **Payment Method Preference:** Knowing the preferred payment methods (5 options) will allow businesses to tailor their checkout process for optimal user experience. Additionally, analyzing trends over time may reveal shifts in consumer behavior regarding preferred payment methods.
+4. Delivery Time: The delivery time for orders varies between 1 and 14 days. Analyzing the factors that contribute to longer delivery times can help identify opportunities to improve supply chain efficiency and reduce customer wait times.
 
-5. **Session Duration and Pages Viewed:** On average, customers spend 14 minutes on the site and view 8 pages during a session. Comparing these values across different demographics can help identify areas for improving user engagement or site navigation.
+5. Pages Viewed vs. Customer Rating: Customers who view more pages tend to have higher ratings (average rating of 8.978 compared to 1.000 for those viewing 1 page). This may indicate that providing a better browsing experience or suggesting related products could lead to increased customer satisfaction and higher sales.
 
-**Risks:**
+Risks:
 
-1. **High Cart Abandonment Risk:** The 'Quantity' column shows an average of 2 items per order, which might indicate a high cart abandonment rate. Investigating the reasons for this trend can help in developing strategies to reduce cart abandonment and increase sales.
+1. Anomalous Orders: There are only two unique values in the 'anomaly' column, which could suggest that there are a substantial number of orders considered as anomalies (outliers) in this dataset. Analyzing these orders could help identify potential issues such as fraudulent transactions or errors in data collection.
 
-2. **Delivery Time Concerns:** With delivery times ranging from 1 to 14 days, there may be potential customer dissatisfaction due to longer delivery times. Analyzing delivery times across different cities or product categories could help in identifying bottlenecks and optimizing the delivery process.
+2. City Representation: There are only ten unique cities represented in the dataset, which may indicate a limited geographic reach for the company's services. Expanding into new markets and serving more diverse customer bases carries risks related to understanding local preferences, regulations, and competition.
 
-**Opportunities:**
+Opportunities:
 
-1. **Loyal Customer Base:** With only two unique values for 'Is_Returning_Customer,' it appears that a significant portion of customers are returning. This indicates a strong customer base, offering opportunities to upsell or cross-sell products to existing customers.
+1. Targeting Returning Customers: There are only two unique values in the 'Is_Returning_Customer' column, suggesting that a majority of customers make a single purchase. Offering loyalty programs or incentives for repeat business could help increase customer retention and overall sales.
 
-2. **Discount Opportunities:** The 'Discount_Amount' column shows that discounts are offered in 551 unique amounts, suggesting potential areas for optimization. Identifying the most effective discount strategies could help increase sales and customer satisfaction. For example, offering tiered discounts based on total purchase amount or frequency of purchases could encourage customers to spend more or shop more often.
+2. Personalized Recommendations: With data on customers' purchase history, browsing behavior, and preferences (e.g., City, Product_Category), the company can leverage machine learning algorithms to develop personalized product recommendations that cater to individual customers' needs, improving their shopping experience and driving sales growth.
