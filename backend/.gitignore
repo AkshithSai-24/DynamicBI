@@ -6,6 +6,7 @@ __pycache__
 test.ipynb
 *.db
 dashboard
+upload
 flow.txt
 main_full.py
 __pycache__/
