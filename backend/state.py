@@ -12,3 +12,4 @@ class AgentState(TypedDict, total=False):
     anomalies: pd.DataFrame
     collection_name: str
     database_name: str
+

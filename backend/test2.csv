@@ -519,7 +519,7 @@ ORD_004915,CUST_04915,2023-02-18,19,Female,Ankara,Books,83.97,2,9.62,158.32,Digi
 ORD_000314,CUST_00314,2023-02-18,44,Female,Gaziantep,Food,35.85,4,0.0,143.4,Credit Card,Mobile,5,7,False,2,2
 ORD_001916,CUST_01916,2023-02-18,28,Female,Izmir,Sports,440.35,2,0.0,880.7,Credit Card,Desktop,13,11,True,3,4
 ORD_003295,CUST_03295,2023-02-18,20,Male,Konya,Electronics,528.28,1,0.0,528.28,Credit Card,Mobile,9,9,True,3,2
-ORD_003764,CUST_03764,2023-02-19,44,Male,Istanbul,Toys,241.61,4,0.0,966.44,Digital Wallet,Mobile,23,10,False,9,4
+ORD_003764,CUST_03764,2023-02-19,44,Male,Istanbul,Toys,241.61,4,0.0,966.44,Digital Wallet,Mobile,23,10,False,9,4 
 ORD_000053,CUST_00053,2023-02-19,26,Male,Eskisehir,Sports,675.54,2,0.0,1351.08,Credit Card,Mobile,16,8,True,11,1
 ORD_001731,CUST_01731,2023-02-19,32,Female,Bursa,Sports,477.43,4,44.24,1865.48,Credit Card,Mobile,8,4,True,2,5
 ORD_002912,CUST_02912,2023-02-19,39,Male,Adana,Beauty,42.23,1,8.26,33.97,Digital Wallet,Mobile,5,10,False,4,4

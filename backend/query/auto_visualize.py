@@ -100,3 +100,5 @@ histogram
     except Exception as e:
 
         print("Visualization error:", e)
+
+

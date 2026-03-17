@@ -32,6 +32,7 @@ function TypingDots() {
   );
 }
 
+
 // ─── Avatar ───────────────────────────────────────────────────────────────────
 function Avatar({ role }) {
   if (role === "user") return (

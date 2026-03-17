@@ -20,3 +20,4 @@ def detect_source_type(source):
         return "mongodb"
 
     raise ValueError("Unsupported source type")
+

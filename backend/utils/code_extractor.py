@@ -39,3 +39,5 @@ def extract_sql(text):
         return select_match.group(1)
 
     return text.strip()
+
+
