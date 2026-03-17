@@ -1,0 +1,36 @@
+DATASET OVERVIEW
+(5000, 19)
+
+COLUMNS
+
+Order_ID | type=object | unique=5000
+Customer_ID | type=object | unique=5000
+Date | type=datetime64[ns] | unique=451
+Age | type=float64 | unique=48
+Gender | type=object | unique=3
+City | type=object | unique=10
+Product_Category | type=object | unique=8
+Unit_Price | type=float64 | unique=4273
+Quantity | type=int64 | unique=5
+Discount_Amount | type=float64 | unique=551
+Total_Amount | type=float64 | unique=4323
+Payment_Method | type=object | unique=5
+Device_Type | type=object | unique=3
+Session_Duration_Minutes | type=float64 | unique=36
+Pages_Viewed | type=int64 | unique=17
+Is_Returning_Customer | type=bool | unique=2
+Delivery_Time_Days | type=int64 | unique=14
+Customer_Rating | type=int64 | unique=5
+anomaly | type=int64 | unique=2
+
+STATISTICS
+
+                             Date          Age   Unit_Price     Quantity  Discount_Amount  Total_Amount  Session_Duration_Minutes  Pages_Viewed  Delivery_Time_Days  Customer_Rating      anomaly
+count                        5000  5000.000000  5000.000000  5000.000000      5000.000000   5000.000000               5000.000000   5000.000000         5000.000000      5000.000000  5000.000000
+mean   2023-08-16 09:16:24.960000    35.008000   353.589695     2.220000         5.219484    672.895139                 14.409600      8.978200            6.408200         3.902800     0.900000
+min           2023-01-01 00:00:00    18.000000     5.180000     1.000000         0.000000      7.870000                  1.000000      1.000000            1.000000         1.000000    -1.000000
+25%           2023-04-30 00:00:00    27.000000    76.587500     1.000000         0.000000    122.517500                  8.000000      7.000000            4.000000         3.000000     1.000000
+50%           2023-08-17 00:00:00    35.000000   182.950000     2.000000         0.000000    337.910000                 13.000000      9.000000            6.000000         4.000000     1.000000
+75%           2023-12-06 00:00:00    42.000000   513.930000     3.000000         8.760000    979.695000                 19.000000     11.000000            8.000000         5.000000     1.000000
+max           2024-03-26 00:00:00    64.500000  1169.943750     5.000000        21.900000   2265.461250                 35.500000     17.000000           14.000000         5.000000     1.000000
+std                           NaN    11.007464   372.751011     1.398711         8.713484    733.097364                  8.131399      2.783321            3.197815         1.128542     0.435933

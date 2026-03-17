@@ -1,0 +1,25 @@
+User Dataset
+     │
+     ▼
+Data Engineer Agent
+     │
+     ▼
+Data Quality Agent
+     │
+     ▼
+BI Analyst Agent
+     │
+     ▼
+Data Scientist Agent
+     │
+     ▼
+Visualization Agent
+     │
+     ▼
+Insight Agent
+     │
+     ▼
+Dashboard Agent
+     │
+     ▼
+Query Intelligence Agent

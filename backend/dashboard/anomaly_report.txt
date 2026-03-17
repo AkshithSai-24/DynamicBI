@@ -1,0 +1,14 @@
+ 1. Anomalies in data can occur due to various reasons such as errors during data entry, system glitches, inconsistent data formatting, or outliers that significantly deviate from the normal pattern. In the provided dataset, some anomalies may have arisen due to:
+   - Unusually high or low values for quantities, unit prices, or total amounts compared to other transactions.
+   - Incorrect data entry for customer age, city, or gender.
+   - Inconsistent formatting of dates, numeric values, or text fields.
+   - Missing values in certain fields (not shown in the provided dataset).
+
+2. Business Meaning: Anomalies can impact business decisions based on data analysis and may lead to incorrect conclusions. For instance, high total amounts due to anomalous data could artificially inflate sales figures, or unusual quantities might indicate a stock shortage or overstock situation that needs attention. Inaccuracies in customer demographics could lead to targeted marketing strategies being misdirected.
+
+3. Fixing the Anomalies: To fix these anomalies, follow these steps:
+   - Validate and clean the data by checking for inconsistencies, errors, or missing values. This may involve manual verification of outliers, correcting formatting issues, or filling in missing data points using appropriate methods such as imputation techniques.
+   - Implement data quality checks during the data collection process to minimize errors at source. This can be achieved by using validation rules, setting up proper data entry guidelines, and automating data cleaning processes where possible.
+   - Periodically review and update your data cleansing procedures to account for any new patterns or trends that might emerge over time.
+   - Monitor the data quality regularly and take corrective actions when necessary to ensure that the data remains accurate and reliable.
+   - Collaborate with business stakeholders to understand their needs and tailor the data quality processes accordingly. This helps in identifying which anomalies are most important to address based on their impact on business decisions.

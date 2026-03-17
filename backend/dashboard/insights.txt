@@ -1,0 +1,23 @@
+ **Business Insights:**
+
+1. **Customer Preference Analysis:** Analyzing the most popular product categories can help identify the items that are selling the best. The 'Product_Category' column shows eight unique categories, with the top three making up approximately 70% of total sales. This information could be used to prioritize inventory management and marketing efforts.
+
+2. **Age Group Analysis:** The average age of customers is around 35 years old. Analyzing trends among different age groups (e.g., younger vs older) can provide insights into potential target markets for promotions or product development.
+
+3. **City Distribution:** With ten unique cities represented in the data, it's essential to understand customer distribution across regions. This information can help in targeted marketing and understanding local preferences.
+
+4. **Payment Method Preference:** Knowing the preferred payment methods (5 options) will allow businesses to tailor their checkout process for optimal user experience. Additionally, analyzing trends over time may reveal shifts in consumer behavior regarding preferred payment methods.
+
+5. **Session Duration and Pages Viewed:** On average, customers spend 14 minutes on the site and view 8 pages during a session. Comparing these values across different demographics can help identify areas for improving user engagement or site navigation.
+
+**Risks:**
+
+1. **High Cart Abandonment Risk:** The 'Quantity' column shows an average of 2 items per order, which might indicate a high cart abandonment rate. Investigating the reasons for this trend can help in developing strategies to reduce cart abandonment and increase sales.
+
+2. **Delivery Time Concerns:** With delivery times ranging from 1 to 14 days, there may be potential customer dissatisfaction due to longer delivery times. Analyzing delivery times across different cities or product categories could help in identifying bottlenecks and optimizing the delivery process.
+
+**Opportunities:**
+
+1. **Loyal Customer Base:** With only two unique values for 'Is_Returning_Customer,' it appears that a significant portion of customers are returning. This indicates a strong customer base, offering opportunities to upsell or cross-sell products to existing customers.
+
+2. **Discount Opportunities:** The 'Discount_Amount' column shows that discounts are offered in 551 unique amounts, suggesting potential areas for optimization. Identifying the most effective discount strategies could help increase sales and customer satisfaction. For example, offering tiered discounts based on total purchase amount or frequency of purchases could encourage customers to spend more or shop more often.
