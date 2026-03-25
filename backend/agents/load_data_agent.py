@@ -50,7 +50,7 @@ def load_data_agent(state: AgentState):
     # ============================================
     # DATABASE
     # ============================================
-    if source_type in ["sqlite", "postgres", "mysql"]:
+    if source_type in ["sqlite", "postgres", "mysql", "oracle","sql"]:
         engine = create_engine(path)
 
         inspector = inspect(engine)
@@ -76,7 +76,7 @@ def load_data_agent(state: AgentState):
             "_df": df,
             "engine": engine,
             "table_name": table,
-            "source_type": "sql"
+            "source_type": source_type
         }
     
 

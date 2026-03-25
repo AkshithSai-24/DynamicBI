@@ -4,12 +4,18 @@ from query.query_loop import query_loop
 from query.conversational_bi_agent import conversational_bi_agent
 from config import LLM_MODEL
 import warnings
+import time
+import os
+import shutil
+
 warnings.filterwarnings("ignore")
 
 if __name__ == "__main__":
-
+    shutil.rmtree("dashboard") if os.path.exists("dashboard") else None
     source_path = input("Enter data source (CSV/Excel/DB connection): ")
     print(f"Using LLM model: {LLM_MODEL}")
+    start_time = time.perf_counter()
+
     app = build_graph()
 
     state = app.invoke({
@@ -17,8 +23,10 @@ if __name__ == "__main__":
     })
 
     print("Dashboard ready.")
+    end_time = time.perf_counter()
+    print(f"Total processing time: {end_time - start_time:.4f} seconds")
 
-    while True:
+    '''while True:
 
         print("1 - Data Query")
         print("2 - BI Chat")
@@ -33,6 +41,6 @@ if __name__ == "__main__":
             conversational_bi_agent()
 
         else:
-            break
+            break'''
 
 

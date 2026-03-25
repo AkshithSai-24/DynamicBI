@@ -84,8 +84,8 @@ def _patch_load_agent():
             print(f"[load_data] Excel sheet='{sheet}'")
             return {**state, "_df": df, "source_type": "excel"}
 
-        # Database (sqlite / postgres / mysql)
-        if source_type in ("sqlite", "postgres", "mysql"):
+        # Database (sqlite / postgres / mysql / oracle)
+        if source_type in ("sqlite", "postgres", "mysql", "oracle"):
             engine = create_engine(path)
             inspector = sa_inspect(engine)
             tables = inspector.get_table_names()
@@ -93,7 +93,7 @@ def _patch_load_agent():
                 raise Exception("No tables found in database.")
             table = state.get("_db_table") or tables[0]
             print(f"[load_data] DB table='{table}'")
-            df = pd.read_sql(f"SELECT * FROM {table}", engine)
+            df = pd.read_sql(f'SELECT * FROM "{table}"', engine)
             return {
                 **state,
                 "_df": df,
@@ -345,10 +345,11 @@ async def inspect_database(body: DbInspectRequest):
     conn = body.connection_string.strip()
     conn_lower = conn.lower()
 
-    # ── SQL databases ──────────────────────────────────────────────────────────
-    if any(k in conn_lower for k in ("sqlite", "postgres", "postgresql", "mysql")):
+    # ── SQL databases (SQLite, PostgreSQL, MySQL, Oracle) ─────────────────────
+    if any(k in conn_lower for k in ("sqlite", "postgres", "postgresql", "mysql", "oracle")):
         try:
             from sqlalchemy import create_engine, inspect as sa_inspect
+            # Oracle needs thick mode hint for cx_Oracle; oracledb works out of the box
             engine = create_engine(conn)
             inspector = sa_inspect(engine)
             tables = inspector.get_table_names()
@@ -372,7 +373,7 @@ async def inspect_database(body: DbInspectRequest):
         except Exception as exc:
             raise HTTPException(400, f"Could not connect to MongoDB: {exc}")
 
-    raise HTTPException(400, "Unsupported connection string. Use SQLite, PostgreSQL, MySQL, or MongoDB.")
+    raise HTTPException(400, "Unsupported connection string. Use SQLite, PostgreSQL, MySQL, Oracle, or MongoDB.")
 
 
 @app.post("/api/upload")
@@ -420,7 +421,7 @@ async def connect_database(
     conn = body.connection_string.strip()
     conn_lower = conn.lower()
 
-    if not any(k in conn_lower for k in ("sqlite", "postgres", "postgresql", "mysql", "mongodb")):
+    if not any(k in conn_lower for k in ("sqlite", "postgres", "postgresql", "mysql", "oracle", "mongodb")):
         raise HTTPException(400, "Unsupported connection string.")
 
     job_id = str(uuid.uuid4())

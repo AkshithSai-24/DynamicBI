@@ -32,6 +32,18 @@ def dashboard_agent(state):
             """
 
     insights = ""
+    chart_insights_html = ""
+
+    for file in os.listdir("dashboard/insights"):
+        if file.startswith("insights_") and file.endswith(".txt"):
+            content = open(f"dashboard/insights/{file}").read()
+
+            chart_insights_html += f"""
+            <div class="text-panel">
+                <h4>{file.replace("insights_", "").replace(".txt", "")}</h4>
+                {content}
+            </div>
+            """
     anomaly_report = ""
 
     if os.path.exists("dashboard/insights.txt"):
@@ -164,7 +176,13 @@ body {{
 </div>
 
 </div>
+<div class="section">
 
+<h2>Chart Insights</h2>
+
+{chart_insights_html}
+
+</div>
 <div class="section">
 
 <h2>Visual Analytics</h2>

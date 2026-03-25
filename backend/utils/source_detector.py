@@ -18,6 +18,9 @@ def detect_source_type(source):
         return "mysql"
     if "mongodb+srv://" in source or "mongodb://" in source:
         return "mongodb"
+    
+    if "oracle+cx_oracle://" in source or "oracle://" in source or "oracle+oracledb://" in source:
+        return "oracle"
 
     raise ValueError("Unsupported source type")
 
