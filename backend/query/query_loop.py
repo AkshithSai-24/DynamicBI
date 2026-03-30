@@ -55,7 +55,8 @@ def _safe_json(obj: Any) -> Any:
     if isinstance(obj, (np.floating,)):
         return float(obj)
     if isinstance(obj, dict):
-        return {k: _safe_json(v) for k, v in obj.items()}
+        return {("_".join(str(k) for k in key) if isinstance(key, tuple) else str(key) if not isinstance(key, (str, int, float, bool, type(None))) else key): _safe_json(v)
+                for key, v in obj.items()}
     if isinstance(obj, (list, tuple)):
         return [_safe_json(v) for v in obj]
     return obj
@@ -179,10 +180,16 @@ def _generate_visual(df: pd.DataFrame, question: str,
                      chart_type: str, x_col: str, y_col: str | None) -> dict | None:
     """Generate a matplotlib chart and return the visual payload."""
     try:
-        # Sanitise column names (MongoDB dot notation)
+        # Sanitise column names (MongoDB dot notation + MultiIndex flattening)
         df = df.copy()
+        # Flatten MultiIndex columns (e.g. from groupby/pivot) into plain strings
+        if isinstance(df.columns, pd.MultiIndex):
+            df.columns = ["_".join(str(lvl) for lvl in col).strip("_")
+                          for col in df.columns]
+        else:
+            df.columns = [str(c) for c in df.columns]
         df.columns = [c.replace(".", "_") for c in df.columns]
-        x_col = x_col.replace(".", "_")
+        x_col = str(x_col).replace(".", "_")
         if y_col:
             y_col = y_col.replace(".", "_")
         if "_id" in df.columns:
@@ -414,16 +421,30 @@ Return corrected JSON pipeline only."""
         return _run(fixed), json.dumps(fixed, indent=2)
 
 
+def _flatten_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """Flatten MultiIndex columns into plain strings."""
+    if isinstance(df.columns, pd.MultiIndex):
+        df = df.copy()
+        df.columns = ["_".join(str(lvl) for lvl in col).strip("_")
+                      for col in df.columns]
+    else:
+        df = df.copy()
+        df.columns = [str(c) for c in df.columns]
+    return df
+
+
 def _coerce_df(result: Any) -> pd.DataFrame | None:
     """Convert a query result to a DataFrame (or return None if scalar)."""
     if isinstance(result, pd.DataFrame):
-        return result if len(result) > 0 else None
+        if len(result) == 0:
+            return None
+        return _flatten_columns(result.reset_index(drop=True) if isinstance(result.index, pd.MultiIndex) else result)
     if isinstance(result, pd.Series):
-        return result.reset_index()
+        return _flatten_columns(result.reset_index())
     if isinstance(result, (int, float, str, bool, np.integer, np.floating)):
         return None    # scalar — no table/chart needed
     try:
-        return pd.DataFrame(result)
+        return _flatten_columns(pd.DataFrame(result))
     except Exception:
         return None
 
@@ -550,5 +571,5 @@ def run_query(
         "visual":       visual,
         "needs_visual": needs_visual,
         "row_count":    len(result_df) if result_df is not None else 0,
-        "columns":      result_df.columns.tolist() if result_df is not None else [],
+        "columns":      [str(c) for c in result_df.columns.tolist()] if result_df is not None else [],
     }
