@@ -5,8 +5,8 @@ __pycache__
 *.jpg
 test.ipynb
 *.db
-dashboard
-upload
+dashboard/
+upload/
 flow.txt
 main_full.py
 __pycache__/

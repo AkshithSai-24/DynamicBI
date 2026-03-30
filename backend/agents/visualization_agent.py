@@ -9,8 +9,8 @@ import warnings
 warnings.filterwarnings("ignore")
 import matplotlib
 matplotlib.use("Agg")
-from agents.chart_insight_agent import analyze_chart
-from agents.chart_insight_agent import analyze_correlation
+'''from agents.chart_insight_agent import analyze_chart
+from agents.chart_insight_agent import analyze_correlation'''
 
 sns.set_style("whitegrid")
 
@@ -87,14 +87,14 @@ Return JSON list:
 # MAIN VISUALIZATION AGENT
 # -------------------------------
 def dataset_visualization_agent(state):
-
+    charts = []
     df = state["_df"]
 
     # MongoDB safety (nested fields)
     df.columns = [col.replace(".", "_") for col in df.columns]
 
     os.makedirs("dashboard", exist_ok=True)
-    os.makedirs("dashboard/insights", exist_ok=True)
+
 
     numeric_cols = df.select_dtypes(include=np.number).columns.tolist()
     categorical_cols = df.select_dtypes(exclude=np.number).columns.tolist()
@@ -123,17 +123,7 @@ def dataset_visualization_agent(state):
         plt.tight_layout()
         plt.savefig(f"dashboard/hist_{col}.png")
         plt.close()
-        chart_data = {
-        "chart_type": "histogram",
-        "x": df[col].dropna().tolist(),
-        "y": df[col].dropna().tolist(),
-        "metric": col
-        }
 
-        result = analyze_chart(chart_data)
-
-        with open(f"dashboard/insights/insights_hist_{col}.txt", "w") as f:
-            f.write(result["llm_insights"])
 
     # =====================================================
     # LINE CHARTS (TRENDS)
@@ -158,17 +148,7 @@ def dataset_visualization_agent(state):
         plt.tight_layout()
         plt.savefig(f"dashboard/line_{col}.png")
         plt.close()
-        chart_data = {
-    "chart_type": "line",
-    "x": list(range(len(df[col]))),
-    "y": df[col].tolist(),
-    "metric": col
-}
-
-        result = analyze_chart(chart_data)
-
-        with open(f"dashboard/insights/insights_line_{col}.txt", "w") as f:
-            f.write(result["llm_insights"])
+    
 '''
     # =====================================================
     # CATEGORY DISTRIBUTION (BAR)
@@ -198,17 +178,7 @@ def dataset_visualization_agent(state):
             plt.tight_layout()
             plt.savefig(f"dashboard/bar_{col}.png")
             plt.close()
-            chart_data = {
-    "chart_type": "bar",
-    "x": counts.index.tolist(),
-    "y": counts.values.tolist(),
-    "metric": col
-}
 
-        result = analyze_chart(chart_data)
-
-        with open(f"dashboard/insights/insights_bar_{col}.txt", "w") as f:
-            f.write(result["llm_insights"])
 
     # =====================================================
     # PIE CHARTS
@@ -235,17 +205,7 @@ def dataset_visualization_agent(state):
             plt.tight_layout()
             plt.savefig(f"dashboard/pie_{col}.png")
             plt.close()
-            chart_data = {
-    "chart_type": "pie",
-    "x": counts.index.tolist(),
-    "y": counts.values.tolist(),
-    "metric": col
-}
-
-        result = analyze_chart(chart_data)
-
-        with open(f"dashboard/insights/insights_pie_{col}.txt", "w") as f:
-            f.write(result["llm_insights"])
+            
 
     # =====================================================
     # SCATTER PLOTS
@@ -277,17 +237,7 @@ def dataset_visualization_agent(state):
             plt.tight_layout()
             plt.savefig(f"dashboard/scatter_{x}_{y}.png")
             plt.close()
-            chart_data = {
-    "chart_type": "scatter",
-    "x": df[x].tolist(),
-    "y": df[y].tolist(),
-    "metric": f"{x} vs {y}"
-}
 
-        result = analyze_chart(chart_data)
-
-        with open(f"dashboard/insights/insights_pie_{col}.txt", "w") as f:
-            f.write(result["llm_insights"])
 
     # =====================================================
     # CATEGORY vs NUMERIC (AI SELECTED)
@@ -323,18 +273,7 @@ def dataset_visualization_agent(state):
             plt.tight_layout()
             plt.savefig(f"dashboard/avg_{num}_by_{cat}.png")
             plt.close()
-            chart_data = {
-    "chart_type": "bar",
-    "x": grouped.index.tolist(),
-    "y": grouped.values.tolist(),
-    "metric": f"avg_{num}_by_{cat}"
-}
-
-            result = analyze_chart(chart_data)
-
-            with open(f"dashboard/insights/insights_avg_{num}_by_{cat}.txt", "w") as f:
-                f.write(result["llm_insights"])
-
+            
     # =====================================================
     # CORRELATION HEATMAP
     # =====================================================
@@ -363,13 +302,8 @@ def dataset_visualization_agent(state):
             plt.tight_layout()
             plt.savefig("dashboard/correlation_heatmap.png")
             plt.close()
-            corr_insights = analyze_correlation(corr)
 
-            with open("dashboard/insights/insights_correlation.txt", "w") as f:
-                f.write("\n".join(corr_insights))
 
     print("Smart visualizations created")
-
-    return state
-
+    
 
