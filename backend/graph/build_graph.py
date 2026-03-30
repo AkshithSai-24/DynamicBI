@@ -43,7 +43,7 @@ def build_graph():
     graph.add_node("insights", insight_agent)
     graph.add_node("forecast", forecasting_agent)
     # Dashboard generation
-    graph.add_node("dashboard", dashboard_agent)
+
 
     graph.set_entry_point("load_data")
 
@@ -57,8 +57,8 @@ def build_graph():
     graph.add_edge("anomaly_visual","anomaly_explain")
     graph.add_edge("anomaly_explain","rag_profile")
     graph.add_edge("rag_profile","insights")
-    graph.add_edge("insights","dashboard")
-    graph.add_edge("dashboard", END)
+    graph.add_edge("insights", END)
+
 
     return graph.compile()
 

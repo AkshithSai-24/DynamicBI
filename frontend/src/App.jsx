@@ -14,6 +14,73 @@ const fmt = (v) => {
 
 const uid = () => Math.random().toString(36).slice(2);
 
+// ─── Markdown renderer (bold, italic, numbered/bullet lists) ──────────────────
+function renderMarkdown(text) {
+  if (!text) return null;
+  // Normalise line endings and collapse excessive blank lines
+  const normalised = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").replace(/\n{3,}/g, "\n\n");
+  const lines = normalised.split("\n");
+
+  return lines.map((raw, idx) => {
+    const line = raw.trimEnd();
+    if (!line) return <div key={idx} style={{ height: 6 }} />;
+
+    // Detect bullet / numbered list items
+    const isBullet  = /^[-•*]\s+/.test(line);
+    const isNum     = /^\d+\.\s+/.test(line);
+    const isHeading = /^#{1,3}\s/.test(line);
+    const isItem    = isBullet || isNum;
+
+    // Strip leading marker for processing
+    let stripped = line;
+    if (isBullet)  stripped = line.replace(/^[-•*]\s+/, "");
+    if (isNum)     stripped = line.replace(/^\d+\.\s+/, "");
+    if (isHeading) stripped = line.replace(/^#{1,3}\s+/, "");
+
+    // Inline: **bold**, *italic*
+    function applyInline(txt) {
+      const parts = [];
+      // Split on **...** and *...*
+      const re = /(\*\*(.+?)\*\*|\*(.+?)\*)/g;
+      let last = 0, m;
+      while ((m = re.exec(txt)) !== null) {
+        if (m.index > last) parts.push(txt.slice(last, m.index));
+        if (m[2] !== undefined) {
+          parts.push(<strong key={m.index} style={{ color: "var(--text)", fontWeight: 700 }}>{m[2]}</strong>);
+        } else if (m[3] !== undefined) {
+          parts.push(<em key={m.index} style={{ color: "var(--muted2)", fontStyle: "italic" }}>{m[3]}</em>);
+        }
+        last = m.index + m[0].length;
+      }
+      if (last < txt.length) parts.push(txt.slice(last));
+      return parts;
+    }
+
+    if (isHeading) return (
+      <p key={idx} style={{ fontSize: 12, fontWeight: 800, color: "var(--accent)", letterSpacing: 0.5, marginBottom: 6, marginTop: 10, textTransform: "uppercase" }}>
+        {applyInline(stripped)}
+      </p>
+    );
+
+    if (isItem) return (
+      <div key={idx} style={{ display: "flex", gap: 8, marginBottom: 5, paddingLeft: 4 }}>
+        <span style={{ color: "var(--accent)", fontWeight: 700, flexShrink: 0, marginTop: 1, fontSize: 12 }}>
+          {isNum ? line.match(/^(\d+\.)/)[1] : "•"}
+        </span>
+        <p style={{ fontSize: 13, lineHeight: 1.75, color: "var(--muted2)", margin: 0, wordBreak: "break-word" }}>
+          {applyInline(stripped)}
+        </p>
+      </div>
+    );
+
+    return (
+      <p key={idx} style={{ fontSize: 13, lineHeight: 1.78, color: "var(--text)", marginBottom: 6, wordBreak: "break-word" }}>
+        {applyInline(line)}
+      </p>
+    );
+  });
+}
+
 // ─── Message types rendered inside the chat thread ───────────────────────────
 // Each message: { id, role:"assistant"|"user"|"system", type, payload, ts }
 
@@ -644,21 +711,7 @@ function AnomalyPanel({ anomalyData, anomalyReport }) {
         )}
 
         {tab === "report" && anomalyReport && (
-          <div>
-            {anomalyReport.split("\n").filter(Boolean).map((line, i) => {
-              const isItem = line.trim().match(/^\d+\.|^[-•]/);
-              return (
-                <p key={i} style={{
-                  fontSize: 12.5, lineHeight: 1.75,
-                  color: isItem ? "var(--muted2)" : "var(--text)",
-                  marginBottom: 6, paddingLeft: isItem ? 14 : 0, position: "relative",
-                }}>
-                  {isItem && <span style={{ position: "absolute", left: 0, top: "0.55em", width: 4, height: 4, borderRadius: "50%", background: "var(--danger)", display: "inline-block" }} />}
-                  {line}
-                </p>
-              );
-            })}
-          </div>
+          <div>{renderMarkdown(anomalyReport)}</div>
         )}
       </div>
     </div>
@@ -705,22 +758,7 @@ function InsightsCard({ insights, anomaly, cleaning }) {
       </div>
 
       <div style={{ padding: "18px 20px", maxHeight: 300, overflowY: "auto" }}>
-        {activeTab?.text.split("\n").filter(Boolean).map((line, i) => {
-          const isItem = line.trim().startsWith("-") || line.trim().startsWith("•");
-          return (
-            <p key={i} style={{
-              fontSize: 13, lineHeight: 1.75, color: isItem ? "var(--muted2)" : "var(--text)",
-              marginBottom: 8,
-              paddingLeft: isItem ? 16 : 0,
-              position: "relative",
-            }}>
-              {isItem && (
-                <span style={{ position: "absolute", left: 0, top: "0.55em", width: 5, height: 5, borderRadius: "50%", background: activeTab.color, display: "inline-block" }} />
-              )}
-              {isItem ? line.replace(/^[-•]\s*/, "") : line}
-            </p>
-          );
-        })}
+        {renderMarkdown(activeTab?.text || "")}
       </div>
     </div>
   );
@@ -776,6 +814,201 @@ function DoneCard({ result, onAskQuestion }) {
           }}>{q}</button>
         ))}
       </div>
+    </div>
+  );
+}
+
+// ─── Query Answer Card ───────────────────────────────────────────────────────
+function QueryAnswerCard({ payload, onExpand }) {
+  const { answer, data, columns, row_count, visual, needs_visual, question } = payload;
+  const [showTable, setShowTable] = useState(false);
+  const hasData  = data && data.length > 0;
+  const hasChart = !!visual;
+
+  return (
+    <div style={{
+      background: "var(--surface)", border: "1px solid var(--border2)",
+      borderRadius: 18, overflow: "hidden",
+      boxShadow: "0 4px 20px rgba(0,0,0,0.25)",
+    }}>
+      {/* Answer text */}
+      <div style={{ padding: "16px 20px", borderBottom: hasData || hasChart ? "1px solid var(--border)" : "none" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 12 }}>
+          <div style={{
+            width: 22, height: 22, borderRadius: 6, flexShrink: 0, marginTop: 1,
+            background: "rgba(0,229,160,0.12)", border: "1px solid rgba(0,229,160,0.35)",
+            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11,
+          }}>💡</div>
+          <p style={{ fontSize: 9.5, fontWeight: 700, color: "var(--accent)", fontFamily: "var(--mono)", letterSpacing: 1.3, marginTop: 3 }}>AI ANALYSIS</p>
+        </div>
+        <div style={{ wordBreak: "break-word", overflowWrap: "break-word" }}>
+          {renderMarkdown(answer)}
+        </div>
+      </div>
+
+      {/* Chart */}
+      {hasChart && (() => {
+        const cd = visual.chartData || {};
+        const chartType = cd.chart_type || "chart";
+        const xName = cd.x_name || "";
+        const yName = cd.y_name || "";
+        const pts = cd.series?.total_points || 0;
+        const stats = cd.statistics || {};
+        const statKey = Object.keys(stats).find(k => typeof stats[k] === "object" && stats[k]?.mean !== undefined);
+        const st = statKey ? stats[statKey] : null;
+        const typeColors = { bar:"var(--accent2)", line:"var(--accent)", scatter:"var(--accent4)", pie:"var(--accent3)", histogram:"var(--accent)", chart:"var(--accent2)" };
+        const typeColor = typeColors[chartType] || "var(--accent2)";
+
+        return (
+          <div style={{ borderBottom: hasData ? "1px solid var(--border)" : "none" }}>
+            {/* Chart header bar */}
+            <div style={{
+              padding: "10px 16px", display: "flex", alignItems: "center", gap: 8,
+              background: "var(--surface2)", borderBottom: "1px solid var(--border)", flexWrap: "wrap", rowGap: 6,
+            }}>
+              <div style={{ width: 4, height: 16, borderRadius: 2, background: typeColor }} />
+              <p style={{ fontSize: 10, fontWeight: 700, color: typeColor, fontFamily: "var(--mono)", letterSpacing: 1.3 }}>
+                {chartType.toUpperCase()} CHART
+              </p>
+              {xName && <span style={{ fontSize: 9.5, color: "var(--muted)", fontFamily: "var(--mono)" }}>X: {xName}</span>}
+              {yName && <span style={{ fontSize: 9.5, color: "var(--muted)", fontFamily: "var(--mono)" }}>· Y: {yName}</span>}
+              {pts > 0 && <span style={{ fontSize: 9.5, color: "var(--muted)", fontFamily: "var(--mono)" }}>· {pts.toLocaleString()} pts</span>}
+              <span style={{ fontSize: 9.5, color: "var(--muted)", fontFamily: "var(--mono)", marginLeft: "auto" }}>click image to expand</span>
+            </div>
+
+            {/* Quick stat pills — from chartData statistics */}
+            {st && (
+              <div style={{ padding: "10px 16px", display: "flex", flexWrap: "wrap", gap: 7, borderBottom: "1px solid var(--border)", background: "rgba(0,0,0,0.15)" }}>
+                {[
+                  { label: "Mean",   value: st.mean,   color: typeColor },
+                  { label: "Median", value: st.median, color: "var(--accent2)" },
+                  { label: "Min",    value: st.min,    color: "var(--muted2)" },
+                  { label: "Max",    value: st.max,    color: "var(--muted2)" },
+                  { label: "Std",    value: st.std,    color: "var(--accent3)" },
+                ].filter(s => s.value !== undefined && s.value !== null).map(({ label, value, color }) => (
+                  <div key={label} style={{
+                    padding: "4px 10px", borderRadius: 8,
+                    background: `${color}10`, border: `1px solid ${color}30`,
+                    display: "flex", alignItems: "center", gap: 6,
+                  }}>
+                    <span style={{ fontSize: 9, color, fontFamily: "var(--mono)", letterSpacing: 0.8, fontWeight: 600 }}>{label.toUpperCase()}</span>
+                    <span style={{ fontSize: 11, fontWeight: 800, color: "var(--text)", fontFamily: "var(--mono)" }}>
+                      {typeof value === "number" ? (Number.isInteger(value) ? value.toLocaleString() : value.toFixed(3)) : value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Chart image */}
+            <div
+              className="chart-card"
+              onClick={() => onExpand(visual)}
+              style={{ cursor: "pointer", position: "relative", overflow: "hidden" }}
+            >
+              <img
+                src={`data:image/png;base64,${visual.data}`}
+                alt={visual.name}
+                style={{ width: "100%", display: "block", maxHeight: 340, objectFit: "contain", background: "#0c0f1e" }}
+              />
+              <div style={{
+                position: "absolute", inset: 0,
+                background: "linear-gradient(0deg, rgba(14,17,32,0.35) 0%, transparent 55%)",
+                pointerEvents: "none",
+              }} />
+              <div style={{
+                position: "absolute", top: 8, left: 8,
+                background: `${typeColor}22`, border: `1px solid ${typeColor}50`,
+                borderRadius: 5, padding: "2px 8px",
+                fontSize: 8.5, color: typeColor, fontFamily: "var(--mono)", fontWeight: 700, letterSpacing: 0.5,
+              }}>QUERY VISUAL · {chartType.toUpperCase()}</div>
+            </div>
+
+            {/* Chart description */}
+            <div style={{ padding: "10px 16px", background: "var(--surface2)" }}>
+              <p style={{ fontSize: 11.5, color: "var(--muted2)", lineHeight: 1.65, wordBreak: "break-word" }}>
+                {xName && yName
+                  ? `This ${chartType} chart shows the relationship between ${xName} and ${yName}${pts > 0 ? ` across ${pts.toLocaleString()} data points` : ""}. Click the chart to open the full statistics panel.`
+                  : xName
+                  ? `This ${chartType} chart visualises ${xName}${pts > 0 ? ` (${pts.toLocaleString()} data points)` : ""}. Click to explore detailed statistics.`
+                  : `AI-generated ${chartType} chart for your query. Click to expand with full data statistics.`
+                }
+              </p>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Data table */}
+      {hasData && (
+        <div>
+          <button
+            onClick={() => setShowTable(p => !p)}
+            style={{
+              width: "100%", padding: "10px 16px", border: "none", cursor: "pointer",
+              background: "var(--surface2)", display: "flex", alignItems: "center", gap: 8,
+              borderBottom: showTable ? "1px solid var(--border)" : "none",
+            }}
+          >
+            <div style={{ width: 4, height: 16, borderRadius: 2, background: "var(--accent3)" }} />
+            <p style={{ fontSize: 10, fontWeight: 700, color: "var(--accent3)", fontFamily: "var(--mono)", letterSpacing: 1.3 }}>
+              DATA TABLE
+            </p>
+            <span style={{ fontSize: 9.5, color: "var(--muted)", fontFamily: "var(--mono)", marginLeft: 4 }}>
+              {row_count} row{row_count !== 1 ? "s" : ""} · {columns.length} col{columns.length !== 1 ? "s" : ""}
+            </span>
+            <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--muted)", transform: showTable ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>▾</span>
+          </button>
+
+          {showTable && (
+            <div style={{ overflowX: "auto", maxHeight: 260, overflowY: "auto" }}>
+              <table style={{
+                width: "100%", borderCollapse: "collapse",
+                fontSize: 11, fontFamily: "var(--mono)",
+              }}>
+                <thead>
+                  <tr style={{ background: "var(--surface3)", position: "sticky", top: 0 }}>
+                    {columns.map(col => (
+                      <th key={col} style={{
+                        padding: "7px 12px", textAlign: "left", color: "var(--muted)",
+                        fontWeight: 600, fontSize: 10, letterSpacing: 0.5,
+                        borderBottom: "1px solid var(--border)", whiteSpace: "nowrap",
+                      }}>{col}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.slice(0, 50).map((row, i) => (
+                    <tr key={i} style={{ background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.012)" }}>
+                      {columns.map(col => {
+                        const val = row[col];
+                        const isNum = typeof val === "number";
+                        return (
+                          <td key={col} style={{
+                            padding: "6px 12px", color: isNum ? "var(--accent)" : "var(--muted2)",
+                            borderBottom: "1px solid rgba(28,36,56,0.45)", whiteSpace: "nowrap",
+                            textAlign: isNum ? "right" : "left",
+                            fontWeight: isNum ? 600 : 400,
+                          }}>
+                            {val === null || val === undefined ? <span style={{ color: "var(--muted)", opacity: 0.5 }}>—</span>
+                              : isNum ? (Number.isInteger(val) ? val.toLocaleString() : val.toFixed(4))
+                              : String(val)}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {data.length > 50 && (
+                <p style={{ fontSize: 10, color: "var(--muted)", fontFamily: "var(--mono)", padding: "8px 12px", textAlign: "center" }}>
+                  Showing first 50 of {row_count} rows
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -1862,7 +2095,23 @@ export default function App() {
       setSessions(prev => prev.map(s => {
         if (s.id !== sid) return s;
         const msgs = s.messages.filter(m => m.id !== typingId);
-        return { ...s, messages: [...msgs, { id: uid(), role: "assistant", type: "text", animate: true, payload: { text: d.answer } }] };
+        // Build a rich query-answer message
+        const newMsgs = [
+          ...msgs,
+          {
+            id: uid(), role: "assistant", type: "query_answer", animate: true,
+            payload: {
+              answer:      d.answer  || "",
+              data:        d.data    || [],
+              columns:     d.columns || [],
+              row_count:   d.row_count || 0,
+              visual:      d.visual  || null,
+              needs_visual:d.needs_visual || false,
+              question,
+            }
+          }
+        ];
+        return { ...s, messages: newMsgs };
       }));
     } catch {
       setSessions(prev => prev.map(s => {
@@ -1886,9 +2135,9 @@ export default function App() {
       case "text":
         return (
           <Bubble key={msg.id} role={msg.role} animate={msg.animate} ts={msg.ts}>
-            {msg.payload.text.split("\n").map((line, i) => (
-              <span key={i}>{line}{i < msg.payload.text.split("\n").length - 1 && <br />}</span>
-            ))}
+            <div style={{ wordBreak: "break-word", overflowWrap: "break-word" }}>
+              {renderMarkdown(msg.payload.text)}
+            </div>
           </Bubble>
         );
 
@@ -1970,6 +2219,18 @@ export default function App() {
               <Avatar role="assistant" />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <DoneCard result={msg.payload} onAskQuestion={handleSend} />
+              </div>
+            </div>
+          </div>
+        );
+
+      case "query_answer":
+        return (
+          <div key={msg.id} style={{ animation: msg.animate ? "msgIn 0.38s ease both" : "none" }}>
+            <div style={{ display: "flex", gap: 10, alignItems: "flex-start", marginBottom: 4 }}>
+              <Avatar role="assistant" />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <QueryAnswerCard payload={msg.payload} onExpand={setLightbox} />
               </div>
             </div>
           </div>
