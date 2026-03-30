@@ -1,26 +1,27 @@
 def detect_source_type(source):
+    s = source.strip().lower()
 
-    source = source.lower()
-
-    if source.endswith(".csv"):
+    if s.endswith(".csv"):
         return "csv"
 
-    if source.endswith(".xlsx") or source.endswith(".xls"):
+    if s.endswith(".xlsx") or s.endswith(".xls"):
         return "excel"
 
-    if "sqlite://" in source:
+    if s.startswith("sqlite://"):
         return "sqlite"
 
-    if "postgres://" in source or "postgresql://" in source:
+    # Accept both shorthand (postgres://) and full (postgresql://)
+    # and any driver variant (postgresql+psycopg2://, postgresql+asyncpg://)
+    if s.startswith("postgres://") or s.startswith("postgresql"):
         return "postgres"
 
-    if "mysql://" in source:
+    if s.startswith("mysql"):
         return "mysql"
-    if "mongodb+srv://" in source or "mongodb://" in source:
+
+    if s.startswith("mongodb://") or s.startswith("mongodb+srv://"):
         return "mongodb"
-    
-    if "oracle+cx_oracle://" in source or "oracle://" in source or "oracle+oracledb://" in source:
+
+    if s.startswith("oracle"):
         return "oracle"
 
-    raise ValueError("Unsupported source type")
-
+    raise ValueError(f"Unsupported source type for: {source}")

@@ -255,15 +255,54 @@ function PipelineCard({ progress, stage }) {
 
 // ─── KPI strip ────────────────────────────────────────────────────────────────
 function KpiStrip({ kpis }) {
-  const show = kpis.slice(0, 8);
   const ACCENTS = ["var(--accent)", "var(--accent2)", "var(--accent3)", "var(--accent4)", "var(--danger)", "var(--accent)", "var(--accent2)", "var(--accent3)"];
+  // Group by type: SUM, AVG, other
+  const sums  = kpis.filter(k => k.Metric.startsWith("SUM_"));
+  const avgs  = kpis.filter(k => k.Metric.startsWith("AVG_"));
+  const other = kpis.filter(k => !k.Metric.startsWith("SUM_") && !k.Metric.startsWith("AVG_"));
+
+  const KpiCard = ({ k, i, prefix }) => {
+    const accent = ACCENTS[i % ACCENTS.length];
+    const label = k.Metric.replace(/^(SUM|AVG)_/, "");
+    return (
+      <div className="kpi-card" style={{
+        background: "linear-gradient(145deg, var(--surface2), var(--surface3))",
+        borderRadius: 14, padding: "14px 16px",
+        border: `1px solid var(--border)`,
+        position: "relative", overflow: "hidden",
+        transition: "border-color 0.25s, transform 0.25s, box-shadow 0.25s",
+        cursor: "default", boxShadow: "0 2px 12px rgba(0,0,0,0.2)",
+      }}>
+        <div style={{ position: "absolute", top: 0, right: 0, width: 60, height: 60, background: `radial-gradient(circle at top right, ${accent}15, transparent)` }} />
+        <div style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: 2, background: `linear-gradient(90deg, ${accent}40, transparent)` }} />
+        <p style={{ fontSize: 9.5, color: accent, fontFamily: "var(--mono)", letterSpacing: 1.2, marginBottom: 7, fontWeight: 600 }}>
+          {prefix} {label.toUpperCase().slice(0, 16)}
+        </p>
+        <p style={{ fontSize: 20, fontWeight: 900, color: "var(--text)", letterSpacing: -0.5 }}>{fmt(k.Value)}</p>
+      </div>
+    );
+  };
+
+  const Section = ({ title, items, prefix, color }) => items.length === 0 ? null : (
+    <div style={{ marginBottom: 18 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+        <div style={{ width: 3, height: 14, borderRadius: 2, background: color }} />
+        <p style={{ fontSize: 10, fontWeight: 700, color, fontFamily: "var(--mono)", letterSpacing: 1.4 }}>{title}</p>
+        <span style={{ fontSize: 9.5, color: "var(--muted)", fontFamily: "var(--mono)" }}>{items.length} metric{items.length !== 1 ? "s" : ""}</span>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(148px, 1fr))", gap: 8 }}>
+        {items.map((k, i) => <KpiCard key={i} k={k} i={i} prefix={prefix} />)}
+      </div>
+    </div>
+  );
+
   return (
     <div style={{
       background: "var(--surface)", border: "1px solid var(--border2)",
       borderRadius: 18, padding: "20px 22px",
       position: "relative", overflow: "hidden",
     }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 18 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
         <div style={{
           width: 28, height: 28, borderRadius: 8,
           background: "rgba(0,229,160,0.12)", border: "1px solid rgba(0,229,160,0.3)",
@@ -273,87 +312,354 @@ function KpiStrip({ kpis }) {
           KEY METRICS
         </p>
         <span style={{ marginLeft: "auto", fontSize: 10, color: "var(--muted)", fontFamily: "var(--mono)" }}>
-          {show.length} of {kpis.length} shown
+          {kpis.length} total
         </span>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(155px, 1fr))", gap: 10 }}>
-        {show.map((k, i) => {
-          const isSum = k.Metric.startsWith("SUM_");
-          const isAvg = k.Metric.startsWith("AVG_");
-          const accent = ACCENTS[i % ACCENTS.length];
-          const label = k.Metric.replace(/^(SUM|AVG)_/, "");
-          const prefix = isSum ? "Σ" : isAvg ? "μ" : "#";
-          return (
-            <div key={i} className="kpi-card" style={{
-              background: "linear-gradient(145deg, var(--surface2), var(--surface3))",
-              borderRadius: 14, padding: "14px 16px",
-              border: `1px solid var(--border)`,
-              position: "relative", overflow: "hidden",
-              transition: "border-color 0.25s, transform 0.25s, box-shadow 0.25s",
-              cursor: "default",
-              boxShadow: "0 2px 12px rgba(0,0,0,0.2)",
-            }}>
-              <div style={{ position: "absolute", top: 0, right: 0, width: 60, height: 60, background: `radial-gradient(circle at top right, ${accent}15, transparent)` }} />
-              <div style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: 2, background: `linear-gradient(90deg, ${accent}40, transparent)` }} />
-              <p style={{ fontSize: 9.5, color: accent, fontFamily: "var(--mono)", letterSpacing: 1.2, marginBottom: 7, fontWeight: 600 }}>
-                {prefix} {label.toUpperCase().slice(0, 14)}
-              </p>
-              <p style={{ fontSize: 22, fontWeight: 900, color: "var(--text)", letterSpacing: -0.5 }}>{fmt(k.Value)}</p>
-            </div>
-          );
-        })}
-      </div>
+      <Section title="TOTALS (Σ)" items={sums}  prefix="Σ" color="var(--accent)" />
+      <Section title="AVERAGES (μ)" items={avgs}  prefix="μ" color="var(--accent2)" />
+      <Section title="OTHER" items={other} prefix="#" color="var(--accent3)" />
     </div>
   );
 }
 
 // ─── Chart gallery ────────────────────────────────────────────────────────────
-function ChartGallery({ charts, onExpand }) {
+const CHART_CATEGORIES = [
+  { key: "forecasting",  label: "📈 Forecasting",    color: "var(--accent)",  desc: "Time-series predictions via Prophet" },
+  { key: "anomaly",      label: "⚠ Anomaly Detection", color: "var(--danger)", desc: "Isolation Forest outlier detection" },
+  { key: "distribution", label: "📊 Distributions",  color: "var(--accent2)", desc: "Histograms of numeric columns" },
+  { key: "scatter",      label: "🔵 Scatter Plots",   color: "var(--accent3)", desc: "Correlation between numeric pairs" },
+  { key: "correlation",  label: "🔥 Correlation",    color: "var(--accent4)", desc: "Full-dataset correlation heatmap" },
+  { key: "bar",          label: "📉 Bar Charts",      color: "#60d394",        desc: "Category frequency counts" },
+  { key: "pie",          label: "🥧 Pie Charts",      color: "#f4a535",        desc: "Proportional breakdowns" },
+  { key: "other",        label: "🗂 Other",           color: "var(--muted2)",  desc: "Miscellaneous charts" },
+];
+
+function ChartCard({ c, onExpand, accentColor }) {
+  return (
+    <div className="chart-card" onClick={() => onExpand(c)} style={{
+      borderRadius: 12, overflow: "hidden", cursor: "pointer",
+      border: "1px solid var(--border)", background: "var(--surface2)",
+      position: "relative",
+    }}>
+      <div style={{ position: "relative", overflow: "hidden" }}>
+        <img src={`data:image/png;base64,${c.data}`} alt={c.name} style={{ width: "100%", display: "block" }} />
+        <div style={{
+          position: "absolute", inset: 0,
+          background: "linear-gradient(0deg, rgba(14,17,32,0.55) 0%, transparent 55%)",
+          pointerEvents: "none",
+        }} />
+        <div style={{
+          position: "absolute", top: 8, right: 8,
+          background: "rgba(0,0,0,0.65)", border: "1px solid rgba(255,255,255,0.1)",
+          borderRadius: 6, padding: "3px 8px",
+          fontSize: 9, color: "rgba(255,255,255,0.7)", fontFamily: "var(--mono)",
+        }}>click to expand</div>
+        {c.category && (
+          <div style={{
+            position: "absolute", top: 8, left: 8,
+            background: `${accentColor}22`, border: `1px solid ${accentColor}50`,
+            borderRadius: 5, padding: "2px 7px",
+            fontSize: 8.5, color: accentColor, fontFamily: "var(--mono)", fontWeight: 700, letterSpacing: 0.5,
+          }}>{c.category.toUpperCase()}</div>
+        )}
+      </div>
+      <div style={{ padding: "9px 12px", borderTop: "1px solid var(--border)" }}>
+        <p style={{ fontSize: 11, color: "var(--muted2)", fontFamily: "var(--mono)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</p>
+      </div>
+    </div>
+  );
+}
+
+function ChartSection({ catKey, catLabel, catColor, catDesc, charts, onExpand }) {
+  const [collapsed, setCollapsed] = useState(false);
+  const filtered = charts.filter(c => (c.category || "other") === catKey);
+  if (filtered.length === 0) return null;
   return (
     <div style={{
       background: "var(--surface)", border: "1px solid var(--border2)",
-      borderRadius: 18, padding: "20px 22px",
+      borderRadius: 16, overflow: "hidden", marginBottom: 12,
     }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 18 }}>
+      {/* Section header — clickable to collapse */}
+      <div
+        onClick={() => setCollapsed(p => !p)}
+        style={{
+          display: "flex", alignItems: "center", gap: 10, padding: "14px 18px",
+          cursor: "pointer", background: "var(--surface2)",
+          borderBottom: collapsed ? "none" : "1px solid var(--border)",
+          userSelect: "none",
+        }}
+      >
+        <div style={{
+          width: 4, height: 22, borderRadius: 2,
+          background: catColor, boxShadow: `0 0 8px ${catColor}60`, flexShrink: 0,
+        }} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontSize: 12, fontWeight: 800, color: "var(--text)", letterSpacing: -0.2 }}>{catLabel}</p>
+          <p style={{ fontSize: 10, color: "var(--muted)", fontFamily: "var(--mono)", marginTop: 1 }}>{catDesc}</p>
+        </div>
+        <span style={{ fontSize: 10, color: catColor, fontFamily: "var(--mono)", fontWeight: 700, flexShrink: 0 }}>
+          {filtered.length} chart{filtered.length !== 1 ? "s" : ""}
+        </span>
+        <span style={{ fontSize: 12, color: "var(--muted)", flexShrink: 0, transform: collapsed ? "rotate(-90deg)" : "none", transition: "transform 0.2s" }}>▾</span>
+      </div>
+
+      {!collapsed && (
+        <div style={{ padding: "14px 16px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 10 }}>
+            {filtered.map((c, i) => (
+              <ChartCard key={i} c={c} onExpand={onExpand} accentColor={catColor} />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ChartGallery({ charts, onExpand }) {
+  const total = charts.length;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+      {/* Gallery header */}
+      <div style={{
+        background: "var(--surface)", border: "1px solid var(--border2)",
+        borderRadius: 16, padding: "16px 20px", marginBottom: 12,
+        display: "flex", alignItems: "center", gap: 10,
+      }}>
         <div style={{
           width: 28, height: 28, borderRadius: 8,
           background: "rgba(77,159,255,0.12)", border: "1px solid rgba(77,159,255,0.3)",
           display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14,
         }}>📈</div>
-        <p style={{ fontSize: 11, fontWeight: 700, color: "var(--accent2)", fontFamily: "var(--mono)", letterSpacing: 1.5 }}>
-          VISUALISATIONS
-        </p>
-        <span style={{ marginLeft: "auto", fontSize: 10, color: "var(--muted)", fontFamily: "var(--mono)" }}>
-          {charts.length} chart{charts.length !== 1 ? "s" : ""}
-        </span>
+        <div>
+          <p style={{ fontSize: 11, fontWeight: 700, color: "var(--accent2)", fontFamily: "var(--mono)", letterSpacing: 1.5 }}>
+            VISUALISATIONS
+          </p>
+          <p style={{ fontSize: 10, color: "var(--muted)", fontFamily: "var(--mono)", marginTop: 1 }}>
+            {total} chart{total !== 1 ? "s" : ""} · grouped by category · click headers to collapse
+          </p>
+        </div>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 10 }}>
-        {charts.map((c, i) => (
-          <div key={i} className="chart-card" onClick={() => onExpand(c)} style={{
-            borderRadius: 12, overflow: "hidden", cursor: "pointer",
-            border: "1px solid var(--border)",
-            background: "var(--surface2)",
-            position: "relative",
-          }}>
-            <div style={{ position: "relative", overflow: "hidden" }}>
-              <img src={`data:image/png;base64,${c.data}`} alt={c.name} style={{ width: "100%", display: "block" }} />
-              <div style={{
-                position: "absolute", inset: 0,
-                background: "linear-gradient(0deg, rgba(14,17,32,0.5) 0%, transparent 50%)",
-                pointerEvents: "none",
-              }} />
-              <div style={{
-                position: "absolute", top: 8, right: 8,
-                background: "rgba(0,0,0,0.6)", border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: 6, padding: "3px 8px",
-                fontSize: 9, color: "rgba(255,255,255,0.7)", fontFamily: "var(--mono)",
-              }}>click to expand</div>
+
+      {CHART_CATEGORIES.map(cat => (
+        <ChartSection
+          key={cat.key}
+          catKey={cat.key}
+          catLabel={cat.label}
+          catColor={cat.color}
+          catDesc={cat.desc}
+          charts={charts}
+          onExpand={onExpand}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ─── Forecast data panel ──────────────────────────────────────────────────────
+function ForecastPanel({ forecasts }) {
+  const [activeIdx, setActiveIdx] = useState(0);
+  if (!forecasts || forecasts.length === 0) return null;
+  const active = forecasts[activeIdx];
+  const rows = active?.rows || [];
+  const lastRow = rows[rows.length - 1];
+  const firstRow = rows[0];
+  const trend = lastRow && firstRow ? lastRow.yhat - firstRow.yhat : 0;
+  const trendPct = firstRow?.yhat ? (trend / Math.abs(firstRow.yhat)) * 100 : 0;
+  const trendUp = trend >= 0;
+
+  return (
+    <div style={{
+      background: "var(--surface)", border: "1px solid rgba(0,229,160,0.25)",
+      borderRadius: 18, overflow: "hidden",
+    }}>
+      {/* Header */}
+      <div style={{
+        padding: "14px 18px", background: "linear-gradient(135deg, rgba(0,229,160,0.06), rgba(0,229,160,0.02))",
+        borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 10,
+      }}>
+        <div style={{
+          width: 28, height: 28, borderRadius: 8,
+          background: "rgba(0,229,160,0.12)", border: "1px solid rgba(0,229,160,0.35)",
+          display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14,
+        }}>📈</div>
+        <div style={{ flex: 1 }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: "var(--accent)", fontFamily: "var(--mono)", letterSpacing: 1.5 }}>FORECAST DATA</p>
+          <p style={{ fontSize: 10, color: "var(--muted)", fontFamily: "var(--mono)", marginTop: 1 }}>Prophet 30-day prediction window</p>
+        </div>
+      </div>
+
+      {/* Column tabs */}
+      {forecasts.length > 1 && (
+        <div style={{ display: "flex", borderBottom: "1px solid var(--border)", background: "var(--surface2)" }}>
+          {forecasts.map((fc, i) => (
+            <button key={i} onClick={() => setActiveIdx(i)} style={{
+              flex: 1, padding: "10px 12px", border: "none", cursor: "pointer",
+              background: "transparent", fontSize: 11, fontFamily: "var(--mono)",
+              color: i === activeIdx ? "var(--accent)" : "var(--muted)",
+              fontWeight: i === activeIdx ? 700 : 400,
+              borderBottom: `2px solid ${i === activeIdx ? "var(--accent)" : "transparent"}`,
+            }}>{fc.col.replace(/_/g, " ")}</button>
+          ))}
+        </div>
+      )}
+
+      <div style={{ padding: "14px 18px" }}>
+        {/* Summary stats */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 14 }}>
+          {[
+            { label: "LAST FORECAST", value: lastRow ? fmt(lastRow.yhat) : "—", color: "var(--accent)" },
+            { label: "TREND", value: `${trendUp ? "+" : ""}${trendPct.toFixed(1)}%`, color: trendUp ? "var(--accent)" : "var(--danger)" },
+            { label: "UNCERTAINTY", value: lastRow ? `±${fmt((lastRow.yhat_upper - lastRow.yhat_lower) / 2)}` : "—", color: "var(--accent3)" },
+          ].map(({ label, value, color }) => (
+            <div key={label} style={{
+              background: `${color}0d`, border: `1px solid ${color}30`,
+              borderRadius: 10, padding: "10px 12px", textAlign: "center",
+            }}>
+              <p style={{ fontSize: 8.5, color, fontFamily: "var(--mono)", letterSpacing: 1, marginBottom: 4 }}>{label}</p>
+              <p style={{ fontSize: 14, fontWeight: 800, color: "var(--text)", fontFamily: "var(--mono)" }}>{value}</p>
             </div>
-            <div style={{ padding: "9px 12px", borderTop: "1px solid var(--border)" }}>
-              <p style={{ fontSize: 11, color: "var(--muted2)", fontFamily: "var(--mono)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</p>
-            </div>
+          ))}
+        </div>
+
+        {/* Forecast table — last 10 rows */}
+        <p style={{ fontSize: 9.5, color: "var(--muted)", fontFamily: "var(--mono)", letterSpacing: 1.3, marginBottom: 8, textTransform: "uppercase" }}>
+          Latest {Math.min(10, rows.length)} Forecast Points
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr 1fr", gap: 4, paddingBottom: 6, borderBottom: "1px solid var(--border)" }}>
+            {["Date", "Forecast", "Lower", "Upper"].map(h => (
+              <span key={h} style={{ fontSize: 9, color: "var(--muted)", fontFamily: "var(--mono)", letterSpacing: 0.8 }}>{h.toUpperCase()}</span>
+            ))}
           </div>
+          {rows.slice(-10).map((row, i) => (
+            <div key={i} style={{
+              display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr 1fr", gap: 4,
+              padding: "4px 0", borderBottom: "1px solid rgba(28,36,56,0.5)",
+              background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.01)",
+            }}>
+              <span style={{ fontSize: 10, color: "var(--muted2)", fontFamily: "var(--mono)" }}>
+                {row.ds ? String(row.ds).slice(0, 10) : "—"}
+              </span>
+              <span style={{ fontSize: 10, fontWeight: 700, color: "var(--accent)", fontFamily: "var(--mono)" }}>{fmt(row.yhat)}</span>
+              <span style={{ fontSize: 10, color: "var(--muted)", fontFamily: "var(--mono)" }}>{fmt(row.yhat_lower)}</span>
+              <span style={{ fontSize: 10, color: "var(--muted)", fontFamily: "var(--mono)" }}>{fmt(row.yhat_upper)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Anomaly data panel ───────────────────────────────────────────────────────
+function AnomalyPanel({ anomalyData, anomalyReport }) {
+  const [tab, setTab] = useState("stats");
+  if (!anomalyData) return null;
+  const { count, stats, sample, numeric_columns } = anomalyData;
+
+  return (
+    <div style={{
+      background: "var(--surface)", border: "1px solid rgba(255,94,122,0.25)",
+      borderRadius: 18, overflow: "hidden",
+    }}>
+      {/* Header */}
+      <div style={{
+        padding: "14px 18px", background: "linear-gradient(135deg, rgba(255,94,122,0.06), rgba(255,94,122,0.02))",
+        borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 10,
+      }}>
+        <div style={{
+          width: 28, height: 28, borderRadius: 8,
+          background: "rgba(255,94,122,0.12)", border: "1px solid rgba(255,94,122,0.35)",
+          display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14,
+        }}>⚠</div>
+        <div style={{ flex: 1 }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: "var(--danger)", fontFamily: "var(--mono)", letterSpacing: 1.5 }}>ANOMALY DATA</p>
+          <p style={{ fontSize: 10, color: "var(--muted)", fontFamily: "var(--mono)", marginTop: 1 }}>Isolation Forest · 5% contamination rate</p>
+        </div>
+        <div style={{
+          padding: "4px 12px", borderRadius: 100,
+          background: "rgba(255,94,122,0.12)", border: "1px solid rgba(255,94,122,0.4)",
+          fontSize: 12, fontWeight: 800, color: "var(--danger)", fontFamily: "var(--mono)",
+        }}>{count} flagged</div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display: "flex", borderBottom: "1px solid var(--border)", background: "var(--surface2)" }}>
+        {[["stats","📊 Stats"], ["sample","🔍 Sample Rows"], ["report","📋 Report"]].map(([id, label]) => (
+          <button key={id} onClick={() => setTab(id)} style={{
+            flex: 1, padding: "10px 8px", border: "none", cursor: "pointer",
+            background: "transparent", fontSize: 11, fontFamily: "var(--sans)",
+            color: tab === id ? "var(--text)" : "var(--muted)",
+            fontWeight: tab === id ? 700 : 400,
+            borderBottom: `2px solid ${tab === id ? "var(--danger)" : "transparent"}`,
+          }}>{label}</button>
         ))}
+      </div>
+
+      <div style={{ padding: "14px 18px", maxHeight: 320, overflowY: "auto" }}>
+        {tab === "stats" && stats && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {Object.entries(stats).map(([col, s]) => (
+              <div key={col} style={{ background: "var(--surface2)", borderRadius: 10, padding: "10px 14px", border: "1px solid var(--border)" }}>
+                <p style={{ fontSize: 10.5, fontWeight: 700, color: "var(--danger)", fontFamily: "var(--mono)", marginBottom: 8 }}>{col}</p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 6 }}>
+                  {[["MEAN", s.mean], ["MIN", s.min], ["MAX", s.max], ["STD", s.std]].map(([lbl, val]) => (
+                    <div key={lbl} style={{ textAlign: "center" }}>
+                      <p style={{ fontSize: 8.5, color: "var(--muted)", fontFamily: "var(--mono)", letterSpacing: 0.8 }}>{lbl}</p>
+                      <p style={{ fontSize: 11, fontWeight: 700, color: "var(--text)", fontFamily: "var(--mono)" }}>{fmt(val)}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {tab === "sample" && sample && (
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 10.5, fontFamily: "var(--mono)" }}>
+              <thead>
+                <tr>
+                  {numeric_columns.slice(0, 6).map(col => (
+                    <th key={col} style={{ padding: "5px 8px", textAlign: "left", color: "var(--muted)", fontWeight: 600, borderBottom: "1px solid var(--border)", whiteSpace: "nowrap" }}>
+                      {col}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {sample.map((row, i) => (
+                  <tr key={i} style={{ background: i % 2 === 0 ? "transparent" : "rgba(255,94,122,0.03)" }}>
+                    {numeric_columns.slice(0, 6).map(col => (
+                      <td key={col} style={{ padding: "5px 8px", color: "var(--muted2)", borderBottom: "1px solid rgba(28,36,56,0.5)", whiteSpace: "nowrap" }}>
+                        {row[col] !== undefined && row[col] !== null ? fmt(Number(row[col])) : "—"}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {tab === "report" && anomalyReport && (
+          <div>
+            {anomalyReport.split("\n").filter(Boolean).map((line, i) => {
+              const isItem = line.trim().match(/^\d+\.|^[-•]/);
+              return (
+                <p key={i} style={{
+                  fontSize: 12.5, lineHeight: 1.75,
+                  color: isItem ? "var(--muted2)" : "var(--text)",
+                  marginBottom: 6, paddingLeft: isItem ? 14 : 0, position: "relative",
+                }}>
+                  {isItem && <span style={{ position: "absolute", left: 0, top: "0.55em", width: 4, height: 4, borderRadius: "50%", background: "var(--danger)", display: "inline-block" }} />}
+                  {line}
+                </p>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -475,47 +781,433 @@ function DoneCard({ result, onAskQuestion }) {
 }
 
 // ─── Lightbox ─────────────────────────────────────────────────────────────────
+function StatRow({ label, value, accent }) {
+  if (value === null || value === undefined) return null;
+  const display = typeof value === "number"
+    ? (Number.isInteger(value) ? value.toLocaleString() : value.toFixed(4))
+    : String(value);
+  return (
+    <div style={{
+      display: "flex", justifyContent: "space-between", alignItems: "center",
+      padding: "5px 0", borderBottom: "1px solid rgba(28,36,56,0.6)",
+    }}>
+      <span style={{ fontSize: 10.5, color: "var(--muted)", fontFamily: "var(--mono)", textTransform: "uppercase", letterSpacing: 0.5 }}>{label}</span>
+      <span style={{ fontSize: 11, fontWeight: 700, color: accent || "var(--text)", fontFamily: "var(--mono)" }}>{display}</span>
+    </div>
+  );
+}
+
+function ChartDataPanel({ chart }) {
+  const cd = chart.chartData;
+  const [activeStatTab, setActiveStatTab] = useState(0);
+
+  if (!cd) return (
+    <div style={{ padding: 24, color: "var(--muted)", fontSize: 12, fontFamily: "var(--mono)", textAlign: "center" }}>
+      No chart data available
+    </div>
+  );
+
+  const chartType = cd.chart_type?.toUpperCase() || "CHART";
+  const typeColors = {
+    bar: "var(--accent2)", pie: "var(--accent3)", scatter: "var(--accent4)",
+    hist: "var(--accent)", histogram: "var(--accent)", heatmap: "var(--danger)",
+  };
+  const typeColor = typeColors[cd.chart_type?.toLowerCase()] || "var(--accent)";
+
+  // Determine data points to show
+  const dataPoints = cd.series?.preview_points || cd.x || [];
+  const isHeatmap = cd.chart_type === "heatmap";
+  const statKeys = cd.statistics ? Object.keys(cd.statistics) : [];
+  const perColStatKeys = cd.per_column_statistics ? Object.keys(cd.per_column_statistics) : [];
+
+  const statTabKeys = statKeys.filter(k => typeof cd.statistics[k] === "object" && cd.statistics[k] !== null && !Array.isArray(cd.statistics[k]));
+  const activeStatKey = statTabKeys[activeStatTab];
+  const activeStat = cd.statistics?.[activeStatKey];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 0, height: "100%", overflow: "hidden" }}>
+
+      {/* Header */}
+      <div style={{
+        padding: "16px 18px 14px", borderBottom: "1px solid var(--border)",
+        background: "linear-gradient(135deg, var(--surface2), var(--surface3))",
+        flexShrink: 0,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+          <div style={{
+            padding: "3px 10px", borderRadius: 100, fontSize: 9.5, fontWeight: 700,
+            fontFamily: "var(--mono)", letterSpacing: 1.2,
+            background: `${typeColor}18`, border: `1px solid ${typeColor}50`,
+            color: typeColor,
+          }}>{chartType}</div>
+          <span style={{ fontSize: 10, color: "var(--muted)", fontFamily: "var(--mono)" }}>
+            {cd.series?.total_points ?? dataPoints.length} points
+          </span>
+        </div>
+        <p style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", lineHeight: 1.4 }}>
+          {cd.x_name && cd.y_name ? `${cd.x_name} vs ${cd.y_name}` : cd.x_name || cd.y_name || chart.name}
+        </p>
+        {cd.x_name && (
+          <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
+            {cd.x_name && <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              <div style={{ width: 5, height: 5, borderRadius: "50%", background: typeColor }} />
+              <span style={{ fontSize: 10, color: "var(--muted)", fontFamily: "var(--mono)" }}>X: {cd.x_name}</span>
+            </div>}
+            {cd.y_name && <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+              <div style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--accent2)" }} />
+              <span style={{ fontSize: 10, color: "var(--muted)", fontFamily: "var(--mono)" }}>Y: {cd.y_name}</span>
+            </div>}
+          </div>
+        )}
+      </div>
+
+      {/* Scrollable content */}
+      <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 0 }}>
+
+        {/* Data points table — skip for histograms and heatmaps */}
+        {!isHeatmap && cd.chart_type !== "histogram" && dataPoints.length > 0 && (
+          <div style={{ padding: "14px 18px", borderBottom: "1px solid var(--border)" }}>
+            <p style={{ fontSize: 9.5, color: "var(--muted)", fontFamily: "var(--mono)", letterSpacing: 1.3, marginBottom: 10, textTransform: "uppercase" }}>
+              Data Points
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+              {dataPoints.slice(0, 12).map((pt, i) => {
+                const xVal = pt.x ?? pt;
+                const yVal = pt.y;
+                const pct = dataPoints.length > 0 && typeof yVal === "number"
+                  ? (yVal / Math.max(...dataPoints.map(p => p.y ?? 0))) * 100 : null;
+                return (
+                  <div key={i} style={{ position: "relative" }}>
+                    {pct !== null && (
+                      <div style={{
+                        position: "absolute", left: 0, top: 0, bottom: 0, borderRadius: 4,
+                        width: `${pct}%`, background: `${typeColor}12`,
+                        transition: "width 0.4s ease", minWidth: 2,
+                      }} />
+                    )}
+                    <div style={{
+                      position: "relative", display: "flex", justifyContent: "space-between",
+                      alignItems: "center", padding: "4px 6px",
+                    }}>
+                      <span style={{ fontSize: 11, color: "var(--muted2)", fontFamily: "var(--mono)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "60%" }}>
+                        {String(xVal)}
+                      </span>
+                      {yVal !== undefined && (
+                        <span style={{ fontSize: 11, fontWeight: 700, color: typeColor, fontFamily: "var(--mono)" }}>
+                          {typeof yVal === "number" ? (Number.isInteger(yVal) ? yVal.toLocaleString() : yVal.toFixed(2)) : yVal}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              {dataPoints.length > 12 && (
+                <p style={{ fontSize: 10, color: "var(--muted)", fontFamily: "var(--mono)", textAlign: "center", paddingTop: 4 }}>
+                  +{dataPoints.length - 12} more rows
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Histogram — rich statistical panel (no raw bin points) */}
+        {cd.chart_type === "histogram" && (() => {
+          const st = cd.statistics || {};
+          const s  = cd.series    || {};
+          const binEdges = s.bin_edges || [];
+          const binMin = binEdges[0];
+          const binMax = binEdges[binEdges.length - 1];
+          const fmtN = v => v === undefined || v === null ? "—"
+            : typeof v === "boolean" ? (v ? "Yes" : "No")
+            : typeof v === "number"  ? (Number.isInteger(v) ? v.toLocaleString() : v.toFixed(4))
+            : String(v);
+          return (
+            <>
+              {/* ── Distribution overview cards ── */}
+              <div style={{ padding: "14px 18px", borderBottom: "1px solid var(--border)" }}>
+                <p style={{ fontSize: 9.5, color: "var(--muted)", fontFamily: "var(--mono)", letterSpacing: 1.3, marginBottom: 10, textTransform: "uppercase" }}>Distribution Overview</p>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 7 }}>
+                  {[
+                    { label: "Total Points", value: s.total_points,  color: typeColor },
+                    { label: "Bin Count",    value: s.bin_count,     color: "var(--accent2)" },
+                    { label: "Range Min",    value: binMin,           color: "var(--muted2)" },
+                    { label: "Range Max",    value: binMax,           color: "var(--muted2)" },
+                    { label: "Mean",         value: st.mean,          color: typeColor },
+                    { label: "Median",       value: st.median,        color: "var(--accent2)" },
+                    { label: "Std Dev",      value: st.std,           color: "var(--accent3)" },
+                    { label: "Variance",     value: st.variance,      color: "var(--accent4)" },
+                  ].filter(x => x.value !== undefined && x.value !== null).map(({ label, value, color }) => (
+                    <div key={label} style={{ background: `${color}0d`, border: `1px solid ${color}28`, borderRadius: 9, padding: "9px 11px", textAlign: "center" }}>
+                      <p style={{ fontSize: 8.5, color, fontFamily: "var(--mono)", letterSpacing: 0.8, marginBottom: 4 }}>{label.toUpperCase()}</p>
+                      <p style={{ fontSize: 13, fontWeight: 800, color: "var(--text)", fontFamily: "var(--mono)" }}>{fmtN(value)}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* ── Shape & tail statistics ── */}
+              <div style={{ padding: "14px 18px", borderBottom: "1px solid var(--border)" }}>
+                <p style={{ fontSize: 9.5, color: "var(--muted)", fontFamily: "var(--mono)", letterSpacing: 1.3, marginBottom: 8, textTransform: "uppercase" }}>Shape & Tail</p>
+                {[
+                  ["Skewness",    st.skewness],
+                  ["Kurtosis",    st.kurtosis],
+                  ["Shapiro Stat",st.shapiro_stat],
+                  ["Shapiro p",   st.shapiro_p_value],
+                  ["Normal Dist", st.is_normal_distribution !== undefined ? (st.is_normal_distribution ? "Yes ✓" : "No ✗") : undefined],
+                  ["CV %",        st.coefficient_of_variation_pct],
+                  ["Outliers",    st.outlier_count],
+                  ["Missing",     st.missing],
+                  ["Mode",        st.mode],
+                  ["Mode Count",  st.mode_count],
+                  ["Sum",         st.sum],
+                ].filter(([,v]) => v !== undefined && v !== null).map(([label, value]) => (
+                  <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0", borderBottom: "1px solid rgba(28,36,56,0.5)" }}>
+                    <span style={{ fontSize: 10.5, color: "var(--muted)", fontFamily: "var(--mono)", textTransform: "uppercase", letterSpacing: 0.5 }}>{label}</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "var(--text)", fontFamily: "var(--mono)" }}>{fmtN(value)}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* ── Percentile ladder ── */}
+              {(st.p5 !== undefined) && (
+                <div style={{ padding: "14px 18px", borderBottom: "1px solid var(--border)" }}>
+                  <p style={{ fontSize: 9.5, color: "var(--muted)", fontFamily: "var(--mono)", letterSpacing: 1.3, marginBottom: 8, textTransform: "uppercase" }}>Percentiles</p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    {[["p5","p5"],["p10","p10"],["Q1 (p25)","q1"],["Median (p50)","p50"],["Q3 (p75)","q3"],["p90","p90"],["p95","p95"]].map(([label, key]) => {
+                      const val = st[key];
+                      if (val === undefined || val === null) return null;
+                      const pct = (val - (binMin||0)) / ((binMax - binMin) || 1) * 100;
+                      return (
+                        <div key={label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ fontSize: 9.5, color: "var(--muted)", fontFamily: "var(--mono)", width: 80, flexShrink: 0 }}>{label}</span>
+                          <div style={{ flex: 1, height: 4, background: "var(--surface3)", borderRadius: 100, overflow: "hidden" }}>
+                            <div style={{ width: `${Math.max(2, Math.min(100, pct))}%`, height: "100%", background: `linear-gradient(90deg, ${typeColor}, var(--accent2))`, borderRadius: 100 }} />
+                          </div>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: typeColor, fontFamily: "var(--mono)", width: 44, textAlign: "right", flexShrink: 0 }}>{fmtN(val)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* ── Fence / IQR ── */}
+              {(st.iqr !== undefined) && (
+                <div style={{ padding: "14px 18px" }}>
+                  <p style={{ fontSize: 9.5, color: "var(--muted)", fontFamily: "var(--mono)", letterSpacing: 1.3, marginBottom: 8, textTransform: "uppercase" }}>IQR & Fences</p>
+                  {[["IQR","iqr"],["Lower Fence","lower_fence"],["Upper Fence","upper_fence"]].map(([label, key]) => {
+                    const val = st[key];
+                    if (val === undefined) return null;
+                    return (
+                      <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "5px 0", borderBottom: "1px solid rgba(28,36,56,0.5)" }}>
+                        <span style={{ fontSize: 10.5, color: "var(--muted)", fontFamily: "var(--mono)", textTransform: "uppercase", letterSpacing: 0.5 }}>{label}</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: "var(--accent3)", fontFamily: "var(--mono)" }}>{fmtN(val)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          );
+        })()}
+
+        {/* Heatmap columns */}
+        {isHeatmap && cd.columns && (
+          <div style={{ padding: "14px 18px", borderBottom: "1px solid var(--border)" }}>
+            <p style={{ fontSize: 9.5, color: "var(--muted)", fontFamily: "var(--mono)", letterSpacing: 1.3, marginBottom: 10, textTransform: "uppercase" }}>
+              Columns ({cd.columns.length})
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+              {cd.columns.map((col, i) => (
+                <span key={i} style={{
+                  padding: "3px 10px", borderRadius: 100, fontSize: 10, fontFamily: "var(--mono)",
+                  background: "var(--surface3)", border: "1px solid var(--border2)", color: "var(--muted2)",
+                }}>{col}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Statistics */}
+        {statTabKeys.length > 0 && (
+          <div style={{ padding: "14px 18px", borderBottom: "1px solid var(--border)" }}>
+            <p style={{ fontSize: 9.5, color: "var(--muted)", fontFamily: "var(--mono)", letterSpacing: 1.3, marginBottom: 10, textTransform: "uppercase" }}>
+              Statistics
+            </p>
+
+            {/* Stat tabs if multiple */}
+            {statTabKeys.length > 1 && (
+              <div style={{ display: "flex", gap: 5, marginBottom: 12, flexWrap: "wrap" }}>
+                {statTabKeys.map((key, i) => (
+                  <button key={key} onClick={() => setActiveStatTab(i)} style={{
+                    padding: "4px 12px", borderRadius: 100, fontSize: 10.5, fontFamily: "var(--mono)",
+                    cursor: "pointer", border: `1px solid ${i === activeStatTab ? typeColor + "60" : "var(--border)"}`,
+                    background: i === activeStatTab ? `${typeColor}12` : "transparent",
+                    color: i === activeStatTab ? typeColor : "var(--muted)",
+                    transition: "all 0.15s",
+                  }}>{key}</button>
+                ))}
+              </div>
+            )}
+
+            {activeStat && (
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                {/* Key stats highlighted */}
+                {activeStat.mean !== undefined && (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 10 }}>
+                    {[
+                      { label: "Mean", value: activeStat.mean, accent: typeColor },
+                      { label: "Median", value: activeStat.median, accent: "var(--accent2)" },
+                      { label: "Std Dev", value: activeStat.std, accent: "var(--accent3)" },
+                      { label: "Count", value: activeStat.count, accent: "var(--accent4)" },
+                    ].map(({ label, value, accent }) => value !== undefined && (
+                      <div key={label} style={{
+                        background: `${accent}0d`, border: `1px solid ${accent}30`,
+                        borderRadius: 8, padding: "8px 10px", textAlign: "center",
+                      }}>
+                        <p style={{ fontSize: 9, color: accent, fontFamily: "var(--mono)", letterSpacing: 1, marginBottom: 3 }}>{label.toUpperCase()}</p>
+                        <p style={{ fontSize: 13, fontWeight: 800, color: "var(--text)", fontFamily: "var(--mono)" }}>
+                          {typeof value === "number" ? (Number.isInteger(value) ? value.toLocaleString() : value.toFixed(3)) : value}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {/* Remaining stats */}
+                {[
+                  ["Min", activeStat.min], ["Max", activeStat.max],
+                  ["Range", activeStat.range], ["Q1", activeStat.q1], ["Q3", activeStat.q3],
+                  ["IQR", activeStat.iqr], ["Skewness", activeStat.skewness],
+                  ["Kurtosis", activeStat.kurtosis], ["Outliers", activeStat.outlier_count],
+                  ["Missing", activeStat.missing], ["CV %", activeStat.coefficient_of_variation_pct],
+                  ["Normal Dist", activeStat.is_normal_distribution !== undefined ? (activeStat.is_normal_distribution ? "Yes" : "No") : undefined],
+                ].filter(([, v]) => v !== undefined && v !== null).map(([label, value]) => (
+                  <StatRow key={label} label={label} value={value} />
+                ))}
+
+                {/* Correlation info if present */}
+                {cd.statistics?.correlation && (
+                  <>
+                    <p style={{ fontSize: 9.5, color: "var(--muted)", fontFamily: "var(--mono)", letterSpacing: 1.3, marginTop: 12, marginBottom: 6, textTransform: "uppercase" }}>Correlation</p>
+                    <StatRow label="Pearson r" value={cd.statistics.correlation.pearson_r} accent={Math.abs(cd.statistics.correlation.pearson_r) > 0.5 ? typeColor : undefined} />
+                    <StatRow label="R²" value={cd.statistics.correlation.r_squared} />
+                    <StatRow label="P-value" value={cd.statistics.correlation.pearson_p_value} />
+                  </>
+                )}
+                {cd.statistics?.linear_regression && (
+                  <>
+                    <p style={{ fontSize: 9.5, color: "var(--muted)", fontFamily: "var(--mono)", letterSpacing: 1.3, marginTop: 12, marginBottom: 6, textTransform: "uppercase" }}>Linear Regression</p>
+                    <StatRow label="Slope" value={cd.statistics.linear_regression.slope} />
+                    <StatRow label="Intercept" value={cd.statistics.linear_regression.intercept} />
+                    <StatRow label="R²" value={cd.statistics.linear_regression.r_squared} />
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Per-column stats for heatmap */}
+        {perColStatKeys.length > 0 && (
+          <div style={{ padding: "14px 18px" }}>
+            <p style={{ fontSize: 9.5, color: "var(--muted)", fontFamily: "var(--mono)", letterSpacing: 1.3, marginBottom: 10, textTransform: "uppercase" }}>
+              Per-column Stats
+            </p>
+            {perColStatKeys.slice(0, 5).map(col => {
+              const s = cd.per_column_statistics[col];
+              return (
+                <div key={col} style={{ marginBottom: 10 }}>
+                  <p style={{ fontSize: 10, color: typeColor, fontFamily: "var(--mono)", marginBottom: 4 }}>{col}</p>
+                  <StatRow label="Mean" value={s.mean} accent={typeColor} />
+                  <StatRow label="Std" value={s.std} />
+                  <StatRow label="Min" value={s.min} />
+                  <StatRow label="Max" value={s.max} />
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function Lightbox({ chart, onClose }) {
   useEffect(() => {
     const h = e => e.key === "Escape" && onClose();
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
   }, [onClose]);
+
   return (
     <div onClick={onClose} style={{
       position: "fixed", inset: 0, zIndex: 1000,
-      background: "rgba(5,7,16,0.92)", backdropFilter: "blur(20px)",
-      display: "flex", alignItems: "center", justifyContent: "center", padding: 40,
+      background: "rgba(5,7,16,0.94)", backdropFilter: "blur(24px)",
+      display: "flex", alignItems: "center", justifyContent: "center", padding: 28,
     }}>
-      <div onClick={e => e.stopPropagation()} style={{ position: "relative" }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        display: "flex", gap: 0,
+        maxWidth: "95vw", maxHeight: "90vh",
+        border: "1px solid var(--border2)", borderRadius: 20, overflow: "hidden",
+        boxShadow: "0 40px 100px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04)",
+        animation: "lightboxIn 0.3s cubic-bezier(.2,.8,.4,1) both",
+        position: "relative",
+      }}>
         {/* Close button */}
         <button onClick={onClose} style={{
-          position: "absolute", top: -14, right: -14, zIndex: 10,
-          width: 32, height: 32, borderRadius: "50%",
-          background: "var(--surface3)", border: "1px solid var(--border2)",
-          color: "var(--muted2)", cursor: "pointer", fontSize: 16,
+          position: "absolute", top: 12, right: 12, zIndex: 10,
+          width: 30, height: 30, borderRadius: "50%",
+          background: "rgba(6,8,14,0.85)", border: "1px solid var(--border2)",
+          color: "var(--muted2)", cursor: "pointer", fontSize: 14,
           display: "flex", alignItems: "center", justifyContent: "center",
-          transition: "all 0.2s",
+          transition: "all 0.2s", backdropFilter: "blur(8px)",
         }}
           onMouseEnter={e => { e.currentTarget.style.background = "var(--danger)"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "var(--danger)"; }}
-          onMouseLeave={e => { e.currentTarget.style.background = "var(--surface3)"; e.currentTarget.style.color = "var(--muted2)"; e.currentTarget.style.borderColor = "var(--border2)"; }}
+          onMouseLeave={e => { e.currentTarget.style.background = "rgba(6,8,14,0.85)"; e.currentTarget.style.color = "var(--muted2)"; e.currentTarget.style.borderColor = "var(--border2)"; }}
         >✕</button>
 
+        {/* Left: Chart image */}
         <div style={{
-          border: "1px solid var(--border2)", borderRadius: 18, overflow: "hidden",
-          boxShadow: "0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)",
+          background: "var(--surface)",
+          display: "flex", flexDirection: "column",
+          minWidth: 0, flex: "1 1 60%",
         }}>
-          <img src={`data:image/png;base64,${chart.data}`} alt={chart.name}
-            style={{ maxWidth: "88vw", maxHeight: "80vh", display: "block" }} />
+          {/* Image area */}
+          <div style={{
+            flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
+            padding: 20, minHeight: 0, overflow: "hidden",
+          }}>
+            <img
+              src={`data:image/png;base64,${chart.data}`}
+              alt={chart.name}
+              style={{ maxWidth: "100%", maxHeight: "72vh", display: "block", borderRadius: 10, objectFit: "contain" }}
+            />
+          </div>
+          {/* Image footer */}
+          <div style={{
+            padding: "10px 20px", borderTop: "1px solid var(--border)",
+            display: "flex", alignItems: "center", gap: 10,
+            background: "rgba(6,8,14,0.6)", flexShrink: 0,
+          }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent)", boxShadow: "0 0 6px var(--accent)" }} />
+            <p style={{ fontSize: 11.5, color: "var(--muted2)", fontFamily: "var(--mono)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {chart.name}
+            </p>
+            <span style={{ fontSize: 10, color: "var(--muted)", fontFamily: "var(--mono)", flexShrink: 0 }}>Esc to close</span>
+          </div>
         </div>
+
+        {/* Divider */}
+        <div style={{ width: 1, background: "var(--border2)", flexShrink: 0 }} />
+
+        {/* Right: Data panel */}
         <div style={{
-          display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginTop: 14,
+          width: 300, flexShrink: 0,
+          background: "var(--surface2)",
+          display: "flex", flexDirection: "column",
+          overflowY: "hidden",
         }}>
-          <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent)", boxShadow: "0 0 6px var(--accent)" }} />
-          <p style={{ fontSize: 12, color: "var(--muted2)", fontFamily: "var(--mono)" }}>
-            {chart.name}
-          </p>
-          <span style={{ fontSize: 11, color: "var(--muted)", fontFamily: "var(--mono)" }}>· Esc to close</span>
+          <ChartDataPanel chart={chart} />
         </div>
       </div>
     </div>
@@ -1239,8 +1931,17 @@ export default function App() {
           <div key={msg.id} style={{ animation: msg.animate ? "msgIn 0.35s 0.1s ease both" : "none" }}>
             <div style={{ display: "flex", gap: 10, alignItems: "flex-start", marginBottom: 4 }}>
               <Avatar role="assistant" />
-              <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 12 }}>
                 <ChartGallery charts={msg.payload.charts} onExpand={setLightbox} />
+                {msg.payload.forecasts?.length > 0 && (
+                  <ForecastPanel forecasts={msg.payload.forecasts} />
+                )}
+                {msg.payload.anomaly_data && (
+                  <AnomalyPanel
+                    anomalyData={msg.payload.anomaly_data}
+                    anomalyReport={msg.payload.anomaly_report}
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -1346,6 +2047,10 @@ export default function App() {
           0%   { background-position: 0%   50%; }
           50%  { background-position: 100% 50%; }
           100% { background-position: 0%   50%; }
+        }
+        @keyframes lightboxIn {
+          from { opacity: 0; transform: scale(0.94) translateY(12px); filter: blur(4px); }
+          to   { opacity: 1; transform: scale(1)    translateY(0);    filter: blur(0);  }
         }
 
         /* Animated gradient border on input-bar focus */

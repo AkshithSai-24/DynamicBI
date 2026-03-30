@@ -20,7 +20,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import pandas as pd
-
+shutil.rmtree("dashboard") if os.path.exists("dashboard") else None
+shutil.rmtree("uploads") if os.path.exists("uploads") else None
 # ── Path setup ────────────────────────────────────────────────────────────────
 BASE_DIR = Path(__file__).parent
 sys.path.insert(0, str(BASE_DIR))
@@ -253,6 +254,8 @@ def _img_b64(path: str) -> str:
 
 
 def _collect_dashboard() -> dict:
+    import json as _json
+
     result = {
         "charts":         [],
         "kpis":           [],
@@ -260,16 +263,85 @@ def _collect_dashboard() -> dict:
         "anomaly_report": "",
         "cleaning_report":"",
         "profile":        "",
+        "forecasts":      [],
+        "anomaly_data":   None,
     }
 
+    def _chart_category(stem):
+        s = stem.lower()
+        if s.startswith("forecast_"):   return "forecasting"
+        if s.startswith("anomaly"):     return "anomaly"
+        if s.startswith("correlation"): return "correlation"
+        if s.startswith("scatter_"):    return "scatter"
+        if s.startswith("hist_"):       return "distribution"
+        if s.startswith("bar_"):        return "bar"
+        if s.startswith("pie_"):        return "pie"
+        return "other"
+
     if DASHBOARD_DIR.exists():
+        chart_data_dir = DASHBOARD_DIR / "chart_data"
+
         for f in sorted(DASHBOARD_DIR.iterdir()):
             if f.suffix == ".png":
-                result["charts"].append({
-                    "name":     f.stem.replace("_", " ").title(),
-                    "filename": f.name,
-                    "data":     _img_b64(str(f)),
-                })
+                stem = f.stem
+                category = _chart_category(stem)
+                if stem.startswith("forecast_"):
+                    name = "Forecast: " + stem[len("forecast_"):].replace("_", " ").title()
+                elif stem.startswith("anomaly"):
+                    name = "Anomaly: " + stem.replace("_", " ").title()
+                else:
+                    name = stem.replace("_", " ").title()
+
+                chart_entry = {
+                    "name":      name,
+                    "filename":  f.name,
+                    "category":  category,
+                    "data":      _img_b64(str(f)),
+                    "chartData": None,
+                }
+                if chart_data_dir.exists():
+                    json_path = chart_data_dir / (stem + ".json")
+                    if json_path.exists():
+                        try:
+                            with open(str(json_path), "r") as jf:
+                                chart_entry["chartData"] = _json.load(jf)
+                        except Exception:
+                            pass
+                result["charts"].append(chart_entry)
+
+        for f in sorted(DASHBOARD_DIR.iterdir()):
+            if f.name.startswith("forecast_") and f.suffix == ".csv":
+                col = f.stem[len("forecast_"):]
+                try:
+                    df_fc = pd.read_csv(str(f))
+                    keep_cols = [c for c in ["ds","yhat","yhat_lower","yhat_upper","trend"] if c in df_fc.columns]
+                    rows = df_fc[keep_cols].tail(60).round(4).to_dict(orient="records")
+                    result["forecasts"].append({"col": col, "rows": rows})
+                except Exception:
+                    pass
+
+        anomaly_csv = DASHBOARD_DIR / "anomalies.csv"
+        if anomaly_csv.exists():
+            try:
+                df_an = pd.read_csv(str(anomaly_csv))
+                num_cols = df_an.select_dtypes(include="number").columns.tolist()
+                result["anomaly_data"] = {
+                    "count":           int(len(df_an)),
+                    "columns":         df_an.columns.tolist(),
+                    "numeric_columns": num_cols,
+                    "sample":          df_an.head(10).to_dict(orient="records"),
+                    "stats": {
+                        c: {
+                            "mean": round(float(df_an[c].mean()), 4),
+                            "min":  round(float(df_an[c].min()),  4),
+                            "max":  round(float(df_an[c].max()),  4),
+                            "std":  round(float(df_an[c].std()),  4),
+                        }
+                        for c in num_cols[:8]
+                    }
+                }
+            except Exception:
+                pass
 
     for key, (fname, ftype) in {
         "kpis":            ("kpis.csv",                "csv"),
@@ -282,7 +354,7 @@ def _collect_dashboard() -> dict:
         if not p.exists():
             continue
         if ftype == "csv":
-            result[key] = pd.read_csv(p).to_dict(orient="records")
+            result[key] = pd.read_csv(str(p)).to_dict(orient="records")
         else:
             result[key] = p.read_text(errors="replace")
 
@@ -337,6 +409,10 @@ async def inspect_database(body: DbInspectRequest):
     Given a connection string, return the list of databases/tables/collections
     WITHOUT starting the pipeline. The frontend uses this to present a picker UI.
 
+    The backend auto-detects the database type — no keyword matching required on
+    the frontend. We try MongoDB first (explicit prefix), then attempt SQLAlchemy
+    for everything else (postgres://, postgresql://, mysql://, sqlite://, oracle://).
+
     Response shape:
       SQL:     { "type": "sql",     "tables": ["orders", "users", ...] }
       MongoDB: { "type": "mongodb", "databases": ["mydb", ...],
@@ -345,26 +421,13 @@ async def inspect_database(body: DbInspectRequest):
     conn = body.connection_string.strip()
     conn_lower = conn.lower()
 
-    # ── SQL databases (SQLite, PostgreSQL, MySQL, Oracle) ─────────────────────
-    if any(k in conn_lower for k in ("sqlite", "postgres", "postgresql", "mysql", "oracle")):
-        try:
-            from sqlalchemy import create_engine, inspect as sa_inspect
-            # Oracle needs thick mode hint for cx_Oracle; oracledb works out of the box
-            engine = create_engine(conn)
-            inspector = sa_inspect(engine)
-            tables = inspector.get_table_names()
-            engine.dispose()
-            return {"type": "sql", "tables": tables}
-        except Exception as exc:
-            raise HTTPException(400, f"Could not connect: {exc}")
-
-    # ── MongoDB ────────────────────────────────────────────────────────────────
-    if "mongodb" in conn_lower:
+    # ── MongoDB (must check before SQLAlchemy attempt) ─────────────────────────
+    if conn_lower.startswith("mongodb://") or conn_lower.startswith("mongodb+srv://"):
         try:
             from pymongo import MongoClient
             import certifi
             client = MongoClient(conn, tlsCAFile=certifi.where(), serverSelectionTimeoutMS=6000)
-            client.server_info()   # force connection — raises if unreachable
+            client.server_info()
             raw_dbs = client.list_database_names()
             databases = [d for d in raw_dbs if d not in ("admin", "local", "config")]
             collections = {db: client[db].list_collection_names() for db in databases}
@@ -373,7 +436,25 @@ async def inspect_database(body: DbInspectRequest):
         except Exception as exc:
             raise HTTPException(400, f"Could not connect to MongoDB: {exc}")
 
-    raise HTTPException(400, "Unsupported connection string. Use SQLite, PostgreSQL, MySQL, Oracle, or MongoDB.")
+    # ── SQL — try SQLAlchemy for any other string ──────────────────────────────
+    # Normalise shorthand: postgres:// → postgresql+psycopg2://
+    normalised = conn
+    if conn_lower.startswith("postgres://"):
+        normalised = "postgresql+psycopg2://" + conn[len("postgres://"):]
+    elif conn_lower.startswith("postgresql://") and "+psycopg" not in conn_lower:
+        normalised = "postgresql+psycopg2://" + conn[len("postgresql://"):]
+
+    try:
+        from sqlalchemy import create_engine, inspect as sa_inspect, text
+        engine = create_engine(normalised, connect_args={"connect_timeout": 10})
+        with engine.connect() as _conn:
+            _conn.execute(text("SELECT 1"))   # lightweight liveness check
+        inspector = sa_inspect(engine)
+        tables = inspector.get_table_names()
+        engine.dispose()
+        return {"type": "sql", "tables": tables}
+    except Exception as exc:
+        raise HTTPException(400, f"Could not connect: {exc}")
 
 
 @app.post("/api/upload")
@@ -421,20 +502,34 @@ async def connect_database(
     conn = body.connection_string.strip()
     conn_lower = conn.lower()
 
-    if not any(k in conn_lower for k in ("sqlite", "postgres", "postgresql", "mysql", "oracle", "mongodb")):
-        raise HTTPException(400, "Unsupported connection string.")
+    # Normalise shorthand postgres:// / postgresql:// → postgresql+psycopg2://
+    # so the pipeline's load_data_agent and source_detector both work correctly.
+    if conn_lower.startswith("postgres://"):
+        conn = "postgresql+psycopg2://" + conn[len("postgres://"):]
+    elif conn_lower.startswith("postgresql://") and "+psycopg" not in conn_lower:
+        conn = "postgresql+psycopg2://" + conn[len("postgresql://"):]
+
+    conn_lower = conn.lower()
+
+    # Accept any string that looks like a known scheme — backend will validate on connect
+    is_mongo = conn_lower.startswith("mongodb://") or conn_lower.startswith("mongodb+srv://")
+    is_sql   = any(conn_lower.startswith(p) for p in (
+        "sqlite", "postgresql+", "mysql", "oracle"
+    ))
+
+    if not (is_mongo or is_sql):
+        raise HTTPException(400, "Unsupported connection string. Supported: postgresql://, mysql://, sqlite://, oracle://, mongodb://")
 
     job_id = str(uuid.uuid4())
     _init_job(job_id, conn)
 
     initial_state: dict = {"source_path": conn}
 
-    if "mongodb" in conn_lower:
-        # For MongoDB, pass database name and collection name via state
+    if is_mongo:
         initial_state["_mongo_database"]   = body.database
         initial_state["_mongo_collection"] = body.table
     else:
-        initial_state["_db_table"] = body.table   # None → first table
+        initial_state["_db_table"] = body.table
 
     _schedule(background_tasks, job_id, initial_state)
     return {"job_id": job_id, "connection": conn}
@@ -494,5 +589,3 @@ async def natural_language_query(job_id: str, body: QueryRequest):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=False)
-
-    
