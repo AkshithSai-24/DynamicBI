@@ -31,23 +31,13 @@ def dashboard_agent(state):
             </div>
             """
 
-    insights = ""
+
     chart_insights_html = ""
 
-    for file in os.listdir("dashboard/insights"):
-        if file.startswith("insights_") and file.endswith(".txt"):
-            content = open(f"dashboard/insights/{file}").read()
-
-            chart_insights_html += f"""
-            <div class="text-panel">
-                <h4>{file.replace("insights_", "").replace(".txt", "")}</h4>
-                {content}
-            </div>
-            """
+    
     anomaly_report = ""
 
-    if os.path.exists("dashboard/insights.txt"):
-        insights = open("dashboard/insights.txt").read()
+
 
     if os.path.exists("dashboard/anomaly_report.txt"):
         anomaly_report = open("dashboard/anomaly_report.txt").read()
@@ -161,9 +151,7 @@ body {{
 
 <h2>Business Insights</h2>
 
-<div class="text-panel">
-{insights}
-</div>
+
 
 </div>
 
