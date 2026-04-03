@@ -13,7 +13,7 @@ const ORBIT_NODES = [
   { label: "Stream", icon: "⚡", angle: 324, r: 62, size: 38, color: "#2dd4bf" },
 ];
 
-function OrbitNode({ node, rotation }) {
+function OrbitNode({ node, rotation, orbitNodeBg }) {
   const rad = ((node.angle + rotation) * Math.PI) / 180;
   const cx = 50 + node.r * Math.cos(rad);
   const cy = 50 + node.r * Math.sin(rad);
@@ -33,7 +33,7 @@ function OrbitNode({ node, rotation }) {
         borderRadius: node.size / 2,
         background: hovered
           ? `${node.color}30`
-          : "rgba(14,17,23,0.85)",
+          : (orbitNodeBg || "rgba(14,17,23,0.85)"),
         border: `2px solid ${hovered ? node.color : node.color + "60"}`,
         display: "flex",
         flexDirection: "column",
@@ -62,7 +62,7 @@ function OrbitNode({ node, rotation }) {
   );
 }
 
-function StatBadge({ value, label, delay }) {
+function StatBadge({ value, label, delay, statBg, statBorder }) {
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     setTimeout(() => setVisible(true), delay);
@@ -72,8 +72,8 @@ function StatBadge({ value, label, delay }) {
       opacity: visible ? 1 : 0,
       transform: visible ? "translateY(0)" : "translateY(20px)",
       transition: "all 0.6s ease",
-      background: "rgba(22,27,39,0.9)",
-      border: "1px solid rgba(74,222,128,0.2)",
+      background: statBg || "rgba(22,27,39,0.9)",
+      border: `1px solid ${statBorder || "rgba(74,222,128,0.2)"}`,
       borderRadius: 16,
       padding: "20px 28px",
       textAlign: "center",
@@ -85,10 +85,66 @@ function StatBadge({ value, label, delay }) {
   );
 }
 
-export default function LandingPage({ onEnter }) {
+export default function LandingPage({ onEnter, darkMode = true, onToggleTheme }) {
   const [rotation, setRotation] = useState(0);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [showDemo, setShowDemo] = useState(false);
   const animRef = useRef();
+  const videoRef = useRef();
+
+  // ── Theme palette ─────────────────────────────────────────────────────────
+  const T = darkMode ? {
+    bg: "#0a0d14",
+    navBg: "rgba(10,13,20,0.6)",
+    navBorder: "rgba(35,44,62,0.6)",
+    text: "#e8ecf4",
+    muted: "#6b7a9a",
+    cardBg: "rgba(22,27,39,0.9)",
+    cardBorder: "rgba(74,222,128,0.2)",
+    featureBg: "rgba(22,27,39,0.6)",
+    featureBorder: "rgba(35,44,62,0.8)",
+    orbitNode: "rgba(14,17,23,0.85)",
+    statBg: "rgba(22,27,39,0.9)",
+    ctaBg: "linear-gradient(135deg, rgba(74,222,128,0.08), rgba(96,165,250,0.08))",
+    ctaBorder: "rgba(74,222,128,0.15)",
+    toggleBg: "rgba(35,44,62,0.8)",
+    toggleBorder: "rgba(74,222,128,0.3)",
+    toggleText: "#e8ecf4",
+    footerBorder: "rgba(35,44,62,0.6)",
+    teamFooterBg: "rgba(10,13,20,0.95)",
+    teamFooterBorder: "rgba(35,44,62,0.8)",
+  } : {
+    bg: "#f0f4fd",
+    navBg: "rgba(240,244,253,0.85)",
+    navBorder: "rgba(200,215,240,0.6)",
+    text: "#1a2540",
+    muted: "#5a6a8a",
+    cardBg: "rgba(255,255,255,0.95)",
+    cardBorder: "rgba(74,222,128,0.3)",
+    featureBg: "rgba(255,255,255,0.85)",
+    featureBorder: "rgba(200,215,240,0.8)",
+    orbitNode: "rgba(240,244,253,0.92)",
+    statBg: "rgba(255,255,255,0.9)",
+    ctaBg: "linear-gradient(135deg, rgba(74,222,128,0.06), rgba(96,165,250,0.06))",
+    ctaBorder: "rgba(74,222,128,0.25)",
+    toggleBg: "rgba(255,255,255,0.9)",
+    toggleBorder: "rgba(74,222,128,0.5)",
+    toggleText: "#1a2540",
+    footerBorder: "rgba(200,215,240,0.6)",
+    teamFooterBg: "rgba(240,244,253,0.97)",
+    teamFooterBorder: "rgba(200,215,240,0.8)",
+  };
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape" && showDemo) {
+        setShowDemo(false);
+        videoRef.current?.pause();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showDemo]);
 
   useEffect(() => {
     let start = null;
@@ -108,7 +164,7 @@ export default function LandingPage({ onEnter }) {
   }, []);
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0a0d14", overflow: "hidden", fontFamily: "'Bricolage Grotesque', sans-serif", position: "relative" }}>
+    <div style={{ minHeight: "100vh", background: T.bg, overflow: "hidden", fontFamily: "'Bricolage Grotesque', sans-serif", position: "relative" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Bricolage+Grotesque:wght@400;500;600;700;800;900&display=swap');
 
@@ -185,9 +241,9 @@ export default function LandingPage({ onEnter }) {
         position: "relative", zIndex: 100,
         display: "flex", alignItems: "center", justifyContent: "space-between",
         padding: "20px 60px",
-        borderBottom: "1px solid rgba(35,44,62,0.6)",
+        borderBottom: `1px solid ${T.navBorder}`,
         backdropFilter: "blur(20px)",
-        background: "rgba(10,13,20,0.6)",
+        background: T.navBg,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{
@@ -195,17 +251,48 @@ export default function LandingPage({ onEnter }) {
             background: "linear-gradient(135deg, #4ade80, #60a5fa)",
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 16, fontWeight: 900, color: "#0a0d14",
+            flexShrink: 0,
           }}>D</div>
-          <span style={{ fontWeight: 800, fontSize: 18, color: "#e8ecf4", letterSpacing: "-0.5px" }}>DynamicBI</span>
+          <div>
+            <span style={{ fontWeight: 800, fontSize: 15, color: T.text, letterSpacing: "-0.3px", display: "block", lineHeight: 1.2 }}>DynamicBI</span>
+            <span style={{ fontSize: 9, color: T.muted, fontFamily: "'DM Mono', monospace", letterSpacing: "0.3px", display: "block" }}>Agentic AI · Conversational BI</span>
+          </div>
         </div>
 
         <div style={{ display: "flex", gap: 36 }}>
           {["Features", "Docs"].map(link => (
-            <a key={link} className="nav-link">{link}</a>
+            <a key={link} className="nav-link" style={{ color: T.muted }}>{link}</a>
           ))}
         </div>
 
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          {/* Dark/Light Toggle */}
+          <button
+            onClick={onToggleTheme}
+            title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            style={{
+              width: 44, height: 26, borderRadius: 13,
+              border: `1.5px solid ${T.toggleBorder}`,
+              background: darkMode ? "rgba(74,222,128,0.15)" : "rgba(74,222,128,0.2)",
+              cursor: "pointer",
+              position: "relative",
+              transition: "all 0.3s ease",
+              display: "flex", alignItems: "center",
+              padding: "2px 3px",
+            }}
+          >
+            <div style={{
+              width: 18, height: 18, borderRadius: "50%",
+              background: "linear-gradient(135deg, #4ade80, #22c55e)",
+              transform: darkMode ? "translateX(0)" : "translateX(18px)",
+              transition: "transform 0.3s ease",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 10,
+              boxShadow: "0 1px 4px rgba(0,0,0,0.3)",
+            }}>
+              {darkMode ? "🌙" : "☀️"}
+            </div>
+          </button>
           <button
             onClick={onEnter}
             style={{
@@ -244,7 +331,7 @@ export default function LandingPage({ onEnter }) {
           }}>
             <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#4ade80", boxShadow: "0 0 8px #4ade80" }} />
             <span style={{ fontWeight: 600, fontSize: 12, color: "#4ade80", fontFamily: "'DM Mono', monospace" }}>
-              Powered by LangGraph · DynamicBI
+              DynamicBI: Agentic AI Framework for Conversational Business Intelligence
             </span>
           </div>
 
@@ -262,10 +349,10 @@ export default function LandingPage({ onEnter }) {
           </h1>
 
           <p style={{
-            fontSize: 18, color: "#6b7a9a", lineHeight: 1.7,
+            fontSize: 18, color: T.muted, lineHeight: 1.7,
             marginBottom: 44, maxWidth: 500,
           }}>
-            Connect any data source and get automated KPIs, visualisations, anomaly detection, forecasting, and natural-language insights — all powered by DynamicBI's intelligent pipeline.
+            Connect any data source and get automated KPIs, visualisations, anomaly detection, forecasting, and natural-language insights — all powered by the <strong style={{ color: "#4ade80" }}>DynamicBI: Agentic AI Framework for Conversational Business Intelligence</strong>.
           </p>
 
           <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
@@ -287,12 +374,14 @@ export default function LandingPage({ onEnter }) {
             >
               Start Analysing →
             </button>
-            <button style={{
+            <button
+              onClick={() => setShowDemo(true)}
+              style={{
               padding: "16px 28px",
               borderRadius: 14,
               border: "1px solid rgba(74,222,128,0.25)",
               background: "transparent",
-              color: "#e8ecf4",
+              color: T.text,
               fontWeight: 600,
               fontSize: 15,
               cursor: "pointer",
@@ -300,7 +389,7 @@ export default function LandingPage({ onEnter }) {
               transition: "all 0.2s",
             }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(74,222,128,0.6)"; e.currentTarget.style.color = "#4ade80"; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(74,222,128,0.25)"; e.currentTarget.style.color = "#e8ecf4"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(74,222,128,0.25)"; e.currentTarget.style.color = T.text; }}
             >
               ▶ Watch Demo
             </button>
@@ -311,7 +400,7 @@ export default function LandingPage({ onEnter }) {
             {["No-code setup", "Any data source", "LLM-powered"].map((t, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: 7 }}>
                 <span style={{ color: "#4ade80", fontSize: 14 }}>✓</span>
-                <span style={{ color: "#6b7a9a", fontSize: 13 }}>{t}</span>
+                <span style={{ color: T.muted, fontSize: 13 }}>{t}</span>
               </div>
             ))}
           </div>
@@ -355,7 +444,7 @@ export default function LandingPage({ onEnter }) {
 
           {/* Orbit nodes */}
           {ORBIT_NODES.map((node, i) => (
-            <OrbitNode key={i} node={node} rotation={rotation} />
+            <OrbitNode key={i} node={node} rotation={rotation} orbitNodeBg={T.orbitNode} />
           ))}
 
           {/* Floating cards */}
@@ -393,21 +482,21 @@ export default function LandingPage({ onEnter }) {
             { value: "8+", label: "chart types rendered" },
             { value: "4 DBs", label: "database connectors" },
             { value: "100%", label: "AI-automated" },
-          ].map((s, i) => <StatBadge key={i} {...s} delay={i * 150} />)}
+          ].map((s, i) => <StatBadge key={i} {...s} delay={i * 150} statBg={T.statBg} statBorder={T.cardBorder} />)}
         </div>
       </section>
 
       {/* Features */}
       <section style={{ position: "relative", zIndex: 10, padding: "60px 60px 120px", maxWidth: 1400, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 60 }}>
-          <h2 style={{ fontSize: 46, fontWeight: 900, color: "#e8ecf4", letterSpacing: "-1.5px", marginBottom: 16 }}>
+          <h2 style={{ fontSize: 46, fontWeight: 900, color: T.text, letterSpacing: "-1.5px", marginBottom: 16 }}>
             One pipeline.{" "}
             <span style={{ background: "linear-gradient(135deg, #4ade80, #60a5fa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
               Every insight.
             </span>
           </h2>
-          <p style={{ color: "#6b7a9a", fontSize: 17, maxWidth: 500, margin: "0 auto" }}>
-            From raw CSV to executive report — DynamicBI handles the entire analytics stack autonomously.
+          <p style={{ color: T.muted, fontSize: 17, maxWidth: 500, margin: "0 auto" }}>
+            From raw CSV to executive report — the DynamicBI Agentic AI Framework handles the entire analytics stack autonomously.
           </p>
         </div>
 
@@ -421,8 +510,8 @@ export default function LandingPage({ onEnter }) {
             { icon: "💬", title: "Natural Language Q&A", desc: "Ask anything about your data in plain English. Get precise, cited answers instantly.", accent: "#2dd4bf" },
           ].map((f, i) => (
             <div key={i} className="feature-card" style={{
-              background: "rgba(22,27,39,0.6)",
-              border: "1px solid rgba(35,44,62,0.8)",
+              background: T.featureBg,
+              border: `1px solid ${T.featureBorder}`,
               borderRadius: 20, padding: "32px 28px",
               backdropFilter: "blur(12px)",
             }}>
@@ -433,8 +522,8 @@ export default function LandingPage({ onEnter }) {
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 24, marginBottom: 20,
               }}>{f.icon}</div>
-              <h3 style={{ fontSize: 18, fontWeight: 700, color: "#e8ecf4", marginBottom: 10 }}>{f.title}</h3>
-              <p style={{ fontSize: 14, color: "#6b7a9a", lineHeight: 1.7 }}>{f.desc}</p>
+              <h3 style={{ fontSize: 18, fontWeight: 700, color: T.text, marginBottom: 10 }}>{f.title}</h3>
+              <p style={{ fontSize: 14, color: T.muted, lineHeight: 1.7 }}>{f.desc}</p>
             </div>
           ))}
         </div>
@@ -445,8 +534,8 @@ export default function LandingPage({ onEnter }) {
         position: "relative", zIndex: 10,
         margin: "0 60px 100px",
         borderRadius: 28,
-        background: "linear-gradient(135deg, rgba(74,222,128,0.08), rgba(96,165,250,0.08))",
-        border: "1px solid rgba(74,222,128,0.15)",
+        background: T.ctaBg,
+        border: `1px solid ${T.ctaBorder}`,
         padding: "72px 60px",
         textAlign: "center",
         backdropFilter: "blur(20px)",
@@ -459,14 +548,14 @@ export default function LandingPage({ onEnter }) {
           background: "radial-gradient(ellipse, rgba(74,222,128,0.05) 0%, transparent 70%)",
           pointerEvents: "none",
         }} />
-        <h2 style={{ fontSize: 48, fontWeight: 900, color: "#e8ecf4", letterSpacing: "-1.5px", marginBottom: 16 }}>
+        <h2 style={{ fontSize: 48, fontWeight: 900, color: T.text, letterSpacing: "-1.5px", marginBottom: 16 }}>
           Your data is talking.
           <br />
           <span style={{ background: "linear-gradient(135deg, #4ade80, #60a5fa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
             Are you listening?
           </span>
         </h2>
-        <p style={{ color: "#6b7a9a", fontSize: 17, marginBottom: 40 }}>
+        <p style={{ color: T.muted, fontSize: 17, marginBottom: 40 }}>
           Upload a CSV or connect your database and get your first insight in under 60 seconds.
         </p>
         <button
@@ -486,15 +575,15 @@ export default function LandingPage({ onEnter }) {
         >
           Start for Free →
         </button>
-        <p style={{ color: "#6b7a9a", fontSize: 12, marginTop: 16, fontFamily: "'DM Mono', monospace" }}>
+        <p style={{ color: T.muted, fontSize: 12, marginTop: 16, fontFamily: "'DM Mono', monospace" }}>
           No credit card · No setup · Runs locally
         </p>
       </section>
 
-      {/* Footer */}
+      {/* Main Footer */}
       <footer style={{
         position: "relative", zIndex: 10,
-        borderTop: "1px solid rgba(35,44,62,0.6)",
+        borderTop: `1px solid ${T.footerBorder}`,
         padding: "28px 60px",
         display: "flex", justifyContent: "space-between", alignItems: "center",
       }}>
@@ -505,17 +594,165 @@ export default function LandingPage({ onEnter }) {
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 13, fontWeight: 900, color: "#0a0d14",
           }}>D</div>
-          <span style={{ fontWeight: 700, fontSize: 15, color: "#e8ecf4" }}>DynamicBI</span>
+          <span style={{ fontWeight: 700, fontSize: 13, color: T.text, lineHeight: 1.3 }}>DynamicBI<br/><span style={{ fontSize: 9, fontWeight: 400, color: T.muted, fontFamily: "'DM Mono', monospace" }}>Agentic AI Framework</span></span>
         </div>
-        <p style={{ color: "#6b7a9a", fontSize: 12, fontFamily: "'DM Mono', monospace" }}>
-          DynamicBI · Powered by LangGraph · © 2025
+        <p style={{ color: T.muted, fontSize: 11, fontFamily: "'DM Mono', monospace", textAlign: "center" }}>
+          DynamicBI: Agentic AI Framework for Conversational Business Intelligence · © 2025
         </p>
         <div style={{ display: "flex", gap: 24 }}>
           {["GitHub", "Docs", "Privacy"].map(l => (
-            <a key={l} className="nav-link" style={{ fontSize: 13 }}>{l}</a>
+            <a key={l} className="nav-link" style={{ fontSize: 13, color: T.muted }}>{l}</a>
           ))}
         </div>
       </footer>
+
+      {/* Team Footer */}
+      <div style={{
+        position: "relative", zIndex: 10,
+        background: T.teamFooterBg,
+        borderTop: `1px solid ${T.teamFooterBorder}`,
+        padding: "20px 60px",
+        backdropFilter: "blur(20px)",
+      }}>
+        <div style={{ maxWidth: 1400, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "6px 28px" }}>
+            {[
+              "Akshith Sai Kondamadugu (2451-22-749-019)",
+              "Ananthula Ujwal (2451-22-749-004)",
+              "Gotte Thiru Habinash Yadav (2451-22-749-021)",
+            ].map((name, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                {i > 0 && <div style={{ width: 3, height: 3, borderRadius: "50%", background: "#4ade80", opacity: 0.5 }} />}
+                <span style={{ fontSize: 11, color: T.muted, fontFamily: "'DM Mono', monospace" }}>{name}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#60a5fa" }} />
+            <span style={{ fontSize: 11, color: T.muted, fontFamily: "'DM Mono', monospace" }}>
+              Guided By <span style={{ color: "#60a5fa", fontWeight: 600 }}>P. Phani Prasad</span>, Asst. Professor, MVSR Engineering College
+            </span>
+            <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#60a5fa" }} />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Demo Video Modal ──────────────────────────────────────────────── */}
+      {showDemo && (
+        <div
+          onClick={(e) => { if (e.target === e.currentTarget) { setShowDemo(false); videoRef.current?.pause(); } }}
+          style={{
+            position: "fixed", inset: 0, zIndex: 1000,
+            background: "rgba(0,0,0,0.85)",
+            backdropFilter: "blur(12px)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            animation: "demoFadeIn 0.25s ease both",
+            padding: "24px",
+          }}
+        >
+          <style>{`
+            @keyframes demoFadeIn {
+              from { opacity: 0; }
+              to   { opacity: 1; }
+            }
+            @keyframes demoSlideUp {
+              from { opacity: 0; transform: scale(0.94) translateY(20px); }
+              to   { opacity: 1; transform: scale(1)    translateY(0); }
+            }
+          `}</style>
+
+          <div style={{
+            position: "relative",
+            width: "100%", maxWidth: 960,
+            background: "#08091a",
+            borderRadius: 20,
+            border: "1px solid rgba(74,222,128,0.25)",
+            boxShadow: "0 40px 120px rgba(0,0,0,0.7), 0 0 0 1px rgba(74,222,128,0.08)",
+            overflow: "hidden",
+            animation: "demoSlideUp 0.3s cubic-bezier(.2,.8,.4,1) both",
+          }}>
+            {/* Modal header */}
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "14px 20px",
+              borderBottom: "1px solid rgba(74,222,128,0.12)",
+              background: "rgba(255,255,255,0.03)",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{
+                  width: 28, height: 28, borderRadius: 8,
+                  background: "linear-gradient(135deg, #4ade80, #60a5fa)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 13, fontWeight: 900, color: "#0a0d14",
+                }}>D</div>
+                <div>
+                  <p style={{ fontWeight: 700, fontSize: 13, color: "#e8ecf4", lineHeight: 1.3 }}>DynamicBI: Agentic AI Framework</p>
+                  <p style={{ fontSize: 10, color: "#4ade80", fontFamily: "'DM Mono', monospace", marginTop: 1 }}>
+                    Conversational Business Intelligence · LangGraph
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => { setShowDemo(false); videoRef.current?.pause(); }}
+                style={{
+                  width: 32, height: 32, borderRadius: 8,
+                  border: "1px solid rgba(74,222,128,0.2)",
+                  background: "rgba(255,255,255,0.05)",
+                  color: "#6b7a9a", cursor: "pointer", fontSize: 16,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  transition: "all 0.18s",
+                  fontFamily: "sans-serif",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,94,122,0.15)"; e.currentTarget.style.color = "#ff5e7a"; e.currentTarget.style.borderColor = "rgba(255,94,122,0.4)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "#6b7a9a"; e.currentTarget.style.borderColor = "rgba(74,222,128,0.2)"; }}
+              >✕</button>
+            </div>
+
+            {/* Video */}
+            <video
+              ref={videoRef}
+              src="/public/demo.mp4"
+              controls
+              autoPlay
+              style={{
+                width: "100%",
+                display: "block",
+                maxHeight: "70vh",
+                background: "#000",
+              }}
+              onError={() => {
+                // show friendly fallback if video not found
+              }}
+            >
+              Your browser does not support the video tag.
+            </video>
+
+            {/* Modal footer */}
+            <div style={{
+              padding: "12px 20px",
+              borderTop: "1px solid rgba(74,222,128,0.1)",
+              background: "rgba(255,255,255,0.02)",
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+            }}>
+              <span style={{ fontSize: 11, color: "#50607e", fontFamily: "'DM Mono', monospace" }}>
+                Place demo.mp4 in /public/assets/ to load this video
+              </span>
+              <button
+                onClick={onEnter}
+                style={{
+                  padding: "8px 20px", borderRadius: 9,
+                  border: "none",
+                  background: "linear-gradient(135deg, #4ade80, #22c55e)",
+                  color: "#0a0d14", fontWeight: 700, fontSize: 13,
+                  cursor: "pointer", fontFamily: "'Bricolage Grotesque', sans-serif",
+                }}
+              >
+                Try it now →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

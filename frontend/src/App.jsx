@@ -191,8 +191,8 @@ function WelcomeCard() {
           fontSize: 20, boxShadow: "0 0 16px rgba(0,229,160,0.3)",
         }}>⚡</div>
         <div>
-          <p style={{ color: "var(--text)", fontWeight: 800, fontSize: 17, letterSpacing: -0.3 }}>
-            Welcome to DynamicBI
+          <p style={{ color: "var(--text)", fontWeight: 800, fontSize: 15, letterSpacing: -0.3, lineHeight: 1.3 }}>
+            DynamicBI: Agentic AI Framework for Conversational Business Intelligence
           </p>
           <p style={{ fontSize: 11, color: "var(--accent)", fontFamily: "var(--mono)", marginTop: 2 }}>
             Powered by LangGraph · AI-native analytics
@@ -1845,8 +1845,8 @@ function Sidebar({ sessions, activeId, onSelect, onNew }) {
             flexShrink: 0,
           }}>D</div>
           <div>
-            <p style={{ fontSize: 15, fontWeight: 800, color: "var(--text)", letterSpacing: -0.5 }}>DynamicBI</p>
-            <p style={{ fontSize: 9, color: "var(--accent)", fontFamily: "var(--mono)", letterSpacing: 1.2, marginTop: 1 }}>POWERED BY LANGGRAPH</p>
+          <p style={{ fontSize: 12.5, fontWeight: 800, color: "var(--text)", letterSpacing: -0.3, lineHeight: 1.2 }}>DynamicBI</p>
+            <p style={{ fontSize: 8.5, color: "var(--accent)", fontFamily: "var(--mono)", letterSpacing: 0.4, marginTop: 2, lineHeight: 1.3 }}>AGENTIC AI · CONVERSATIONAL BI</p>
           </div>
         </div>
       </div>
@@ -1926,6 +1926,7 @@ function Sidebar({ sessions, activeId, onSelect, onNew }) {
 // ─── Main App ─────────────────────────────────────────────────────────────────
 export default function App() {
   const [showLanding, setShowLanding] = useState(true);
+  const [darkMode, setDarkMode] = useState(true);
   const [sessions, setSessions] = useState([{ id: "s1", label: "Getting started", sourceType: null, messages: [], jobId: null, result: null, status: "idle" }]);
   const [activeId, setActiveId] = useState("s1");
   const [lightbox, setLightbox] = useState(null);
@@ -2244,7 +2245,7 @@ export default function App() {
   const isDone = active?.status === "done";
   const hasMessages = active?.messages?.length > 0;
 
-  if (showLanding) return <LandingPage onEnter={() => setShowLanding(false)} />;
+  if (showLanding) return <LandingPage onEnter={() => setShowLanding(false)} darkMode={darkMode} onToggleTheme={() => setDarkMode(d => !d)} />;
 
   return (
     <>
@@ -2252,16 +2253,16 @@ export default function App() {
         @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Bricolage+Grotesque:wght@400;500;600;700;800;900&display=swap');
 
         :root {
-          --bg:        #06080e;
-          --sidebar:   #040610;
-          --surface:   #0c0f1e;
-          --surface2:  #111426;
-          --surface3:  #171b30;
-          --border:    #1c2438;
-          --border2:   #222d46;
-          --text:      #dde4f4;
-          --muted:     #50607e;
-          --muted2:    #7585a8;
+          --bg:        ${darkMode ? "#06080e" : "#f0f4fd"};
+          --sidebar:   ${darkMode ? "#040610" : "#e8edf8"};
+          --surface:   ${darkMode ? "#0c0f1e" : "#ffffff"};
+          --surface2:  ${darkMode ? "#111426" : "#f0f4fd"};
+          --surface3:  ${darkMode ? "#171b30" : "#e4eaf6"};
+          --border:    ${darkMode ? "#1c2438" : "#cdd6ea"};
+          --border2:   ${darkMode ? "#222d46" : "#b8c4da"};
+          --text:      ${darkMode ? "#dde4f4" : "#1a2540"};
+          --muted:     ${darkMode ? "#50607e" : "#6b7a9a"};
+          --muted2:    ${darkMode ? "#7585a8" : "#4a5878"};
           --accent:    #00e5a0;
           --accent2:   #4d9fff;
           --accent3:   #f4a535;
@@ -2272,11 +2273,20 @@ export default function App() {
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; }
+        html, body { height: 100%; }
+        body {
+          background: var(--bg);
+          color: var(--text);
+          font-family: var(--sans);
+          min-height: 100%;
+        }
 
-        /* Dot-grid on chat area */
+        /* Responsive full-height layout */
+        #root { height: 100%; display: flex; flex-direction: column; }
+
+        /* Dot-grid on chat area — theme-aware */
         .chat-bg {
-          background-image: radial-gradient(circle, rgba(28,36,56,0.55) 1px, transparent 1px);
+          background-image: radial-gradient(circle, ${darkMode ? "rgba(28,36,56,0.55)" : "rgba(180,196,220,0.45)"} 1px, transparent 1px);
           background-size: 28px 28px;
         }
 
@@ -2284,6 +2294,7 @@ export default function App() {
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 8px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+        input, textarea { background: var(--surface2); color: var(--text); }
         input::placeholder { color: var(--muted); }
         textarea::placeholder { color: var(--muted); }
 
@@ -2316,9 +2327,7 @@ export default function App() {
 
         /* Animated gradient border on input-bar focus */
         .input-bar-wrap { position: relative; }
-        .input-bar-wrap:focus-within {
-          border-color: transparent !important;
-        }
+        .input-bar-wrap:focus-within { border-color: transparent !important; }
         .input-bar-wrap:focus-within::before {
           content: '';
           position: absolute; inset: -1px;
@@ -2338,15 +2347,15 @@ export default function App() {
 
         /* KPI card */
         .kpi-card { transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s !important; }
-        .kpi-card:hover { border-color: var(--accent2) !important; transform: translateY(-3px) !important; box-shadow: 0 8px 24px rgba(0,0,0,0.3) !important; }
+        .kpi-card:hover { border-color: var(--accent2) !important; transform: translateY(-3px) !important; box-shadow: 0 8px 24px ${darkMode ? "rgba(0,0,0,0.3)" : "rgba(0,0,0,0.1)"} !important; }
 
         /* Chart card */
         .chart-card { transition: all 0.28s cubic-bezier(.2,.8,.4,1) !important; }
-        .chart-card:hover { transform: translateY(-5px) scale(1.015) !important; border-color: rgba(77,159,255,0.5) !important; box-shadow: 0 16px 40px rgba(0,0,0,0.4), 0 0 24px rgba(77,159,255,0.08) !important; }
+        .chart-card:hover { transform: translateY(-5px) scale(1.015) !important; border-color: rgba(77,159,255,0.5) !important; box-shadow: 0 16px 40px ${darkMode ? "rgba(0,0,0,0.4)" : "rgba(0,0,0,0.1)"}, 0 0 24px rgba(77,159,255,0.08) !important; }
 
         /* Welcome feature cards */
         .feat-card { transition: all 0.22s ease !important; }
-        .feat-card:hover { border-color: rgba(0,229,160,0.3) !important; background: rgba(0,229,160,0.03) !important; transform: translateY(-2px); }
+        .feat-card:hover { border-color: rgba(0,229,160,0.35) !important; background: rgba(0,229,160,0.04) !important; transform: translateY(-2px); }
 
         /* DB connector buttons */
         .db-connector { transition: all 0.22s cubic-bezier(.2,.8,.4,1) !important; }
@@ -2354,7 +2363,7 @@ export default function App() {
 
         /* Session items */
         .sess-item { transition: all 0.15s ease !important; }
-        .sess-item:hover { background: rgba(26,32,52,0.8) !important; }
+        .sess-item:hover { background: var(--surface2) !important; }
 
         /* Step pills in pipeline */
         .step-pill { transition: all 0.4s ease !important; }
@@ -2364,7 +2373,7 @@ export default function App() {
         .suggest-chip:hover {
           border-color: rgba(0,229,160,0.45) !important;
           color: var(--accent) !important;
-          background: rgba(0,229,160,0.05) !important;
+          background: rgba(0,229,160,0.06) !important;
           transform: translateY(-1px);
         }
 
@@ -2372,18 +2381,36 @@ export default function App() {
         .tab-btn { transition: all 0.18s ease !important; }
         .tab-btn:hover { color: var(--text) !important; }
 
-        select option { background: #111426; color: #dde4f4; }
+        /* Select dropdown — theme-aware */
+        select { background: var(--surface2) !important; color: var(--text) !important; border-color: var(--border) !important; }
+        select option { background: var(--surface2); color: var(--text); }
+
+        /* Responsive: smaller sidebar on tablet */
+        @media (max-width: 900px) {
+          .app-sidebar { width: 200px !important; }
+        }
+        @media (max-width: 680px) {
+          .app-sidebar { display: none !important; }
+          .app-topbar { padding: 10px 14px !important; }
+          .app-chat { padding: 16px 14px !important; }
+          .app-input { padding: 10px 14px 14px !important; }
+        }
       `}</style>
 
-      <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
+      <div style={{ display: "flex", height: "100dvh", overflow: "hidden" }}>
 
         {/* Sidebar */}
         <Sidebar sessions={sessions} activeId={activeId} onSelect={setActiveId} onNew={newSession} />
 
         {/* Main chat area */}
         <main style={{
-          flex: 1, display: "flex", flexDirection: "column",
-          height: "100vh", overflow: "hidden", position: "relative",
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          minWidth: 0,
+          height: "100dvh",
+          overflow: "hidden",
+          position: "relative",
           background: "var(--bg)",
         }}>
           {/* Ambient corner glows */}
@@ -2399,10 +2426,10 @@ export default function App() {
           {/* Top bar */}
           <div style={{
             padding: "12px 28px",
-            borderBottom: "1px solid rgba(28,36,56,0.8)",
+            borderBottom: "1px solid var(--border)",
             display: "flex", alignItems: "center", justifyContent: "space-between",
             flexShrink: 0,
-            background: "rgba(6,8,14,0.88)",
+            background: "var(--surface2)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
             position: "relative", zIndex: 5,
@@ -2435,6 +2462,34 @@ export default function App() {
             </div>
 
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              {/* Dark/Light Mode Toggle */}
+              <button
+                onClick={() => setDarkMode(d => !d)}
+                title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                style={{
+                  width: 44, height: 26, borderRadius: 13,
+                  border: "1.5px solid rgba(0,229,160,0.35)",
+                  background: darkMode ? "rgba(0,229,160,0.1)" : "rgba(0,229,160,0.18)",
+                  cursor: "pointer",
+                  position: "relative",
+                  transition: "all 0.3s ease",
+                  display: "flex", alignItems: "center",
+                  padding: "2px 3px",
+                  flexShrink: 0,
+                }}
+              >
+                <div style={{
+                  width: 18, height: 18, borderRadius: "50%",
+                  background: "linear-gradient(135deg, #00e5a0, #22c55e)",
+                  transform: darkMode ? "translateX(0)" : "translateX(18px)",
+                  transition: "transform 0.3s ease",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 9,
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.4)",
+                }}>
+                  {darkMode ? "🌙" : "☀️"}
+                </div>
+              </button>
               {isDone && (
                 <>
                   {/* Mini stats */}
@@ -2466,8 +2521,6 @@ export default function App() {
               )}
             </div>
           </div>
-
-          {/* Messages thread */}
           <div className="chat-bg" style={{
             flex: 1, overflowY: "auto", padding: "28px 32px",
             display: "flex", flexDirection: "column", gap: 12,
@@ -2492,9 +2545,9 @@ export default function App() {
           {/* Input bar area */}
           <div style={{
             padding: "12px 28px 18px",
-            borderTop: "1px solid rgba(28,36,56,0.7)",
+            borderTop: "1px solid var(--border)",
             flexShrink: 0,
-            background: "rgba(6,8,14,0.92)",
+            background: "var(--surface2)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
             boxShadow: "0 -1px 0 rgba(255,255,255,0.025)",
@@ -2512,13 +2565,38 @@ export default function App() {
               showSourceButtons={!isRunning}
             />
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14, marginTop: 10 }}>
-              {[["DynamicBI", "var(--accent)"], ["LangGraph", "var(--accent2)"], ["Local & Private", "var(--muted)"]].map(([label, color], i) => (
+              {[["DynamicBI: Agentic AI", "var(--accent)"], ["LangGraph", "var(--accent2)"], ["Local & Private", "var(--muted)"]].map(([label, color], i) => (
                 <div key={label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   {i > 0 && <div style={{ width: 3, height: 3, borderRadius: "50%", background: "var(--border2)" }} />}
                   <span style={{ fontSize: 10, color, fontFamily: "var(--mono)", letterSpacing: 0.5 }}>{label}</span>
                 </div>
               ))}
             </div>
+          </div>
+
+          {/* Team Footer */}
+          <div style={{
+            borderTop: "1px solid var(--border)",
+            padding: "10px 28px",
+            background: "var(--sidebar)",
+            flexShrink: 0,
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 5,
+          }}>
+            <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "4px 20px" }}>
+              {[
+                "Akshith Sai Kondamadugu (2451-22-749-019)",
+                "Ananthula Ujwal (2451-22-749-004)",
+                "Gotte Thiru Habinash Yadav (2451-22-749-021)",
+              ].map((name, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  {i > 0 && <div style={{ width: 3, height: 3, borderRadius: "50%", background: "var(--border2)" }} />}
+                  <span style={{ fontSize: 10, color: "var(--muted)", fontFamily: "var(--mono)" }}>{name}</span>
+                </div>
+              ))}
+            </div>
+            <span style={{ fontSize: 10, color: "var(--muted)", fontFamily: "var(--mono)" }}>
+              Guided By <span style={{ color: "var(--accent2)", fontWeight: 600 }}>P. Phani Prasad</span>, Asst. Professor, MVSR Engineering College
+            </span>
           </div>
         </main>
       </div>
