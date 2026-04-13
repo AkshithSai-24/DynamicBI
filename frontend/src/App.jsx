@@ -2467,28 +2467,31 @@ export default function App() {
                 onClick={() => setDarkMode(d => !d)}
                 title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
                 style={{
-                  width: 44, height: 26, borderRadius: 13,
-                  border: "1.5px solid rgba(0,229,160,0.35)",
-                  background: darkMode ? "rgba(0,229,160,0.1)" : "rgba(0,229,160,0.18)",
+                  width: 52, height: 28, borderRadius: 14,
+                  border: `1.5px solid ${darkMode ? "rgba(0,229,160,0.35)" : "rgba(251,191,36,0.5)"}`,
+                  background: darkMode ? "rgba(15,20,35,0.8)" : "rgba(255,252,235,0.9)",
                   cursor: "pointer",
                   position: "relative",
-                  transition: "all 0.3s ease",
+                  transition: "all 0.35s cubic-bezier(.2,.8,.4,1)",
                   display: "flex", alignItems: "center",
                   padding: "2px 3px",
                   flexShrink: 0,
+                  boxShadow: darkMode ? "inset 0 1px 3px rgba(0,0,0,0.4)" : "inset 0 1px 3px rgba(0,0,0,0.08)",
                 }}
               >
+                {/* Track icons */}
+                <span style={{ position: "absolute", left: 6, fontSize: 10, opacity: darkMode ? 0.8 : 0.3, transition: "opacity 0.3s" }}>🌙</span>
+                <span style={{ position: "absolute", right: 6, fontSize: 10, opacity: darkMode ? 0.3 : 0.9, transition: "opacity 0.3s" }}>☀️</span>
                 <div style={{
-                  width: 18, height: 18, borderRadius: "50%",
-                  background: "linear-gradient(135deg, #00e5a0, #22c55e)",
-                  transform: darkMode ? "translateX(0)" : "translateX(18px)",
-                  transition: "transform 0.3s ease",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 9,
-                  boxShadow: "0 1px 4px rgba(0,0,0,0.4)",
-                }}>
-                  {darkMode ? "🌙" : "☀️"}
-                </div>
+                  width: 20, height: 20, borderRadius: "50%",
+                  background: darkMode
+                    ? "linear-gradient(135deg, #6b7a9a, #4ade8060)"
+                    : "linear-gradient(135deg, #fbbf24, #f59e0b)",
+                  transform: darkMode ? "translateX(0px)" : "translateX(24px)",
+                  transition: "transform 0.35s cubic-bezier(.2,.8,.4,1), background 0.3s",
+                  flexShrink: 0, zIndex: 1,
+                  boxShadow: darkMode ? "0 1px 4px rgba(0,0,0,0.5)" : "0 1px 6px rgba(251,191,36,0.5)",
+                }} />
               </button>
               {isDone && (
                 <>

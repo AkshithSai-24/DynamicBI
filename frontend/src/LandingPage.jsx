@@ -62,7 +62,7 @@ function OrbitNode({ node, rotation, orbitNodeBg }) {
   );
 }
 
-function StatBadge({ value, label, delay, statBg, statBorder }) {
+function StatBadge({ value, label, delay, statBg, statBorder, statMuted }) {
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     setTimeout(() => setVisible(true), delay);
@@ -80,7 +80,7 @@ function StatBadge({ value, label, delay, statBg, statBorder }) {
       backdropFilter: "blur(12px)",
     }}>
       <div style={{ fontSize: 36, fontWeight: 900, background: "linear-gradient(135deg, #4ade80, #60a5fa)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{value}</div>
-      <div style={{ fontSize: 12, color: "#6b7a9a", marginTop: 4, fontFamily: "'DM Mono', monospace" }}>{label}</div>
+      <div style={{ fontSize: 12, color: statMuted || "#6b7a9a", marginTop: 4, fontFamily: "'DM Mono', monospace" }}>{label}</div>
     </div>
   );
 }
@@ -186,7 +186,7 @@ export default function LandingPage({ onEnter, darkMode = true, onToggleTheme })
           50% { box-shadow: 0 0 40px rgba(74,222,128,0.5), 0 0 100px rgba(74,222,128,0.2); }
         }
         .hero-title span {
-          background: linear-gradient(135deg, #ffffff 0%, #4ade80 50%, #60a5fa 100%);
+          background: linear-gradient(135deg, ${darkMode ? "#ffffff" : "#1a2540"} 0%, #4ade80 50%, #60a5fa 100%);
           background-size: 200% auto;
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
@@ -200,19 +200,19 @@ export default function LandingPage({ onEnter, darkMode = true, onToggleTheme })
           transform: scale(1.05) !important;
         }
         .nav-link {
-          color: #6b7a9a;
+          color: ${T.muted};
           text-decoration: none;
           font-size: 14px;
           transition: color 0.2s;
           cursor: pointer;
         }
-        .nav-link:hover { color: #e8ecf4; }
+        .nav-link:hover { color: ${T.text}; }
         .feature-card {
           transition: border-color 0.3s, background 0.3s, transform 0.3s;
         }
         .feature-card:hover {
           border-color: rgba(74,222,128,0.4) !important;
-          background: rgba(74,222,128,0.04) !important;
+          background: ${darkMode ? "rgba(74,222,128,0.04)" : "rgba(74,222,128,0.08)"} !important;
           transform: translateY(-4px);
         }
       `}</style>
@@ -221,12 +221,12 @@ export default function LandingPage({ onEnter, darkMode = true, onToggleTheme })
       <div style={{
         position: "fixed", inset: 0, zIndex: 0,
         background: `
-          radial-gradient(ellipse at ${30 + mousePos.x * 20}% ${20 + mousePos.y * 20}%, rgba(74,222,128,0.08) 0%, transparent 60%),
-          radial-gradient(ellipse at ${70 - mousePos.x * 20}% ${80 - mousePos.y * 20}%, rgba(96,165,250,0.08) 0%, transparent 60%),
-          radial-gradient(ellipse at 50% 50%, rgba(167,139,250,0.05) 0%, transparent 70%),
-          #0a0d14
+          radial-gradient(ellipse at ${30 + mousePos.x * 20}% ${20 + mousePos.y * 20}%, ${darkMode ? "rgba(74,222,128,0.08)" : "rgba(74,222,128,0.12)"} 0%, transparent 60%),
+          radial-gradient(ellipse at ${70 - mousePos.x * 20}% ${80 - mousePos.y * 20}%, ${darkMode ? "rgba(96,165,250,0.08)" : "rgba(96,165,250,0.12)"} 0%, transparent 60%),
+          radial-gradient(ellipse at 50% 50%, ${darkMode ? "rgba(167,139,250,0.05)" : "rgba(167,139,250,0.07)"} 0%, transparent 70%),
+          ${T.bg}
         `,
-        transition: "background 0.3s ease",
+        transition: "background 0.4s ease",
       }} />
 
       {/* Noise texture overlay */}
@@ -271,27 +271,31 @@ export default function LandingPage({ onEnter, darkMode = true, onToggleTheme })
             onClick={onToggleTheme}
             title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
             style={{
-              width: 44, height: 26, borderRadius: 13,
+              width: 52, height: 28, borderRadius: 14,
               border: `1.5px solid ${T.toggleBorder}`,
-              background: darkMode ? "rgba(74,222,128,0.15)" : "rgba(74,222,128,0.2)",
+              background: darkMode ? "rgba(15,20,35,0.8)" : "rgba(240,248,255,0.9)",
               cursor: "pointer",
               position: "relative",
-              transition: "all 0.3s ease",
+              transition: "all 0.35s cubic-bezier(.2,.8,.4,1)",
               display: "flex", alignItems: "center",
               padding: "2px 3px",
+              flexShrink: 0,
+              boxShadow: darkMode ? "inset 0 1px 3px rgba(0,0,0,0.4)" : "inset 0 1px 3px rgba(0,0,0,0.08)",
             }}
           >
+            {/* Track icons */}
+            <span style={{ position: "absolute", left: 6, fontSize: 10, opacity: darkMode ? 0.8 : 0.3, transition: "opacity 0.3s" }}>🌙</span>
+            <span style={{ position: "absolute", right: 6, fontSize: 10, opacity: darkMode ? 0.3 : 0.9, transition: "opacity 0.3s" }}>☀️</span>
             <div style={{
-              width: 18, height: 18, borderRadius: "50%",
-              background: "linear-gradient(135deg, #4ade80, #22c55e)",
-              transform: darkMode ? "translateX(0)" : "translateX(18px)",
-              transition: "transform 0.3s ease",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 10,
-              boxShadow: "0 1px 4px rgba(0,0,0,0.3)",
-            }}>
-              {darkMode ? "🌙" : "☀️"}
-            </div>
+              width: 20, height: 20, borderRadius: "50%",
+              background: darkMode
+                ? "linear-gradient(135deg, #6b7a9a, #4ade8060)"
+                : "linear-gradient(135deg, #fbbf24, #f59e0b)",
+              transform: darkMode ? "translateX(0px)" : "translateX(24px)",
+              transition: "transform 0.35s cubic-bezier(.2,.8,.4,1), background 0.3s",
+              flexShrink: 0, zIndex: 1,
+              boxShadow: darkMode ? "0 1px 4px rgba(0,0,0,0.5)" : "0 1px 6px rgba(251,191,36,0.5)",
+            }} />
           </button>
           <button
             onClick={onEnter}
@@ -341,7 +345,7 @@ export default function LandingPage({ onEnter, darkMode = true, onToggleTheme })
             lineHeight: 1.05,
             letterSpacing: "-2px",
             marginBottom: 28,
-            color: "#fff",
+            color: T.text,
           }}>
             Unlock Deep{" "}
             <span>Business Intelligence</span>
@@ -456,19 +460,19 @@ export default function LandingPage({ onEnter, darkMode = true, onToggleTheme })
               position: "absolute",
               top: card.top, bottom: card.bottom,
               right: card.right, left: card.left,
-              background: "rgba(14,17,23,0.9)",
+              background: darkMode ? "rgba(14,17,23,0.9)" : "rgba(255,255,255,0.95)",
               border: `1px solid ${card.color}40`,
               borderRadius: 12, padding: "10px 16px",
               backdropFilter: "blur(12px)",
               zIndex: 30,
               minWidth: 170,
-              boxShadow: `0 4px 20px rgba(0,0,0,0.4)`,
+              boxShadow: darkMode ? `0 4px 20px rgba(0,0,0,0.4)` : `0 4px 20px rgba(0,0,0,0.1)`,
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 4 }}>
                 <div style={{ width: 8, height: 8, borderRadius: "50%", background: card.color, boxShadow: `0 0 8px ${card.color}` }} />
-                <span style={{ fontSize: 12, fontWeight: 700, color: "#e8ecf4" }}>{card.label}</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: T.text }}>{card.label}</span>
               </div>
-              <span style={{ fontSize: 11, color: "#6b7a9a", fontFamily: "'DM Mono', monospace" }}>{card.sub}</span>
+              <span style={{ fontSize: 11, color: T.muted, fontFamily: "'DM Mono', monospace" }}>{card.sub}</span>
             </div>
           ))}
         </div>
@@ -482,7 +486,7 @@ export default function LandingPage({ onEnter, darkMode = true, onToggleTheme })
             { value: "8+", label: "chart types rendered" },
             { value: "4 DBs", label: "database connectors" },
             { value: "100%", label: "AI-automated" },
-          ].map((s, i) => <StatBadge key={i} {...s} delay={i * 150} statBg={T.statBg} statBorder={T.cardBorder} />)}
+          ].map((s, i) => <StatBadge key={i} {...s} delay={i * 150} statBg={T.statBg} statBorder={T.cardBorder} statMuted={T.muted} />)}
         </div>
       </section>
 
