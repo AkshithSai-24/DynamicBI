@@ -1554,7 +1554,7 @@ function InputBar({ onSend, onFileSelect, onDbConnect, disabled, placeholder, sh
   const [selectedConnector, setSelectedConnector] = useState(null);
 
   const selectStyle = {
-    background: "rgba(20,24,40,0.8)", border: "1px solid var(--border2)", borderRadius: 10,
+    background: "var(--surface2)", border: "1px solid var(--border2)", borderRadius: 10,
     padding: "9px 13px", color: "var(--text)", fontSize: 13, outline: "none",
     width: "100%", cursor: "pointer", fontFamily: "var(--sans)",
   };
@@ -1565,7 +1565,7 @@ function InputBar({ onSend, onFileSelect, onDbConnect, disabled, placeholder, sh
       {/* ── Futuristic DB panel ── */}
       {dbMode && (
         <div style={{
-          background: "linear-gradient(145deg, rgba(14,17,32,0.98), rgba(10,13,24,0.98))",
+          background: "linear-gradient(145deg, var(--surface), var(--surface2))",
           border: "1px solid var(--border2)", borderRadius: 20, overflow: "hidden",
           animation: "msgIn 0.28s cubic-bezier(.2,.8,.4,1) both",
           boxShadow: "0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)",
@@ -1626,14 +1626,14 @@ function InputBar({ onSend, onFileSelect, onDbConnect, disabled, placeholder, sh
                       <button key={c.id} className="db-connector" onClick={() => { setSelectedConnector(c); setDbConn(c.example); }} style={{
                         padding: "10px 6px 9px", borderRadius: 12,
                         border: `1.5px solid ${isSel ? c.color + "70" : "var(--border)"}`,
-                        background: isSel ? c.color + "10" : "rgba(20,24,40,0.6)",
+                        background: isSel ? c.color + "10" : "var(--surface2)",
                         cursor: "pointer",
                         display: "flex", flexDirection: "column", alignItems: "center", gap: 5,
                         transition: "all 0.2s cubic-bezier(.2,.8,.4,1)", position: "relative", overflow: "hidden",
                         boxShadow: isSel ? `0 0 16px ${c.color}20, inset 0 1px 0 ${c.color}15` : "none",
                       }}
                         onMouseEnter={e => { if (!isSel) { e.currentTarget.style.borderColor = c.color + "50"; e.currentTarget.style.background = c.color + "08"; }}}
-                        onMouseLeave={e => { if (!isSel) { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "rgba(20,24,40,0.6)"; }}}
+                        onMouseLeave={e => { if (!isSel) { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "var(--surface2)"; }}}
                       >
                         {isSel && <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${c.color}, transparent)` }} />}
                         <span style={{ fontSize: 18 }}>{c.icon}</span>
@@ -1659,7 +1659,7 @@ function InputBar({ onSend, onFileSelect, onDbConnect, disabled, placeholder, sh
                     placeholder={selectedConnector?.example || "Select a connector above or paste connection string…"}
                     disabled={dbStep === "picking"}
                     style={{
-                      background: "rgba(20,24,40,0.8)",
+                      background: "var(--surface2)",
                       border: `1px solid ${dbInspectError ? "var(--danger)" : dbConn ? "rgba(77,159,255,0.3)" : "var(--border2)"}`,
                       borderRadius: 12, padding: "11px 14px 11px 36px",
                       color: "var(--text)", fontSize: 12, fontFamily: "var(--mono)", outline: "none", width: "100%",
@@ -1724,7 +1724,7 @@ function InputBar({ onSend, onFileSelect, onDbConnect, disabled, placeholder, sh
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     {dbDatabases.map(db => {
                       const isA = selectedDb === db;
-                      return <button key={db} onClick={() => handleDbChange(db)} style={{ padding: "5px 14px", borderRadius: 100, fontSize: 11.5, cursor: "pointer", border: `1px solid ${isA ? "rgba(0,229,160,0.5)" : "var(--border2)"}`, background: isA ? "rgba(0,229,160,0.1)" : "rgba(20,24,40,0.6)", color: isA ? "var(--accent)" : "var(--muted2)", transition: "all 0.15s", fontFamily: "var(--mono)" }}>{db}</button>;
+                      return <button key={db} onClick={() => handleDbChange(db)} style={{ padding: "5px 14px", borderRadius: 100, fontSize: 11.5, cursor: "pointer", border: `1px solid ${isA ? "rgba(0,229,160,0.5)" : "var(--border2)"}`, background: isA ? "rgba(0,229,160,0.1)" : "var(--surface2)", color: isA ? "var(--accent)" : "var(--muted2)", transition: "all 0.15s", fontFamily: "var(--mono)" }}>{db}</button>;
                     })}
                   </div>
                 </div>
@@ -1750,7 +1750,7 @@ function InputBar({ onSend, onFileSelect, onDbConnect, disabled, placeholder, sh
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap", maxHeight: 130, overflowY: "auto" }}>
                       {items.map(t => {
                         const isA = selectedTable === t;
-                        return <button key={t} onClick={() => setSelectedTable(t)} style={{ padding: "6px 14px", borderRadius: 8, fontSize: 11.5, cursor: "pointer", border: `1px solid ${isA ? "rgba(77,159,255,0.5)" : "var(--border)"}`, background: isA ? "rgba(77,159,255,0.1)" : "rgba(20,24,40,0.5)", color: isA ? "var(--accent2)" : "var(--muted2)", transition: "all 0.15s", fontFamily: "var(--mono)", fontWeight: isA ? 700 : 400, boxShadow: isA ? "0 0 10px rgba(77,159,255,0.15)" : "none" }}>{t}</button>;
+                        return <button key={t} onClick={() => setSelectedTable(t)} style={{ padding: "6px 14px", borderRadius: 8, fontSize: 11.5, cursor: "pointer", border: `1px solid ${isA ? "rgba(77,159,255,0.5)" : "var(--border)"}`, background: isA ? "rgba(77,159,255,0.1)" : "var(--surface2)", color: isA ? "var(--accent2)" : "var(--muted2)", transition: "all 0.15s", fontFamily: "var(--mono)", fontWeight: isA ? 700 : 400, boxShadow: isA ? "0 0 10px rgba(77,159,255,0.15)" : "none" }}>{t}</button>;
                       })}
                     </div>
                   );
@@ -1785,7 +1785,7 @@ function InputBar({ onSend, onFileSelect, onDbConnect, disabled, placeholder, sh
       {/* ── Main input bar ── */}
       <div className="input-bar-wrap" style={{
         display: "flex", gap: 10, alignItems: "center",
-        background: "linear-gradient(135deg, rgba(12,15,30,0.97), rgba(8,10,20,0.97))",
+        background: "linear-gradient(135deg, var(--surface), var(--surface2))",
         border: "1px solid var(--border2)", borderRadius: 16, padding: "8px 8px 8px 16px",
         boxShadow: "0 4px 28px rgba(0,0,0,0.4)", position: "relative",
         transition: "border-color 0.25s, box-shadow 0.25s",
@@ -2527,6 +2527,7 @@ export default function App() {
           <div className="chat-bg" style={{
             flex: 1, overflowY: "auto", padding: "28px 32px",
             display: "flex", flexDirection: "column", gap: 12,
+            background: darkMode ? "var(--surface)" : "var(--surface)",
           }}>
             {/* Welcome */}
             {!hasMessages && (
