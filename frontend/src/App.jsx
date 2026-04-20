@@ -312,7 +312,7 @@ function PipelineCard({ progress, stage }) {
       </div>
 
       {stage && (
-        <p style={{ marginTop: 14, fontSize: 11, color: "var(--muted)", fontFamily: "var(--mono)", paddingLeft: 4, borderLeft: "2px solid var(--border2)", paddingLeft: 10 }}>
+        <p style={{ marginTop: 14, fontSize: 11, color: "var(--muted)", fontFamily: "var(--mono)", paddingLeft: 10, borderLeft: "2px solid var(--border2)" }}>
           {stage}
         </p>
       )}
@@ -1786,7 +1786,7 @@ function InputBar({ onSend, onFileSelect, onDbConnect, disabled, placeholder, sh
       <div className="input-bar-wrap" style={{
         display: "flex", gap: 10, alignItems: "center",
         background: "linear-gradient(135deg, var(--surface), var(--surface2))",
-        border: "1px solid var(--border2)", borderRadius: 16, padding: "8px 8px 8px 16px",
+        border: "1px solid var(--border2)", borderRadius: 16, padding: "6px 8px 6px 12px",
         boxShadow: "0 4px 28px rgba(0,0,0,0.4)", position: "relative",
         transition: "border-color 0.25s, box-shadow 0.25s",
       }}>
@@ -1806,7 +1806,7 @@ function InputBar({ onSend, onFileSelect, onDbConnect, disabled, placeholder, sh
         <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls" style={{ display: "none" }} onChange={handleFile} />
         <input value={text} onChange={e => setText(e.target.value)} onKeyDown={handleKey}
           placeholder={placeholder || "Ask a question about your data…"} disabled={disabled}
-          style={{ flex: 1, background: "transparent", border: "none", color: "var(--text)", fontSize: 13.5, outline: "none", padding: "8px 0", lineHeight: 1.5, opacity: disabled ? 0.4 : 1, fontFamily: "var(--sans)" }}
+          style={{ flex: 1, background: "transparent", border: "none", color: "var(--text)", fontSize: 13.5, outline: "none", padding: "6px 0", lineHeight: 1.5, opacity: disabled ? 0.4 : 1, fontFamily: "var(--sans)" }}
         />
         <button onClick={submit} disabled={!text.trim() || disabled} style={{
           width: 38, height: 38, borderRadius: 11, border: "none",
@@ -1959,7 +1959,7 @@ export default function App() {
 
   // scroll to bottom whenever messages change
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [sessions]);
 
   // ── Polling ────────────────────────────────────────────────────────────────
@@ -2525,8 +2525,8 @@ export default function App() {
             </div>
           </div>
           <div className="chat-bg" style={{
-            flex: 1, overflowY: "auto", padding: "28px 32px",
-            display: "flex", flexDirection: "column", gap: 12,
+            flex: 1, overflowY: "auto", padding: "8px 20px 6px",
+            display: "flex", flexDirection: "column", gap: 8,
             background: darkMode ? "var(--surface)" : "var(--surface)",
           }}>
             {/* Welcome */}
@@ -2548,7 +2548,7 @@ export default function App() {
 
           {/* Input bar area */}
           <div style={{
-            padding: "12px 28px 18px",
+            padding: "6px 16px 6px",
             borderTop: "1px solid var(--border)",
             flexShrink: 0,
             background: "var(--surface2)",
@@ -2568,7 +2568,7 @@ export default function App() {
               }
               showSourceButtons={!isRunning}
             />
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14, marginTop: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginTop: 2 }}>
               {[["DynamicBI: Agentic AI", "var(--accent)"], ["LangGraph", "var(--accent2)"], ["Local & Private", "var(--muted)"]].map(([label, color], i) => (
                 <div key={label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   {i > 0 && <div style={{ width: 3, height: 3, borderRadius: "50%", background: "var(--border2)" }} />}
@@ -2581,10 +2581,10 @@ export default function App() {
           {/* Team Footer */}
           <div style={{
             borderTop: "1px solid var(--border)",
-            padding: "10px 28px",
+            padding: "4px 12px",
             background: "var(--sidebar)",
             flexShrink: 0,
-            display: "flex", flexDirection: "column", alignItems: "center", gap: 5,
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 1,
           }}>
             <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "4px 20px" }}>
               {[
