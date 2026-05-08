@@ -696,7 +696,7 @@ export default function LandingPage({ onEnter, darkMode = true, onToggleTheme })
             {/* Video */}
             <video
               ref={videoRef}
-              src="/public/demo.mp4"
+              src="/demo.mp4"
               controls
               autoPlay
               style={{
@@ -720,7 +720,7 @@ export default function LandingPage({ onEnter, darkMode = true, onToggleTheme })
               display: "flex", alignItems: "center", justifyContent: "space-between",
             }}>
               <span style={{ fontSize: 11, color: "#50607e", fontFamily: "'DM Mono', monospace" }}>
-                Place demo.mp4 in /public/assets/ to load this video
+                Press Esc or click outside to close
               </span>
               <button
                 onClick={onEnter}
