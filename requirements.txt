@@ -17,3 +17,5 @@ pystan
 prophet
 pymongo
 certifi
+fastapi
+uvicorn
