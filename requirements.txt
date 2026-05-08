@@ -1,6 +1,7 @@
 pandas 
 plotly
 langchain_ollama
+langchain_openrouter
 langgraph
 matplotlib
 numpy

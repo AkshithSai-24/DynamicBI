@@ -1,5 +1,4 @@
 from langchain_ollama import OllamaLLM
-from langchain_google_genai import GoogleGenerativeAI
 from langchain_openrouter import ChatOpenRouter
 
 from dotenv import load_dotenv
