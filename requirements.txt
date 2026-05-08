@@ -20,3 +20,4 @@ pymongo
 certifi
 fastapi
 uvicorn
+python-dotenv
