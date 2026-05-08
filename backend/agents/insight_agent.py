@@ -1,6 +1,6 @@
 import json
 import re
-from config import get_llm
+from backend.config import get_llm
 
 
 def _clean_table_text(text: str) -> str:

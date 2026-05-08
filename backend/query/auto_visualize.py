@@ -1,4 +1,4 @@
-from config import get_llm
+from backend.config import get_llm
 from utils.chart_title import generate_chart_title
 import matplotlib.pyplot as plt
 import seaborn as sns

@@ -1,4 +1,4 @@
-from config import get_llm
+from backend.config import get_llm
 import os
 import json
 import matplotlib.pyplot as plt

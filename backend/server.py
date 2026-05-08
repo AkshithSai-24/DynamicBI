@@ -14,7 +14,7 @@ import base64
 import json
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
-from config import get_llm
+from backend.config import get_llm
 from fastapi import FastAPI, UploadFile, File, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse

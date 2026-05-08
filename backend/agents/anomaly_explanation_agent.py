@@ -1,5 +1,5 @@
 import os
-from config import get_llm
+from backend.config import get_llm
 
 
 def anomaly_explanation_agent(state):

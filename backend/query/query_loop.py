@@ -28,7 +28,7 @@ import seaborn as sns
 import pandas as pd
 import numpy as np
 
-from config import get_llm
+from backend.config import get_llm
 from utils.code_extractor import extract_python, extract_sql
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
