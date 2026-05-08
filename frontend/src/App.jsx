@@ -2586,21 +2586,9 @@ export default function App() {
             flexShrink: 0,
             display: "flex", flexDirection: "column", alignItems: "center", gap: 1,
           }}>
-            <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "4px 20px" }}>
-              {[
-                "Akshith Sai Kondamadugu (2451-22-749-019)",
-                "Ananthula Ujwal (2451-22-749-004)",
-                "Gotte Thiru Habinash Yadav (2451-22-749-021)",
-              ].map((name, i) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  {i > 0 && <div style={{ width: 3, height: 3, borderRadius: "50%", background: "var(--border2)" }} />}
-                  <span style={{ fontSize: 10, color: "var(--muted)", fontFamily: "var(--mono)" }}>{name}</span>
-                </div>
-              ))}
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <span style={{ fontSize: 10, color: "var(--muted)", fontFamily: "var(--mono)" }}>Developed by Akshith Sai Kondamadugu</span>
             </div>
-            <span style={{ fontSize: 10, color: "var(--muted)", fontFamily: "var(--mono)" }}>
-              Guided By <span style={{ color: "var(--accent2)", fontWeight: 600 }}>P. Phani Prasad</span>, Asst. Professor, MVSR Engineering College
-            </span>
           </div>
         </main>
       </div>

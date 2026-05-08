@@ -37,9 +37,6 @@ if __name__ == "__main__":
         if choice == "1":
             query_loop(state)
 
-        elif choice == "2":
-            conversational_bi_agent()
-
         else:
             break'''
 

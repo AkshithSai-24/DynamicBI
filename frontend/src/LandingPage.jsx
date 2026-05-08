@@ -260,8 +260,8 @@ export default function LandingPage({ onEnter, darkMode = true, onToggleTheme })
         </div>
 
         <div style={{ display: "flex", gap: 36 }}>
-          {["Features", "Docs"].map(link => (
-            <a key={link} className="nav-link" style={{ color: T.muted }}>{link}</a>
+          {["GitHub"].map(link => (
+            <a key={link} href={link === "GitHub" ? "https://github.com/AkshithSai-24/DynamicBI" : "#"} target={link === "GitHub" ? "_blank" : "_self"} className="nav-link" style={{ color: T.muted }}>{link}</a>
           ))}
         </div>
 
@@ -579,9 +579,6 @@ export default function LandingPage({ onEnter, darkMode = true, onToggleTheme })
         >
           Start for Free →
         </button>
-        <p style={{ color: T.muted, fontSize: 12, marginTop: 16, fontFamily: "'DM Mono', monospace" }}>
-          No credit card · No setup · Runs locally
-        </p>
       </section>
 
       {/* Main Footer */}
@@ -604,8 +601,8 @@ export default function LandingPage({ onEnter, darkMode = true, onToggleTheme })
           DynamicBI: Agentic AI Framework for Conversational Business Intelligence · © 2025
         </p>
         <div style={{ display: "flex", gap: 24 }}>
-          {["GitHub", "Docs", "Privacy"].map(l => (
-            <a key={l} className="nav-link" style={{ fontSize: 13, color: T.muted }}>{l}</a>
+          {["GitHub"].map(l => (
+            <a key={l} href={l === "GitHub" ? "https://github.com/AkshithSai-24/DynamicBI" : "#"} target={l === "GitHub" ? "_blank" : "_self"} className="nav-link" style={{ fontSize: 13, color: T.muted }}>{l}</a>
           ))}
         </div>
       </footer>
@@ -619,24 +616,8 @@ export default function LandingPage({ onEnter, darkMode = true, onToggleTheme })
         backdropFilter: "blur(20px)",
       }}>
         <div style={{ maxWidth: 1400, margin: "0 auto", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "6px 28px" }}>
-            {[
-              "Akshith Sai Kondamadugu (2451-22-749-019)",
-              "Ananthula Ujwal (2451-22-749-004)",
-              "Gotte Thiru Habinash Yadav (2451-22-749-021)",
-            ].map((name, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                {i > 0 && <div style={{ width: 3, height: 3, borderRadius: "50%", background: "#4ade80", opacity: 0.5 }} />}
-                <span style={{ fontSize: 11, color: T.muted, fontFamily: "'DM Mono', monospace" }}>{name}</span>
-              </div>
-            ))}
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#60a5fa" }} />
-            <span style={{ fontSize: 11, color: T.muted, fontFamily: "'DM Mono', monospace" }}>
-              Guided By <span style={{ color: "#60a5fa", fontWeight: 600 }}>P. Phani Prasad</span>, Asst. Professor, MVSR Engineering College
-            </span>
-            <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#60a5fa" }} />
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <span style={{ fontSize: 11, color: T.muted, fontFamily: "'DM Mono', monospace" }}>Developed by Akshith Sai Kondamadugu</span>
           </div>
         </div>
       </div>

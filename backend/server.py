@@ -163,7 +163,7 @@ def _build_instrumented_graph(job_id: str):
     from agents.forecasting_agent import forecasting_agent
     from agents.rag_profile_agent import rag_profile_agent
     from agents.insight_agent import insight_agent
-    from agents.dashboard_agent import dashboard_agent
+
 
     agent_map = {
         "load_data":       lda_mod.load_data_agent,     # patched version
