@@ -1,8 +1,9 @@
-from langchain_ollama import OllamaLLM
-from config import LLM_MODEL
+from config import get_llm
+
+
 def generate_chart_title(description):
 
-    llm = OllamaLLM(model=LLM_MODEL)
+    llm = get_llm()
 
     prompt = f"""
 You are a data visualization expert.
@@ -16,9 +17,13 @@ Return ONLY the title.
 """
 
     try:
-        title = llm.invoke(prompt).strip()
+        resp = llm.invoke(prompt)
+        if hasattr(resp, "content"):
+            title = resp.content.strip()
+        elif hasattr(resp, "text"):
+            title = resp.text.strip()
+        else:
+            title = str(resp).strip()
         return title
     except:
         return description.replace("_"," ").title()
-    
-    

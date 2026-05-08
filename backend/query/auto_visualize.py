@@ -1,9 +1,9 @@
-from langchain_ollama import OllamaLLM
+from config import get_llm
 from utils.chart_title import generate_chart_title
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
-from config import LLM_MODEL
+
 
 def auto_visualize(result, query):
 
@@ -12,11 +12,9 @@ def auto_visualize(result, query):
 
     if not isinstance(result, pd.DataFrame):
         return
-    # -------------------------------
-# Fix MongoDB-specific issues
-# -------------------------------
 
-# Rename _id column
+    # Fix MongoDB-specific issues
+    # Rename _id column
     if "_id" in result.columns:
         result = result.rename(columns={"_id": "category"})
 
@@ -30,7 +28,7 @@ def auto_visualize(result, query):
 
     cols = result.columns.tolist()
 
-    llm = OllamaLLM(model=LLM_MODEL)
+    llm = get_llm()
 
     prompt = f"""
 User query:
@@ -47,9 +45,15 @@ pie
 histogram
 """
 
-    chart = llm.invoke(prompt).strip().lower()
+    resp = llm.invoke(prompt)
+    if hasattr(resp, "content"):
+        chart = resp.content.strip().lower()
+    elif hasattr(resp, "text"):
+        chart = resp.text.strip().lower()
+    else:
+        chart = str(resp).strip().lower()
 
-    plt.figure(figsize=(7,5))
+    plt.figure(figsize=(7, 5))
 
     title = generate_chart_title(query)
 
@@ -100,5 +104,3 @@ histogram
     except Exception as e:
 
         print("Visualization error:", e)
-
-

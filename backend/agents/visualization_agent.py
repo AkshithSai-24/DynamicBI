@@ -1,11 +1,10 @@
-from langchain_ollama import OllamaLLM
+from config import get_llm
 import os
 import json
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 from scipy import stats as scipy_stats
-from config import LLM_MODEL
 from utils.chart_title import generate_chart_title
 import warnings
 warnings.filterwarnings("ignore")
@@ -323,7 +322,7 @@ def save_chart_data(filename_base, chart_type, x_vals, y_vals, x_name, y_name, e
 # AI Column Pair Selection
 # -------------------------------
 def ai_select_category_numeric_pairs(df, categorical_cols, numeric_cols):
-    llm = OllamaLLM(model=LLM_MODEL)
+    llm = get_llm()
     sample = df.head(10).to_string()
     prompt = f"""
 You are a data analyst.
@@ -350,7 +349,14 @@ Return JSON list:
 ]
 """
     try:
-        pairs = json.loads(llm.invoke(prompt))
+        resp = llm.invoke(prompt)
+        if hasattr(resp, "content"):
+            text = resp.content.strip()
+        elif hasattr(resp, "text"):
+            text = resp.text.strip()
+        else:
+            text = str(resp).strip()
+        pairs = json.loads(text)
         valid_pairs = []
         for p in pairs:
             cat = p.get("category")

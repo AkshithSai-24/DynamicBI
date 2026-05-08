@@ -1,11 +1,11 @@
 import os
 import pandas as pd
-from langchain_ollama import OllamaLLM
-from config import LLM_MODEL
+from config import get_llm
+
 
 def conversational_bi_agent():
 
-    llm = OllamaLLM(model=LLM_MODEL)
+    llm = get_llm()
 
     print("\nAI BI Chat ready. Ask analytical questions (type exit).")
 
@@ -47,10 +47,13 @@ Provide a clear business answer.
 Explain reasoning briefly.
 """
 
-        response = llm.invoke(prompt)
+        resp = llm.invoke(prompt)
+        if hasattr(resp, "content"):
+            response = resp.content.strip()
+        elif hasattr(resp, "text"):
+            response = resp.text.strip()
+        else:
+            response = str(resp).strip()
 
         print("\nAI BI Answer:\n")
         print(response)
-
-
-

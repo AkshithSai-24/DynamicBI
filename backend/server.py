@@ -1,5 +1,5 @@
 """
-FastAPI Backend for NeuralBI
+FastAPI Backend for Dynamic BI.
 Uses build_graph() exclusively — the LangGraph pipeline handles all agent orchestration.
 Supports both file uploads (CSV/Excel) and database connection strings.
 """
@@ -14,7 +14,7 @@ import base64
 import json
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
-from config import LLM_MODEL
+from config import get_llm
 from fastapi import FastAPI, UploadFile, File, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -605,12 +605,17 @@ async def natural_language_query(job_id: str, body: QueryRequest):
     if df is None:
         # Fallback — no stored df; answer from context only
         try:
-            from langchain_ollama import OllamaLLM
-            llm = OllamaLLM(model=LLM_MODEL)
-            answer = llm.invoke(
+            llm = get_llm()
+            resp = llm.invoke(
                 f"You are an expert BI analyst.\n\nContext:\n{source_context}\n\n"
                 f"Question: {body.question}\n\nProvide a clear, concise business answer."
             )
+            if hasattr(resp, "content"):
+                answer = resp.content.strip()
+            elif hasattr(resp, "text"):
+                answer = resp.text.strip()
+            else:
+                answer = str(resp).strip()
         except Exception as e:
             answer = f"⚠ AI unavailable: {e}"
         return {"answer": answer, "data": [], "visual": None, "needs_visual": False}

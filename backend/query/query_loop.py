@@ -27,21 +27,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 import numpy as np
-from langchain_ollama import OllamaLLM
 
-from config import LLM_MODEL
+from config import get_llm
 from utils.code_extractor import extract_python, extract_sql
-
-# ── LLM singleton (reused across calls) ───────────────────────────────────────
-_llm: OllamaLLM | None = None
-
-def _get_llm() -> OllamaLLM:
-    global _llm
-    if _llm is None:
-        _llm = OllamaLLM(model=LLM_MODEL)
-    return _llm
-
-
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
 def _safe_json(obj: Any) -> Any:
@@ -60,19 +48,13 @@ def _safe_json(obj: Any) -> Any:
     if isinstance(obj, (list, tuple)):
         return [_safe_json(v) for v in obj]
     return obj
-
-
 def _df_to_rows(df: pd.DataFrame, max_rows: int = 200) -> list[dict]:
     return [_safe_json(row) for row in df.head(max_rows).to_dict(orient="records")]
-
-
 def _fig_to_b64(fig) -> str:
     buf = io.BytesIO()
     fig.savefig(buf, format="png", bbox_inches="tight", dpi=120)
     buf.seek(0)
     return base64.b64encode(buf.read()).decode()
-
-
 def _compute_chart_data(df: pd.DataFrame, chart_type: str,
                          x_col: str, y_col: str | None) -> dict:
     """Build a chartData dict matching the lightbox panel format."""
@@ -108,8 +90,6 @@ def _compute_chart_data(df: pd.DataFrame, chart_type: str,
     if stats:
         cd["statistics"] = stats
     return cd
-
-
 # ── Visual decision & generation ───────────────────────────────────────────────
 
 def _should_visualise(question: str, df: pd.DataFrame) -> tuple[bool, str]:
@@ -158,7 +138,13 @@ Rules:
 - histogram: single numeric column (distribution)
 """
     try:
-        raw = _get_llm().invoke(prompt).strip()
+        resp = get_llm().invoke(prompt)
+        if hasattr(resp, "content"):
+            raw = resp.content.strip()
+        elif hasattr(resp, "text"):
+            raw = resp.text.strip()
+        else:
+            raw = str(resp).strip()
         # Extract JSON even if wrapped in markdown
         m = re.search(r'\{.*\}', raw, re.DOTALL)
         dec = json.loads(m.group()) if m else {}
@@ -174,8 +160,6 @@ Rules:
         return needs_v or forced, ctype, xcol, ycol
     except Exception:
         return forced, "bar", cols[0] if cols else None, num_cols[0] if num_cols else None
-
-
 def _generate_visual(df: pd.DataFrame, question: str,
                      chart_type: str, x_col: str, y_col: str | None) -> dict | None:
     """Generate a matplotlib chart and return the visual payload."""
@@ -291,13 +275,11 @@ def _generate_visual(df: pd.DataFrame, question: str,
         print(f"[query visual] error: {e}\n{traceback.format_exc()}")
         plt.close("all")
         return None
-
-
 # ── Per-source query executors ─────────────────────────────────────────────────
 
 def _query_csv_excel(df: pd.DataFrame, question: str) -> tuple[Any, str]:
     """Execute a pandas query, return (result_df_or_scalar, generated_code)."""
-    llm = _get_llm()
+    llm = get_llm()
     cols_info = "\n".join(f"  {c}: {df[c].dtype}" for c in df.columns)
     prompt = f"""You are a pandas expert.
 
@@ -317,14 +299,35 @@ Rules:
 - Use .reset_index() if needed
 - Do not import anything extra
 """
-    code = extract_python(llm.invoke(prompt))
+    resp = llm.invoke(prompt)
+    if hasattr(resp, "content"):
+        text_resp = resp.content.strip()
+    elif hasattr(resp, "text"):
+        text_resp = resp.text.strip()
+    else:
+        text_resp = str(resp).strip()
+    code = extract_python(text_resp)
     local_vars: dict = {"df": df.copy(), "pd": pd, "np": np}
-    exec(compile(code, "<query>", "exec"), {}, local_vars)   # nosec
+    try:
+        exec(compile(code, "<query>", "exec"), {}, local_vars)   # nosec
+    except Exception as e:
+        # AI-generated code may assume numeric columns; attempt basic coercion and retry
+        try:
+            sanitized = df.copy()
+            for col in sanitized.columns:
+                # coerce values that look numeric into numbers, keep others as-is
+                coerced = pd.to_numeric(sanitized[col], errors="coerce")
+                # If coercion produced any numeric values, replace column with coerced (NaNs allowed)
+                if coerced.notna().sum() > 0:
+                    sanitized[col] = coerced
+            local_vars["df"] = sanitized
+            exec(compile(code, "<query>", "exec"), {}, local_vars)   # nosec
+        except Exception as e2:
+            # Propagate a clear error so caller can handle it
+            raise RuntimeError(f"AI-generated code execution failed: {e2}") from e2
     return local_vars.get("result"), code
-
-
 def _query_sql(df: pd.DataFrame, engine: Any, table: str, question: str) -> tuple[Any, str]:
-    llm = _get_llm()
+    llm = get_llm()
     dialect = engine.dialect.name
     cols_info = ", ".join(f"{c} ({df[c].dtype})" for c in df.columns)
     schema = f"Table: {table}\nColumns: {cols_info}\nDialect: {dialect}"
@@ -344,7 +347,14 @@ Rules:
 - Compatible with {dialect}
 - SELECT query only
 """
-    sql = extract_sql(llm.invoke(prompt))
+    resp = llm.invoke(prompt)
+    if hasattr(resp, "content"):
+        text_resp = resp.content.strip()
+    elif hasattr(resp, "text"):
+        text_resp = resp.text.strip()
+    else:
+        text_resp = str(resp).strip()
+    sql = extract_sql(text_resp)
     try:
         return _run_sql(sql), sql
     except Exception as e:
@@ -354,13 +364,18 @@ Error: {e}
 Schema: {schema}
 Question: {question}
 Rewrite correctly. Return ONLY SQL."""
-        fixed_sql = extract_sql(llm.invoke(retry_prompt))
+        resp = llm.invoke(retry_prompt)
+        if hasattr(resp, "content"):
+            text_resp = resp.content.strip()
+        elif hasattr(resp, "text"):
+            text_resp = resp.text.strip()
+        else:
+            text_resp = str(resp).strip()
+        fixed_sql = extract_sql(text_resp)
         return _run_sql(fixed_sql), fixed_sql
-
-
 def _query_mongodb(client: Any, db_name: str, col_name: str,
                    question: str) -> tuple[Any, str]:
-    llm = _get_llm()
+    llm = get_llm()
     collection = client[db_name][col_name]
     sample_docs = list(collection.find({}, {"_id": 0}).limit(5))
     schema_keys = list(sample_docs[0].keys()) if sample_docs else []
@@ -378,7 +393,13 @@ Rules:
 - No markdown, no comments, no extra text
 - Use $project, $group, $sort, $limit etc as needed
 """
-    raw = llm.invoke(prompt)
+    resp = llm.invoke(prompt)
+    if hasattr(resp, "content"):
+        raw = resp.content.strip()
+    elif hasattr(resp, "text"):
+        raw = resp.text.strip()
+    else:
+        raw = str(resp).strip()
 
     def _extract(text: str) -> list:
         try:
@@ -417,10 +438,15 @@ Error: {e}
 Collection: {col_name}, Fields: {schema_keys}
 Question: {question}
 Return corrected JSON pipeline only."""
-        fixed = _extract(llm.invoke(retry))
+        resp = llm.invoke(retry)
+        if hasattr(resp, "content"):
+            fixed_raw = resp.content.strip()
+        elif hasattr(resp, "text"):
+            fixed_raw = resp.text.strip()
+        else:
+            fixed_raw = str(resp).strip()
+        fixed = _extract(fixed_raw)
         return _run(fixed), json.dumps(fixed, indent=2)
-
-
 def _flatten_columns(df: pd.DataFrame) -> pd.DataFrame:
     """Flatten MultiIndex columns into plain strings."""
     if isinstance(df.columns, pd.MultiIndex):
@@ -431,8 +457,6 @@ def _flatten_columns(df: pd.DataFrame) -> pd.DataFrame:
         df = df.copy()
         df.columns = [str(c) for c in df.columns]
     return df
-
-
 def _coerce_df(result: Any) -> pd.DataFrame | None:
     """Convert a query result to a DataFrame (or return None if scalar)."""
     if isinstance(result, pd.DataFrame):
@@ -447,12 +471,10 @@ def _coerce_df(result: Any) -> pd.DataFrame | None:
         return _flatten_columns(pd.DataFrame(result))
     except Exception:
         return None
-
-
 def _narrate(question: str, result: Any, df: pd.DataFrame | None,
              source_context: str) -> str:
     """Ask LLM to produce a natural-language answer from the result."""
-    llm = _get_llm()
+    llm = get_llm()
 
     if df is not None and len(df) > 0:
         result_summary = df.head(10).to_string(index=False)
@@ -482,11 +504,14 @@ Rules:
 - Keep the total response under 150 words
 """
     try:
-        return llm.invoke(prompt).strip()
+        resp = llm.invoke(prompt)
+        if hasattr(resp, "content"):
+            return resp.content.strip()
+        if hasattr(resp, "text"):
+            return resp.text.strip()
+        return str(resp).strip()
     except Exception:
         return f"Result: {result_summary}"
-
-
 # ── Public entry point ─────────────────────────────────────────────────────────
 
 def run_query(

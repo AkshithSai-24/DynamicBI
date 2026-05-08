@@ -1,8 +1,7 @@
 import os
-from langchain_ollama import OllamaLLM
 import pandas as pd
 from prophet import Prophet
-from config import LLM_MODEL
+from config import get_llm
 import numpy as np
 import warnings
 warnings.filterwarnings("ignore")
@@ -14,7 +13,7 @@ def forecasting_agent(state):
 
     os.makedirs("dashboard", exist_ok=True)
 
-    llm = OllamaLLM(model=LLM_MODEL)
+    llm = get_llm()
 
     columns = df.columns.tolist()
 
@@ -49,31 +48,95 @@ Return JSON:
 
     import json
 
+    def _detect_time_col(df: pd.DataFrame):
+        # Prefer columns with many parseable datetimes or containing 'date'/'time'/'ds'
+        candidates = []
+        for col in df.columns:
+            s = df[col]
+            parsed = pd.to_datetime(s, errors='coerce')
+            non_na = parsed.notna().sum()
+            score = non_na
+            name = str(col).lower()
+            if any(k in name for k in ['date', 'time', 'ds']):
+                score += 10
+            candidates.append((score, col))
+        candidates.sort(reverse=True)
+        return candidates[0][1] if candidates and candidates[0][0] > 0 else None
+
+    def _detect_forecast_cols(df: pd.DataFrame, time_col, max_cols=3):
+        numeric_cols = []
+        for col in df.columns:
+            if col == time_col:
+                continue
+            # attempt to coerce
+            coerced = pd.to_numeric(df[col], errors='coerce')
+            non_na = coerced.notna().sum()
+            uniq = coerced.nunique(dropna=True)
+            if non_na >= 10 and uniq >= 2:
+                numeric_cols.append((non_na, col))
+        numeric_cols.sort(reverse=True)
+        return [c for _, c in numeric_cols[:max_cols]]
+
+    decision = None
     try:
-        decision = json.loads(llm.invoke(prompt))
-    except:
-        print("AI forecast detection failed")
-        return state
+        resp = llm.invoke(prompt)
+        if hasattr(resp, "content"):
+            text = resp.content.strip()
+        elif hasattr(resp, "text"):
+            text = resp.text.strip()
+        else:
+            text = str(resp).strip()
+        try:
+            decision = json.loads(text)
+        except Exception:
+            # sometimes LLM returns text around JSON; try to extract
+            import re
+            m = re.search(r"\{.*\}", text, re.DOTALL)
+            if m:
+                try:
+                    decision = json.loads(m.group())
+                except Exception:
+                    decision = None
 
-    time_col = decision.get("time_column")
-    forecast_cols = decision.get("forecast_columns", [])
+    except Exception:
+        decision = None
 
+    time_col = None
+    forecast_cols = []
+    if isinstance(decision, dict):
+        time_col = decision.get("time_column")
+        forecast_cols = decision.get("forecast_columns", []) or []
+
+    # Fallback detection if LLM failed or returned invalid columns
     if not time_col or time_col not in df.columns:
-        print("AI could not find valid time column")
-        return state
+        detected = _detect_time_col(df)
+        if detected:
+            print(f"[forecast] LLM time column invalid; auto-detected '{detected}'")
+            time_col = detected
+        else:
+            print("AI could not find valid time column and auto-detection failed")
+            return state
 
-    if len(forecast_cols) == 0:
-        print("AI found no metrics suitable for forecasting")
-        return state
+    if not forecast_cols:
+        detected_cols = _detect_forecast_cols(df, time_col, max_cols=3)
+        if detected_cols:
+            print(f"[forecast] LLM forecast columns missing; auto-detected {detected_cols}")
+            forecast_cols = detected_cols
+        else:
+            print("AI found no metrics suitable for forecasting and auto-detection failed")
+            return state
 
     print("\nAI Forecast Setup")
     print("Time column:", time_col)
     print("Forecast columns:", forecast_cols)
 
     try:
-        df[time_col] = pd.to_datetime(df[time_col])
-    except:
-        print("Time conversion failed")
+        df[time_col] = pd.to_datetime(df[time_col], errors='coerce')
+        if df[time_col].notna().sum() == 0:
+            print("Time conversion failed (no parsable dates)")
+            return state
+    except Exception as e:
+        print("Time conversion failed:", e)
         return state
 
     from prophet import Prophet
@@ -83,23 +146,23 @@ Return JSON:
         if col not in df.columns:
             continue
 
-        ts = df[[time_col, col]].replace([np.inf, -np.inf], np.nan)
+        # coerce metric to numeric
+        ts = df[[time_col, col]].copy()
+        ts[col] = pd.to_numeric(ts[col], errors='coerce')
+        ts = ts.replace([np.inf, -np.inf], np.nan).dropna()
 
-        ts = ts.dropna()
-
-# remove constant series
+        # remove constant series
         if ts[col].nunique() < 2:
-            print(f"Skipping {col} (constant values)")
+            print(f"Skipping {col} (constant values or couldn't coerce to numeric)")
             continue
 
-# remove extreme outliers
+        # remove extreme outliers (clamp to 1st-99th percentile)
         q1 = ts[col].quantile(0.01)
         q99 = ts[col].quantile(0.99)
-
         ts = ts[(ts[col] >= q1) & (ts[col] <= q99)]
 
         if len(ts) < 20:
-            print(f"Skipping {col} (not enough data)")
+            print(f"Skipping {col} (not enough data after coercion/outlier removal)")
             continue
 
         prophet_df = ts.rename(columns={
@@ -108,13 +171,9 @@ Return JSON:
         })
 
         try:
-
             model = Prophet()
-
             model.fit(prophet_df)
-
             future = model.make_future_dataframe(periods=30)
-
             forecast = model.predict(future)
 
             forecast.tail(30).to_csv(
@@ -123,14 +182,11 @@ Return JSON:
             )
 
             fig = model.plot(forecast)
-
             fig.savefig(f"dashboard/forecast_{col}.png")
 
             print(f"Forecast created for {col}")
 
         except Exception as e:
-
             print(f"Forecast failed for {col}: {e}")
 
     return state
-

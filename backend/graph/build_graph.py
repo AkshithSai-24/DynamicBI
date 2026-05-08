@@ -13,7 +13,7 @@ from agents.anomaly_explanation_agent import anomaly_explanation_agent
 from agents.forecasting_agent import forecasting_agent
 from agents.rag_profile_agent import rag_profile_agent
 from agents.insight_agent import insight_agent
-from agents.dashboard_agent import dashboard_agent
+
 import warnings
 warnings.filterwarnings("ignore")
 

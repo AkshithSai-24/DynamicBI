@@ -1,18 +1,16 @@
 import numpy as np
-from langchain_ollama import OllamaLLM
-from config import LLM_MODEL
+from config import get_llm
 
 
-
-# Initialize Mistral via Ollama
-llm = OllamaLLM(model=LLM_MODEL)
+# Initialize LLM via config
+llm = get_llm()
 
 
 # -----------------------------
 # 🔍 STEP 1: PYTHON INSIGHTS
 # -----------------------------
 def generate_statistical_insights(chart_data):
-    x = [str(v) for v in chart_data.get("x", [])]  
+    x = [str(v) for v in chart_data.get("x", [])]
     y = chart_data.get("y", [])
     chart_type = chart_data.get("chart_type", "bar")
 
@@ -94,12 +92,15 @@ Task:
 - First point on the statistical insights.
 - Rest points can be on recommendations, next steps, or implications based on the data.
 """
-    
 
-    
+    resp = llm.invoke(prompt)
+    if hasattr(resp, "content"):
+        return resp.content.strip()
+    if hasattr(resp, "text"):
+        return resp.text.strip()
+    return str(resp).strip()
 
-    response = llm.invoke(prompt)
-    return response
+
 def analyze_correlation(corr_matrix):
 
     insights = []
@@ -120,6 +121,7 @@ def analyze_correlation(corr_matrix):
         insights.append("No strong correlations found")
 
     return insights
+
 
 # -----------------------------
 # 🚀 MAIN FUNCTION
