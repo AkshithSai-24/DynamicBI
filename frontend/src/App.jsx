@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import LandingPage from "./LandingPage.jsx";
 
-const API = "http://127.0.0.1:8000";
+//const API = "http://127.0.0.1:8000";
+const API = "https://dynamicbi.onrender.com";
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
 const fmt = (v) => {
@@ -2023,7 +2024,7 @@ export default function App() {
 
     addMessage(sessionId, {
       role: "assistant", type: "text",
-      payload: { text: `Got it! I'm starting the analysis pipeline on **${label}**. This runs 11 AI agents in sequence — I'll show you the results as they complete.` }
+      payload: { text: `Got it! I'm starting the analysis pipeline on **${label}**. This runs 10 AI agents  — I'll show you the results as they complete.` }
     });
     addMessage(sessionId, {
       role: "assistant", type: "pipeline",
