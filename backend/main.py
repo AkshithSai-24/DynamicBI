@@ -1,7 +1,7 @@
 
 from graph.build_graph import build_graph
 from query.query_loop import query_loop
-from query.conversational_bi_agent import conversational_bi_agent
+
 
 import warnings
 import time
