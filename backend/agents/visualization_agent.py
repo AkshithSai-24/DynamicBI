@@ -1,4 +1,4 @@
-from backend.config import get_llm
+from config import get_llm
 import os
 import json
 import matplotlib.pyplot as plt
@@ -165,23 +165,99 @@ def compute_scatter_statistics(x_vals, y_vals, x_name="x", y_name="y"):
 # Persist chart data + stats to JSON
 # -----------------------------------------------
 
+import math
+import pandas as pd
+
+
 def _is_nan_like(value):
-    return value is None or (isinstance(value, float) and np.isnan(value))
+    """True for None, float NaN, float Inf, and pandas NaT/NA."""
+    if value is None:
+        return True
+    try:
+        if pd.isnull(value):
+            return True
+    except (TypeError, ValueError):
+        pass
+    if isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
+        return True
+    return False
+
+
+def _safe_key(value):
+    """
+    Convert any value that might appear as a dict key into a JSON-legal string.
+    JSON only allows str / int / float / bool / None as keys — pandas Timestamp,
+    numpy integers, dates, etc. all need to be stringified.
+    """
+    if isinstance(value, str):
+        return value
+    if isinstance(value, bool):          # must come before int check
+        return value
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        if math.isnan(value) or math.isinf(value):
+            return str(value)
+        return value
+    # Timestamp / datetime-like
+    try:
+        if hasattr(value, "isoformat"):
+            return value.isoformat()
+    except Exception:
+        pass
+    # numpy scalars
+    if hasattr(value, "item"):
+        try:
+            return _safe_key(value.item())
+        except Exception:
+            pass
+    return str(value)
 
 
 def _safe_serializable(value):
-    if isinstance(value, (np.integer,)):
+    """
+    Convert a scalar value to a JSON-serialisable Python native type.
+    Returns None for NaN / Inf / NaT so the JSON stays valid.
+    """
+    # numpy integer / float / bool
+    if isinstance(value, np.integer):
         return int(value)
-    if isinstance(value, (np.floating,)):
-        return float(value)
-    if isinstance(value, (np.bool_,)):
+    if isinstance(value, np.floating):
+        f = float(value)
+        return None if (math.isnan(f) or math.isinf(f)) else f
+    if isinstance(value, np.bool_):
         return bool(value)
+    # generic numpy scalar fallback
     if hasattr(value, "item"):
         try:
-            return value.item()
+            return _safe_serializable(value.item())
         except Exception:
             pass
+    # pandas Timestamp / NaT
+    if isinstance(value, pd.Timestamp):
+        return None if pd.isnull(value) else value.isoformat()
+    # plain Python float – guard NaN / Inf
+    if isinstance(value, float):
+        return None if (math.isnan(value) or math.isinf(value)) else value
     return value
+
+
+def _sanitize_records(records):
+    """
+    Walk a list of dicts (e.g. from .to_dict(orient='records')) and make every
+    key and value JSON-safe.  Handles Timestamps as keys and NaN values.
+    """
+    cleaned = []
+    for row in records:
+        cleaned.append({_safe_key(k): _safe_serializable(v) for k, v in row.items()})
+    return cleaned
+
+
+def _sanitize_top5(top5_dict):
+    """
+    value_counts().head(5).to_dict() → keys can be Timestamps or any index type.
+    """
+    return {_safe_key(k): _safe_serializable(v) for k, v in top5_dict.items()}
 
 
 def _series_points(x_vals, y_vals, chart_type):
@@ -313,7 +389,7 @@ def save_chart_data(filename_base, chart_type, x_vals, y_vals, x_name, y_name, e
 
     out_path = f"dashboard/chart_data/{filename_base}.json"
     with open(out_path, "w") as f:
-        json.dump(payload, f, indent=2, default=str)
+        json.dump(payload, f, indent=2, default=_safe_key)
 
     return payload
 
@@ -519,10 +595,11 @@ def dataset_visualization_agent(state):
             plt.savefig(f"dashboard/avg_{num}_by_{cat}.png")
             plt.close()
 
-            # Per-group detail stats
+            # Per-group detail stats — reset_index() can leave Timestamp index
+            # values in the category column, and agg values may be NaN/numpy types.
             group_detail = df.groupby(cat)[num].agg(["mean", "std", "min", "max", "count", "median"])
             group_detail = group_detail.reset_index()
-            group_stats_dict = group_detail.to_dict(orient="records")
+            group_stats_dict = _sanitize_records(group_detail.to_dict(orient="records"))
 
             save_chart_data(
                 filename_base=f"avg_{num}_by_{cat}",
@@ -567,7 +644,7 @@ def dataset_visualization_agent(state):
                 },
             }
             with open("dashboard/chart_data/correlation_heatmap.json", "w") as f:
-                json.dump(corr_payload, f, indent=2, default=str)
+                json.dump(corr_payload, f, indent=2, default=_safe_key)
 
 
     # =====================================================
@@ -584,14 +661,17 @@ def dataset_visualization_agent(state):
         "categorical_statistics": {
             col: {
                 "unique_values": int(df[col].nunique()),
-                "top_5_values": df[col].value_counts().head(5).to_dict(),
+                # value_counts keys can be Timestamps when the column holds dates
+                "top_5_values": _sanitize_top5(df[col].value_counts().head(5).to_dict()),
                 "missing_count": int(df[col].isna().sum()),
             }
             for col in categorical_cols
         },
     }
     with open("dashboard/chart_data/dataset_statistics_summary.json", "w") as f:
-        json.dump(summary, f, indent=2, default=str)
+        # Use default=_safe_key so any remaining non-string keys (e.g. Timestamps
+        # buried in nested dicts) are stringified before the encoder sees them.
+        json.dump(summary, f, indent=2, default=_safe_key)
 
     print("Smart visualizations created — chart data & statistics saved to dashboard/chart_data/")
 

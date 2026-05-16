@@ -14,12 +14,13 @@ import base64
 import json
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
-from backend.config import get_llm
+from config import get_llm
 from fastapi import FastAPI, UploadFile, File, BackgroundTasks, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import pandas as pd
+import math
 
 # ── Path setup ────────────────────────────────────────────────────────────────
 BASE_DIR = Path(__file__).parent
@@ -33,6 +34,73 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ── JSON-safe sanitizer ────────────────────────────────────────────────────────
+# Recursively walks any Python object and replaces non-JSON-compliant values:
+#   - float NaN / Inf  → None
+#   - numpy scalar types → native Python ints/floats
+#   - numpy arrays → lists
+#   - pandas Timestamps → ISO string
+# This is applied to every result payload before JSONResponse serialization.
+
+def _sanitize_for_json(obj, _depth: int = 0):
+    """Recursively make *obj* safe for JSON serialization."""
+    # Guard against runaway recursion on pathological structures
+    if _depth > 50:
+        return None
+
+    # ── numpy / pandas scalar types ──────────────────────────────────────────
+    try:
+        import numpy as np
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            f = float(obj)
+            if math.isnan(f) or math.isinf(f):
+                return None
+            return f
+        if isinstance(obj, np.bool_):
+            return bool(obj)
+        if isinstance(obj, np.ndarray):
+            return _sanitize_for_json(obj.tolist(), _depth + 1)
+    except ImportError:
+        pass
+
+    # ── pandas Timestamp ─────────────────────────────────────────────────────
+    try:
+        import pandas as _pd
+        if isinstance(obj, _pd.Timestamp):
+            return obj.isoformat() if not _pd.isnull(obj) else None
+        if isinstance(obj, _pd.NA.__class__):
+            return None
+    except Exception:
+        pass
+
+    # ── built-in float ───────────────────────────────────────────────────────
+    if isinstance(obj, float):
+        if math.isnan(obj) or math.isinf(obj):
+            return None
+        return obj
+
+    # ── collections ──────────────────────────────────────────────────────────
+    if isinstance(obj, dict):
+        return {k: _sanitize_for_json(v, _depth + 1) for k, v in obj.items()}
+
+    if isinstance(obj, (list, tuple)):
+        sanitized = [_sanitize_for_json(v, _depth + 1) for v in obj]
+        return sanitized if isinstance(obj, list) else tuple(sanitized)
+
+    # ── anything with .item() (catches remaining numpy scalars) ──────────────
+    if hasattr(obj, "item"):
+        try:
+            raw = obj.item()
+            return _sanitize_for_json(raw, _depth + 1)
+        except Exception:
+            pass
+
+    return obj
+
 
 UPLOAD_DIR = BASE_DIR / "uploads"
 DASHBOARD_DIR = BASE_DIR / "dashboard"
@@ -326,8 +394,16 @@ def _collect_dashboard() -> dict:
                 try:
                     df_fc = pd.read_csv(str(f))
                     keep_cols = [c for c in ["ds","yhat","yhat_lower","yhat_upper","trend"] if c in df_fc.columns]
-                    rows = df_fc[keep_cols].tail(60).round(4).to_dict(orient="records")
-                    result["forecasts"].append({"col": col, "rows": rows})
+                    raw_rows = df_fc[keep_cols].tail(60).round(4).to_dict(orient="records")
+                    # Sanitize NaN/Inf that Prophet sometimes emits for yhat_lower/upper
+                    clean_rows = []
+                    for row in raw_rows:
+                        clean_row = {
+                            k: (None if isinstance(v, float) and (math.isnan(v) or math.isinf(v)) else v)
+                            for k, v in row.items()
+                        }
+                        clean_rows.append(clean_row)
+                    result["forecasts"].append({"col": col, "rows": clean_rows})
                 except Exception:
                     pass
 
@@ -335,18 +411,36 @@ def _collect_dashboard() -> dict:
         if anomaly_csv.exists():
             try:
                 df_an = pd.read_csv(str(anomaly_csv))
+                # Replace inf/nan so stats are JSON-safe
+                df_an = df_an.replace([float("inf"), float("-inf")], float("nan"))
                 num_cols = df_an.select_dtypes(include="number").columns.tolist()
+
+                def _safe_stat(series, fn):
+                    """Compute a stat function safely, returning None on NaN/error."""
+                    try:
+                        val = float(fn(series))
+                        return None if (math.isnan(val) or math.isinf(val)) else round(val, 4)
+                    except Exception:
+                        return None
+
                 result["anomaly_data"] = {
                     "count":           int(len(df_an)),
                     "columns":         df_an.columns.tolist(),
                     "numeric_columns": num_cols,
-                    "sample":          df_an.head(10).to_dict(orient="records"),
+                    # to_dict can contain NaN for missing cells — sanitize each record
+                    "sample": [
+                        {
+                            k: (None if isinstance(v, float) and (math.isnan(v) or math.isinf(v)) else v)
+                            for k, v in row.items()
+                        }
+                        for row in df_an.head(10).to_dict(orient="records")
+                    ],
                     "stats": {
                         c: {
-                            "mean": round(float(df_an[c].mean()), 4),
-                            "min":  round(float(df_an[c].min()),  4),
-                            "max":  round(float(df_an[c].max()),  4),
-                            "std":  round(float(df_an[c].std()),  4),
+                            "mean": _safe_stat(df_an[c].dropna(), lambda s: s.mean()),
+                            "min":  _safe_stat(df_an[c].dropna(), lambda s: s.min()),
+                            "max":  _safe_stat(df_an[c].dropna(), lambda s: s.max()),
+                            "std":  _safe_stat(df_an[c].dropna(), lambda s: s.std()),
                         }
                         for c in num_cols[:8]
                     }
@@ -365,7 +459,22 @@ def _collect_dashboard() -> dict:
         if not p.exists():
             continue
         if ftype == "csv":
-            result[key] = pd.read_csv(str(p)).to_dict(orient="records")
+            df_tmp = pd.read_csv(str(p))
+            records = []
+            for row in df_tmp.to_dict(orient="records"):
+                clean_row = {}
+                for k, v in row.items():
+                    # Convert numpy scalars and sanitize NaN / Inf
+                    if hasattr(v, "item"):
+                        try:
+                            v = v.item()
+                        except Exception:
+                            v = str(v)
+                    if isinstance(v, float) and (math.isnan(v) or math.isinf(v)):
+                        v = None
+                    clean_row[k] = v
+                records.append(clean_row)
+            result[key] = records
         else:
             result[key] = p.read_text(errors="replace")
 
@@ -568,7 +677,11 @@ async def get_result(job_id: str):
     j = JOBS[job_id]
     if j["status"] != "done":
         raise HTTPException(400, f"Pipeline not finished yet (status={j['status']}).")
-    return JSONResponse(content=j["result"])
+    # Sanitize the entire result payload before serialization so that NaN /
+    # Inf / numpy scalar values (which are not JSON-compliant) never reach
+    # the JSONResponse encoder and cause a 500 ValueError.
+    safe_result = _sanitize_for_json(j["result"])
+    return JSONResponse(content=safe_result)
 
 
 @app.post("/api/query/{job_id}")
@@ -632,7 +745,7 @@ async def natural_language_query(job_id: str, body: QueryRequest):
             collection_name   = col_name,
             source_context    = source_context,
         )
-        return JSONResponse(content=response)
+        return JSONResponse(content=_sanitize_for_json(response))
     except Exception as e:
         import traceback
         traceback.print_exc()

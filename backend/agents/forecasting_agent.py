@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 from prophet import Prophet
-from backend.config import get_llm
+from config import get_llm
 import numpy as np
 import warnings
 warnings.filterwarnings("ignore")

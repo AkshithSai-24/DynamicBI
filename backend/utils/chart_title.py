@@ -1,4 +1,4 @@
-from backend.config import get_llm
+from config import get_llm
 
 
 def generate_chart_title(description):
