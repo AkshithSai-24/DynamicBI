@@ -140,7 +140,7 @@ function Bubble({ role, children, animate, ts }) {
       position: "relative",
     }}>
       <Avatar role={role} />
-      <div style={{ maxWidth: "76%", display: "flex", flexDirection: "column", alignItems: isUser ? "flex-end" : "flex-start", gap: 4 }}>
+      <div style={{ maxWidth: "76%", display: "flex", flexDirection: "column", alignItems: isUser ? "flex-end" : "flex-start", gap: 4 }} className="bubble-max">
         <div style={{
           background: isUser
             ? "linear-gradient(135deg, rgba(0,229,160,0.09), rgba(77,159,255,0.07))"
@@ -1930,6 +1930,7 @@ export default function App() {
   const [sessions, setSessions] = useState([{ id: "s1", label: "Getting started", sourceType: null, messages: [], jobId: null, result: null, status: "idle" }]);
   const [activeId, setActiveId] = useState("s1");
   const [lightbox, setLightbox] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const pollRef = useRef({});
   const bottomRef = useRef();
 
@@ -2385,22 +2386,62 @@ export default function App() {
         select { background: var(--surface2) !important; color: var(--text) !important; border-color: var(--border) !important; }
         select option { background: var(--surface2); color: var(--text); }
 
-        /* Responsive: smaller sidebar on tablet */
+        /* KPI strip — wrap on small screens */
+        .kpi-strip { display: flex; flex-wrap: wrap; gap: 10px; }
+
+        /* Chart gallery responsive */
+        .chart-gallery { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+
+        /* ── TABLET ≤ 900px ── */
         @media (max-width: 900px) {
           .app-sidebar { width: 200px !important; }
+          .app-topbar-stats { display: none !important; }
         }
+
+        /* ── MOBILE ≤ 680px ── */
         @media (max-width: 680px) {
           .app-sidebar { display: none !important; }
-          .app-topbar { padding: 10px 14px !important; }
-          .app-chat { padding: 16px 14px !important; }
-          .app-input { padding: 10px 14px 14px !important; }
+          .app-sidebar-open {
+            display: flex !important;
+            position: fixed; top: 0; left: 0; bottom: 0;
+            width: 260px; z-index: 500;
+            box-shadow: 4px 0 24px rgba(0,0,0,0.4);
+          }
+          .app-sidebar-overlay {
+            display: block !important;
+            position: fixed; inset: 0; z-index: 499;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+          }
+          .app-topbar { padding: 10px 12px !important; }
+          .app-topbar-title { font-size: 12.5px !important; }
+          .app-topbar-sub { display: none !important; }
+          .app-chat { padding: 12px 10px !important; }
+          .app-input { padding: 8px 10px 10px !important; }
+          .app-footer-labels { display: none !important; }
+          .app-menu-btn { display: flex !important; }
+          .bubble-max { max-width: 90% !important; }
+          .chart-gallery { grid-template-columns: 1fr !important; }
+          .kpi-strip .kpi-card { min-width: calc(50% - 5px) !important; }
+        }
+
+        /* ── SMALL MOBILE ≤ 420px ── */
+        @media (max-width: 420px) {
+          .kpi-strip .kpi-card { min-width: 100% !important; }
         }
       `}</style>
 
       <div style={{ display: "flex", height: "100dvh", overflow: "hidden" }}>
 
+        {/* Mobile sidebar overlay */}
+        {sidebarOpen && (
+          <div className="app-sidebar-overlay" style={{ display: "none" }} onClick={() => setSidebarOpen(false)} />
+        )}
+
         {/* Sidebar */}
-        <Sidebar sessions={sessions} activeId={activeId} onSelect={setActiveId} onNew={newSession} />
+        <div className={sidebarOpen ? "app-sidebar app-sidebar-open" : "app-sidebar"}>
+          <Sidebar sessions={sessions} activeId={activeId} onSelect={(id) => { setActiveId(id); setSidebarOpen(false); }} onNew={() => { newSession(); setSidebarOpen(false); }} />
+        </div>
 
         {/* Main chat area */}
         <main style={{
@@ -2436,6 +2477,22 @@ export default function App() {
             boxShadow: "0 1px 0 rgba(255,255,255,0.03)",
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              {/* Hamburger – mobile only */}
+              <button
+                className="app-menu-btn"
+                onClick={() => setSidebarOpen(o => !o)}
+                aria-label="Open sidebar"
+                style={{
+                  display: "none",
+                  width: 34, height: 34, borderRadius: 9,
+                  border: "1px solid var(--border2)",
+                  background: "var(--surface2)",
+                  color: "var(--muted)", cursor: "pointer",
+                  alignItems: "center", justifyContent: "center",
+                  fontSize: 16, flexShrink: 0,
+                  transition: "all 0.18s",
+                }}
+              >☰</button>
               {/* Status dot */}
               <div style={{
                 width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
@@ -2449,10 +2506,10 @@ export default function App() {
                 animation: active?.status === "running" ? "pulse-dot 1.5s ease-in-out infinite" : "none",
               }} />
               <div>
-                <p style={{ fontWeight: 700, fontSize: 13.5, color: "var(--text)", letterSpacing: -0.2 }}>
+                <p className="app-topbar-title" style={{ fontWeight: 700, fontSize: 13.5, color: "var(--text)", letterSpacing: -0.2 }}>
                   {active?.label || "New session"}
                 </p>
-                <p style={{ fontSize: 10.5, color: "var(--muted)", fontFamily: "var(--mono)", marginTop: 1 }}>
+                <p className="app-topbar-sub" style={{ fontSize: 10.5, color: "var(--muted)", fontFamily: "var(--mono)", marginTop: 1 }}>
                   {active?.status === "running" ? "⟳ Pipeline running…"
                     : active?.status === "done" ? `✓ Done · ${active.result?.charts?.length ?? 0} charts · ${active.result?.kpis?.length ?? 0} KPIs`
                     : active?.status === "error" ? "⚠ Error encountered"
@@ -2496,7 +2553,7 @@ export default function App() {
               {isDone && (
                 <>
                   {/* Mini stats */}
-                  <div style={{ display: "flex", gap: 6 }}>
+                  <div className="app-topbar-stats" style={{ display: "flex", gap: 6 }}>
                     {[
                       { label: active.result?.charts?.length ?? 0, suffix: "charts", color: "var(--accent2)" },
                       { label: active.result?.kpis?.length ?? 0, suffix: "KPIs", color: "var(--accent)" },
@@ -2524,7 +2581,7 @@ export default function App() {
               )}
             </div>
           </div>
-          <div className="chat-bg" style={{
+          <div className="chat-bg app-chat" style={{
             flex: 1, overflowY: "auto", padding: "8px 20px 6px",
             display: "flex", flexDirection: "column", gap: 8,
             background: darkMode ? "var(--surface)" : "var(--surface)",
@@ -2547,7 +2604,7 @@ export default function App() {
           </div>
 
           {/* Input bar area */}
-          <div style={{
+          <div className="app-input" style={{
             padding: "6px 16px 6px",
             borderTop: "1px solid var(--border)",
             flexShrink: 0,
@@ -2568,7 +2625,7 @@ export default function App() {
               }
               showSourceButtons={!isRunning}
             />
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginTop: 2 }}>
+            <div className="app-footer-labels" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginTop: 2 }}>
               {[["DynamicBI: Agentic AI", "var(--accent)"], ["LangGraph", "var(--accent2)"], ["Local & Private", "var(--muted)"]].map(([label, color], i) => (
                 <div key={label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   {i > 0 && <div style={{ width: 3, height: 3, borderRadius: "50%", background: "var(--border2)" }} />}
