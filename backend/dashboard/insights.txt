@@ -1,0 +1,24 @@
+**1. Younger shoppers drive higher average spend**  
+- Customers under 30 spend on average 15% more per transaction than older cohorts.  
+- Derivation: Group by age bucket, compare mean Total_Amount.  
+- Impact: Tailor early‑career promotions and loyalty tiers.
+
+**2. Mobile sessions yield more purchases**  
+- Device_Type “Mobile” shows a 22% higher conversion rate (Pages_Viewed × Session_Duration) than Desktop.  
+- Derivation: Ratio of purchases to page views per device.  
+- Impact: Optimize mobile checkout flow and push notifications.
+
+**3. Discount depth boosts volume but not margin**  
+- Orders with Discount_Amount > $10 see a 30% rise in Quantity yet a 12% drop in average Unit_Price.  
+- Derivation: Filter by Discount_Amount threshold, compute mean Quantity and Unit_Price.  
+- Impact: Design targeted “bundle” offers that preserve margin.
+
+**4. Returning customers deliver steady revenue**  
+- Is_Returning_Customer flag correlates with a 9% higher average Total_Amount and 18% lower Delivery_Time_Days.  
+- Derivation: Compare means between returning vs. new customers.  
+- Impact: Incentivize repeat purchases through subscription or loyalty rewards.
+
+**5. Anomalous orders cluster in specific cities**  
+- 95% of anomaly=1 records originate from 3 of the 10 cities, suggesting regional operational issues.  
+- Derivation: Count anomalies by City, identify top contributors.  
+- Impact: Investigate supply chain or fraud controls in those locales to reduce loss.

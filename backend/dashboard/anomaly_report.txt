@@ -1,0 +1,21 @@
+### 1. Why these anomalies occur
+- **Incorrect Total_Amount calculation** – The `Total_Amount` field does not match `Unit_Price * Quantity – Discount_Amount`.  
+- **Discount mis‑application** – Some rows show a non‑zero `Discount_Amount` while the total still reflects the full price, or vice‑versa.  
+- **Data entry or ETL errors** – Manual input or automated extraction may have truncated or rounded values, leading to mismatched totals.  
+- **Missing or duplicated discount logic** – The same discount may be applied twice or omitted entirely in the calculation pipeline.
+
+### 2. Business meaning
+- **Revenue distortion** – Inaccurate totals inflate or deflate reported sales, skewing financial statements and KPI dashboards.  
+- **Customer trust impact** – Wrong billing can lead to disputes, refunds, or churn.  
+- **Inventory & cost planning errors** – Mis‑priced orders affect cost‑of‑goods calculations and stock‑valuation.  
+- **Analytics noise** – Anomalous rows pollute trend analyses, forecasting, and segmentation models.
+
+### 3. How to fix them
+- **Re‑calculate `Total_Amount`** using the formula `Unit_Price * Quantity – Discount_Amount` for all rows and flag mismatches.  
+- **Implement validation rules** in the ETL pipeline:  
+  - `Total_Amount` must equal the calculated value within a small tolerance (e.g., ±0.01).  
+  - `Discount_Amount` must be ≤ `Unit_Price * Quantity`.  
+- **Add data quality checks** that run nightly and send alerts for any rows violating the rules.  
+- **Audit the source data** (POS, e‑commerce platform) to ensure discounts are applied consistently and not duplicated.  
+- **Correct historical records** in the data warehouse and re‑run downstream reports to restore accuracy.  
+- **Document the business logic** for discounts and totals so future developers and analysts understand the expected calculations.

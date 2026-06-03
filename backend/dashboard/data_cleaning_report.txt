@@ -1,0 +1,10 @@
+DATA CLEANING REPORT
+
+Duplicates removed: 0
+Capped 30 outliers in column Age
+Capped 513 outliers in column Unit_Price
+Capped 879 outliers in column Discount_Amount
+Capped 546 outliers in column Total_Amount
+Capped 124 outliers in column Session_Duration_Minutes
+Capped 14 outliers in column Pages_Viewed
+Capped 141 outliers in column Delivery_Time_Days

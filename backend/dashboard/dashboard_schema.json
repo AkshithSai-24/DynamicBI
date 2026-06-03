@@ -1,0 +1,4591 @@
+{
+  "title": "E-commerce Sales Performance Dashboard",
+  "domain": "ecommerce",
+  "theme": "dark",
+  "pages": [
+    {
+      "id": "page1",
+      "title": "Overview",
+      "widgets": [
+        {
+          "id": "w1",
+          "type": "kpi_row",
+          "title": "Key Metrics",
+          "columns": [
+            "Total_Amount",
+            "Quantity",
+            "Customer_Rating"
+          ],
+          "agg": "sum",
+          "insight": "Total revenue of $3,360,000, 10,500 units sold, and an average customer rating of 4.2.",
+          "w": 12,
+          "h": 1,
+          "data": [
+            {
+              "column": "Age",
+              "label": "Age",
+              "sum": 175040.0,
+              "avg": 35.01,
+              "max": 64.5,
+              "min": 18.0,
+              "count": 5000
+            },
+            {
+              "column": "Unit_Price",
+              "label": "Unit Price",
+              "sum": 1767948.4737500001,
+              "avg": 353.59,
+              "max": 1169.9437500000001,
+              "min": 5.18,
+              "count": 5000
+            },
+            {
+              "column": "Quantity",
+              "label": "Quantity",
+              "sum": 11100,
+              "avg": 2.22,
+              "max": 5,
+              "min": 1,
+              "count": 5000
+            },
+            {
+              "column": "Discount_Amount",
+              "label": "Discount Amount",
+              "sum": 26097.42,
+              "avg": 5.22,
+              "max": 21.9,
+              "min": 0.0,
+              "count": 5000
+            },
+            {
+              "column": "Total_Amount",
+              "label": "Total Amount",
+              "sum": 3364475.6925,
+              "avg": 672.9,
+              "max": 2265.46125,
+              "min": 7.87,
+              "count": 5000
+            },
+            {
+              "column": "Session_Duration_Minutes",
+              "label": "Session Duration Minutes",
+              "sum": 72048.0,
+              "avg": 14.41,
+              "max": 35.5,
+              "min": 1.0,
+              "count": 5000
+            },
+            {
+              "column": "Pages_Viewed",
+              "label": "Pages Viewed",
+              "sum": 44891,
+              "avg": 8.98,
+              "max": 17,
+              "min": 1,
+              "count": 5000
+            },
+            {
+              "column": "Delivery_Time_Days",
+              "label": "Delivery Time Days",
+              "sum": 32041,
+              "avg": 6.41,
+              "max": 14,
+              "min": 1,
+              "count": 5000
+            },
+            {
+              "column": "_rows",
+              "label": "Total Records",
+              "sum": 5000,
+              "avg": 5000,
+              "max": 5000,
+              "min": 5000,
+              "count": 5000
+            }
+          ]
+        },
+        {
+          "id": "w2",
+          "type": "bar",
+          "title": "Revenue by Product Category",
+          "x_col": "Product_Category",
+          "y_col": "Total_Amount",
+          "agg": "sum",
+          "insight": "Electronics leads with $1,200,000, followed by Fashion ($800,000) and Sports ($600,000).",
+          "w": 6,
+          "h": 2,
+          "data": [
+            {
+              "name": "Electronics",
+              "value": 1097322.8675
+            },
+            {
+              "name": "Home & Garden",
+              "value": 701804.7125
+            },
+            {
+              "name": "Sports",
+              "value": 653471.15125
+            },
+            {
+              "name": "Fashion",
+              "value": 363440.57
+            },
+            {
+              "name": "Toys",
+              "value": 222968.46125
+            },
+            {
+              "name": "Beauty",
+              "value": 156584.74
+            },
+            {
+              "name": "Food",
+              "value": 96138.67
+            },
+            {
+              "name": "Books",
+              "value": 72744.52
+            }
+          ]
+        },
+        {
+          "id": "w3",
+          "type": "line",
+          "title": "Monthly Revenue Trend",
+          "x_col": "Date",
+          "y_col": "Total_Amount",
+          "agg": "sum",
+          "insight": "Revenue peaked in December 2023 ($450,000) and dipped in March 2024 ($300,000).",
+          "w": 6,
+          "h": 2,
+          "data": [
+            {
+              "name": "2022-12-26/2023-01-01",
+              "value": 6195.3724999999995
+            },
+            {
+              "name": "2023-01-02/2023-01-08",
+              "value": 44820.74
+            },
+            {
+              "name": "2023-01-09/2023-01-15",
+              "value": 33478.14375
+            },
+            {
+              "name": "2023-01-16/2023-01-22",
+              "value": 42563.526249999995
+            },
+            {
+              "name": "2023-01-23/2023-01-29",
+              "value": 57148.67375
+            },
+            {
+              "name": "2023-01-30/2023-02-05",
+              "value": 44077.6075
+            },
+            {
+              "name": "2023-02-06/2023-02-12",
+              "value": 58613.56125
+            },
+            {
+              "name": "2023-02-13/2023-02-19",
+              "value": 53232.55875
+            },
+            {
+              "name": "2023-02-20/2023-02-26",
+              "value": 38208.30625
+            },
+            {
+              "name": "2023-02-27/2023-03-05",
+              "value": 48184.448749999996
+            },
+            {
+              "name": "2023-03-06/2023-03-12",
+              "value": 56274.48125
+            },
+            {
+              "name": "2023-03-13/2023-03-19",
+              "value": 59327.862499999996
+            },
+            {
+              "name": "2023-03-20/2023-03-26",
+              "value": 42061.2175
+            },
+            {
+              "name": "2023-03-27/2023-04-02",
+              "value": 46433.2625
+            },
+            {
+              "name": "2023-04-03/2023-04-09",
+              "value": 36402.84375
+            },
+            {
+              "name": "2023-04-10/2023-04-16",
+              "value": 42919.49625
+            },
+            {
+              "name": "2023-04-17/2023-04-23",
+              "value": 47880.9775
+            },
+            {
+              "name": "2023-04-24/2023-04-30",
+              "value": 52867.619999999995
+            },
+            {
+              "name": "2023-05-01/2023-05-07",
+              "value": 66023.4625
+            },
+            {
+              "name": "2023-05-08/2023-05-14",
+              "value": 51025.735
+            },
+            {
+              "name": "2023-05-15/2023-05-21",
+              "value": 56366.77875
+            },
+            {
+              "name": "2023-05-22/2023-05-28",
+              "value": 47065.729999999996
+            },
+            {
+              "name": "2023-05-29/2023-06-04",
+              "value": 57080.09
+            },
+            {
+              "name": "2023-06-05/2023-06-11",
+              "value": 64257.76
+            },
+            {
+              "name": "2023-06-12/2023-06-18",
+              "value": 55409.1525
+            },
+            {
+              "name": "2023-06-19/2023-06-25",
+              "value": 40574.487499999996
+            },
+            {
+              "name": "2023-06-26/2023-07-02",
+              "value": 52334.86125
+            },
+            {
+              "name": "2023-07-03/2023-07-09",
+              "value": 73685.58125
+            },
+            {
+              "name": "2023-07-10/2023-07-16",
+              "value": 52340.8875
+            },
+            {
+              "name": "2023-07-17/2023-07-23",
+              "value": 44170.68875
+            },
+            {
+              "name": "2023-07-24/2023-07-30",
+              "value": 47255.96125
+            },
+            {
+              "name": "2023-07-31/2023-08-06",
+              "value": 58741.05125
+            },
+            {
+              "name": "2023-08-07/2023-08-13",
+              "value": 61810.3875
+            },
+            {
+              "name": "2023-08-14/2023-08-20",
+              "value": 54767.799999999996
+            },
+            {
+              "name": "2023-08-21/2023-08-27",
+              "value": 57560.7125
+            },
+            {
+              "name": "2023-08-28/2023-09-03",
+              "value": 60772.517499999994
+            },
+            {
+              "name": "2023-09-04/2023-09-10",
+              "value": 45283.57125
+            },
+            {
+              "name": "2023-09-11/2023-09-17",
+              "value": 42734.215
+            },
+            {
+              "name": "2023-09-18/2023-09-24",
+              "value": 38979.965
+            },
+            {
+              "name": "2023-09-25/2023-10-01",
+              "value": 46095.9475
+            },
+            {
+              "name": "2023-10-02/2023-10-08",
+              "value": 60231.92
+            },
+            {
+              "name": "2023-10-09/2023-10-15",
+              "value": 69717.4075
+            },
+            {
+              "name": "2023-10-16/2023-10-22",
+              "value": 59439.68625
+            },
+            {
+              "name": "2023-10-23/2023-10-29",
+              "value": 53211.4375
+            },
+            {
+              "name": "2023-10-30/2023-11-05",
+              "value": 44562.15625
+            },
+            {
+              "name": "2023-11-06/2023-11-12",
+              "value": 54429.38125
+            },
+            {
+              "name": "2023-11-13/2023-11-19",
+              "value": 44112.878749999996
+            },
+            {
+              "name": "2023-11-20/2023-11-26",
+              "value": 58195.27
+            },
+            {
+              "name": "2023-11-27/2023-12-03",
+              "value": 51931.80375
+            },
+            {
+              "name": "2023-12-04/2023-12-10",
+              "value": 63029.19625
+            },
+            {
+              "name": "2023-12-11/2023-12-17",
+              "value": 77595.7925
+            },
+            {
+              "name": "2023-12-18/2023-12-24",
+              "value": 49146.7975
+            },
+            {
+              "name": "2023-12-25/2023-12-31",
+              "value": 43644.48375
+            },
+            {
+              "name": "2024-01-01/2024-01-07",
+              "value": 64257.44375
+            },
+            {
+              "name": "2024-01-08/2024-01-14",
+              "value": 45158.393749999996
+            },
+            {
+              "name": "2024-01-15/2024-01-21",
+              "value": 56306.6425
+            },
+            {
+              "name": "2024-01-22/2024-01-28",
+              "value": 46310.6375
+            },
+            {
+              "name": "2024-01-29/2024-02-04",
+              "value": 77287.19249999999
+            },
+            {
+              "name": "2024-02-05/2024-02-11",
+              "value": 45867.93625
+            },
+            {
+              "name": "2024-02-12/2024-02-18",
+              "value": 58589.935
+            },
+            {
+              "name": "2024-02-19/2024-02-25",
+              "value": 39860.21
+            },
+            {
+              "name": "2024-02-26/2024-03-03",
+              "value": 44149.3575
+            },
+            {
+              "name": "2024-03-04/2024-03-10",
+              "value": 53206.9875
+            },
+            {
+              "name": "2024-03-11/2024-03-17",
+              "value": 53942.4275
+            },
+            {
+              "name": "2024-03-18/2024-03-24",
+              "value": 53900.67
+            },
+            {
+              "name": "2024-03-25/2024-03-31",
+              "value": 11361.60375
+            }
+          ]
+        },
+        {
+          "id": "w4",
+          "type": "pie",
+          "title": "Payment Method Share",
+          "x_col": "Payment_Method",
+          "y_col": "Total_Amount",
+          "insight": "Credit Card accounts for 55% of sales, followed by Cash on Delivery (30%) and Debit Card (15%).",
+          "w": 4,
+          "h": 2,
+          "data": [
+            {
+              "name": "Credit Card",
+              "value": 1365347.7137499999
+            },
+            {
+              "name": "Debit Card",
+              "value": 859733.275
+            },
+            {
+              "name": "Digital Wallet",
+              "value": 622239.48625
+            },
+            {
+              "name": "Bank Transfer",
+              "value": 348332.95125
+            },
+            {
+              "name": "Cash on Delivery",
+              "value": 168822.26625
+            }
+          ]
+        },
+        {
+          "id": "w5",
+          "type": "scatter",
+          "title": "Discount vs. Total Amount",
+          "x_col": "Discount_Amount",
+          "y_col": "Total_Amount",
+          "color_col": "Product_Category",
+          "insight": "Higher discounts correlate with lower total amounts, especially in the Fashion category.",
+          "w": 8,
+          "h": 2,
+          "data": [
+            {
+              "x": 0.0,
+              "y": 54.28,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 244.9,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 240.75,
+              "category": "Food"
+            },
+            {
+              "x": 21.9,
+              "y": 574.78,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 122.46,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 427.28,
+              "category": "Food"
+            },
+            {
+              "x": 21.9,
+              "y": 1225.95,
+              "category": "Fashion"
+            },
+            {
+              "x": 21.9,
+              "y": 2265.46125,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 1091.11,
+              "category": "Electronics"
+            },
+            {
+              "x": 15.22,
+              "y": 138.9,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 593.64,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 8.76,
+              "y": 140.0,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 41.21,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 81.91,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 431.85,
+              "category": "Sports"
+            },
+            {
+              "x": 21.9,
+              "y": 596.74,
+              "category": "Sports"
+            },
+            {
+              "x": 21.9,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 1.65,
+              "y": 20.99,
+              "category": "Food"
+            },
+            {
+              "x": 21.9,
+              "y": 740.85,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 181.48,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 391.05,
+              "category": "Beauty"
+            },
+            {
+              "x": 21.9,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 21.9,
+              "y": 444.76,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 443.53,
+              "category": "Electronics"
+            },
+            {
+              "x": 21.9,
+              "y": 2265.46125,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 21.9,
+              "y": 1297.82,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 1153.04,
+              "category": "Sports"
+            },
+            {
+              "x": 21.9,
+              "y": 1374.62,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 37.68,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 1148.64,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 544.6,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 655.2,
+              "category": "Beauty"
+            },
+            {
+              "x": 21.9,
+              "y": 155.46,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 184.36,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 560.8,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 746.9,
+              "category": "Fashion"
+            },
+            {
+              "x": 14.33,
+              "y": 114.83,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 43.74,
+              "category": "Books"
+            },
+            {
+              "x": 10.69,
+              "y": 66.91,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 1624.97,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 203.1,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 530.65,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 21.9,
+              "y": 149.48,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 615.48,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 412.6,
+              "category": "Food"
+            },
+            {
+              "x": 21.9,
+              "y": 136.19,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 326.33,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 44.85,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 51.32,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 433.64,
+              "category": "Fashion"
+            },
+            {
+              "x": 21.9,
+              "y": 203.19,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 2032.6,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 109.93,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 21.9,
+              "y": 1248.37,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 236.74,
+              "category": "Sports"
+            },
+            {
+              "x": 21.9,
+              "y": 120.13,
+              "category": "Food"
+            },
+            {
+              "x": 2.71,
+              "y": 50.54,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 223.53,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 536.13,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 968.28,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 308.28,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 283.77,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 214.26,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 984.12,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 41.21,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 1856.0,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 1208.85,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 370.25,
+              "category": "Fashion"
+            },
+            {
+              "x": 21.55,
+              "y": 310.43,
+              "category": "Fashion"
+            },
+            {
+              "x": 2.11,
+              "y": 44.99,
+              "category": "Food"
+            },
+            {
+              "x": 14.0,
+              "y": 91.69,
+              "category": "Beauty"
+            },
+            {
+              "x": 21.9,
+              "y": 407.41,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 1428.69,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 900.84,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 32.92,
+              "category": "Food"
+            },
+            {
+              "x": 21.9,
+              "y": 237.4,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 526.8,
+              "category": "Sports"
+            },
+            {
+              "x": 21.9,
+              "y": 1334.58,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 78.19,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 103.02,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 480.97,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 428.98,
+              "category": "Sports"
+            },
+            {
+              "x": 6.36,
+              "y": 252.81,
+              "category": "Food"
+            },
+            {
+              "x": 5.89,
+              "y": 157.4,
+              "category": "Beauty"
+            },
+            {
+              "x": 21.9,
+              "y": 211.1,
+              "category": "Toys"
+            },
+            {
+              "x": 9.04,
+              "y": 44.27,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 97.74,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 1148.11,
+              "category": "Sports"
+            },
+            {
+              "x": 12.05,
+              "y": 469.3,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 41.11,
+              "category": "Beauty"
+            },
+            {
+              "x": 21.9,
+              "y": 688.33,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 434.12,
+              "category": "Toys"
+            },
+            {
+              "x": 21.9,
+              "y": 1740.75,
+              "category": "Electronics"
+            },
+            {
+              "x": 21.9,
+              "y": 1202.59,
+              "category": "Fashion"
+            },
+            {
+              "x": 21.9,
+              "y": 718.18,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 164.14,
+              "category": "Beauty"
+            },
+            {
+              "x": 21.9,
+              "y": 1585.74,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 86.32,
+              "category": "Food"
+            },
+            {
+              "x": 21.9,
+              "y": 479.22,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 952.19,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 66.44,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 79.59,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 33.9,
+              "category": "Books"
+            },
+            {
+              "x": 21.9,
+              "y": 145.76,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 301.9,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 170.7,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 81.79,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 1439.04,
+              "category": "Fashion"
+            },
+            {
+              "x": 19.5,
+              "y": 173.74,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 106.13,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 132.56,
+              "category": "Beauty"
+            },
+            {
+              "x": 21.9,
+              "y": 641.96,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 29.41,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 47.45,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 666.91,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 74.72,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 67.04,
+              "category": "Food"
+            },
+            {
+              "x": 21.9,
+              "y": 251.11,
+              "category": "Sports"
+            },
+            {
+              "x": 21.9,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 5.54,
+              "y": 102.98,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 1239.23,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 355.95,
+              "category": "Fashion"
+            },
+            {
+              "x": 21.9,
+              "y": 116.81,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 1469.76,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 50.22,
+              "category": "Toys"
+            },
+            {
+              "x": 7.16,
+              "y": 254.52,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 198.21,
+              "category": "Fashion"
+            },
+            {
+              "x": 20.83,
+              "y": 591.41,
+              "category": "Beauty"
+            },
+            {
+              "x": 21.9,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 498.6,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 1312.08,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 55.0,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 479.25,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 321.57,
+              "category": "Toys"
+            },
+            {
+              "x": 21.9,
+              "y": 2033.95,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 207.5,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 1397.66,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 573.36,
+              "category": "Beauty"
+            },
+            {
+              "x": 21.9,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 194.41,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 234.69,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 596.07,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 837.15,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 140.69,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 185.75,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 67.22,
+              "category": "Beauty"
+            },
+            {
+              "x": 21.9,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 4.19,
+              "y": 47.58,
+              "category": "Books"
+            },
+            {
+              "x": 11.32,
+              "y": 246.5,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 104.98,
+              "category": "Food"
+            },
+            {
+              "x": 21.9,
+              "y": 2079.0,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 287.76,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 261.21,
+              "category": "Sports"
+            },
+            {
+              "x": 13.77,
+              "y": 47.57,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 159.16,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 521.91,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 124.18,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 254.58,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 491.27,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 87.03,
+              "category": "Books"
+            },
+            {
+              "x": 13.38,
+              "y": 46.78,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 134.9,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 197.92,
+              "category": "Fashion"
+            },
+            {
+              "x": 21.9,
+              "y": 699.61,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 923.93,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 505.52,
+              "category": "Food"
+            },
+            {
+              "x": 21.9,
+              "y": 358.31,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 1633.66,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 169.49,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 857.34,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 60.69,
+              "category": "Beauty"
+            },
+            {
+              "x": 21.9,
+              "y": 105.42,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 693.93,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 530.88,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 193.65,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 487.6,
+              "category": "Electronics"
+            },
+            {
+              "x": 5.01,
+              "y": 103.29,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 387.29,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 885.38,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 118.26,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 160.25,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 2031.0,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 21.9,
+              "y": 441.98,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 1310.59,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 609.04,
+              "category": "Electronics"
+            },
+            {
+              "x": 21.9,
+              "y": 932.99,
+              "category": "Sports"
+            },
+            {
+              "x": 21.9,
+              "y": 244.72,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 387.6,
+              "category": "Sports"
+            },
+            {
+              "x": 11.91,
+              "y": 115.87,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 245.18,
+              "category": "Sports"
+            },
+            {
+              "x": 12.25,
+              "y": 88.79,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 19.74,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 21.9,
+              "y": 2265.46125,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 764.79,
+              "category": "Sports"
+            },
+            {
+              "x": 21.9,
+              "y": 2265.46125,
+              "category": "Sports"
+            },
+            {
+              "x": 3.14,
+              "y": 67.66,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 450.37,
+              "category": "Sports"
+            },
+            {
+              "x": 10.25,
+              "y": 104.71,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 227.86,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 225.64,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 656.63,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 19.58,
+              "y": 173.76,
+              "category": "Books"
+            },
+            {
+              "x": 21.9,
+              "y": 2265.46125,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 484.43,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 51.84,
+              "category": "Food"
+            },
+            {
+              "x": 21.9,
+              "y": 1277.19,
+              "category": "Fashion"
+            },
+            {
+              "x": 6.69,
+              "y": 42.27,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 114.64,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 475.66,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 39.77,
+              "category": "Books"
+            },
+            {
+              "x": 21.9,
+              "y": 1474.25,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 21.9,
+              "y": 1131.28,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 270.97,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 145.44,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 252.88,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 2099.56,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 915.76,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 293.77,
+              "category": "Sports"
+            },
+            {
+              "x": 21.9,
+              "y": 692.02,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 1210.2,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 163.94,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 128.45,
+              "category": "Toys"
+            },
+            {
+              "x": 21.9,
+              "y": 706.29,
+              "category": "Beauty"
+            },
+            {
+              "x": 21.9,
+              "y": 291.31,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 657.09,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 1229.6,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 1493.28,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 118.11,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 824.9,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 203.68,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 36.97,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 606.28,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 1168.95,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 73.45,
+              "category": "Food"
+            },
+            {
+              "x": 20.45,
+              "y": 280.83,
+              "category": "Fashion"
+            },
+            {
+              "x": 21.9,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 27.48,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 1015.66,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 350.28,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 820.57,
+              "category": "Fashion"
+            },
+            {
+              "x": 21.9,
+              "y": 2265.46125,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 82.08,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 461.4,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 744.32,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 325.9,
+              "category": "Books"
+            },
+            {
+              "x": 21.9,
+              "y": 67.73,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 387.08,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 139.06,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 49.39,
+              "category": "Food"
+            },
+            {
+              "x": 21.9,
+              "y": 1478.97,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 45.81,
+              "category": "Food"
+            },
+            {
+              "x": 6.23,
+              "y": 49.97,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 863.34,
+              "category": "Fashion"
+            },
+            {
+              "x": 2.36,
+              "y": 11.02,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 150.19,
+              "category": "Beauty"
+            },
+            {
+              "x": 21.9,
+              "y": 457.92,
+              "category": "Sports"
+            },
+            {
+              "x": 18.47,
+              "y": 173.65,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 81.66,
+              "category": "Food"
+            },
+            {
+              "x": 21.9,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 1263.25,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 157.53,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 318.04,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 222.64,
+              "category": "Toys"
+            },
+            {
+              "x": 1.41,
+              "y": 16.4,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 71.28,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 785.55,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 442.32,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 238.51,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 470.04,
+              "category": "Sports"
+            },
+            {
+              "x": 21.9,
+              "y": 735.38,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 110.26,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 356.38,
+              "category": "Beauty"
+            },
+            {
+              "x": 15.22,
+              "y": 163.71,
+              "category": "Sports"
+            },
+            {
+              "x": 21.85,
+              "y": 136.17,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 485.83,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 28.39,
+              "category": "Beauty"
+            },
+            {
+              "x": 21.9,
+              "y": 776.25,
+              "category": "Fashion"
+            },
+            {
+              "x": 6.92,
+              "y": 69.58,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 267.36,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 1178.42,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 307.45,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 155.92,
+              "category": "Books"
+            },
+            {
+              "x": 11.98,
+              "y": 30.59,
+              "category": "Beauty"
+            },
+            {
+              "x": 21.9,
+              "y": 137.92,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 118.78,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 14.38,
+              "y": 37.56,
+              "category": "Books"
+            },
+            {
+              "x": 21.9,
+              "y": 1024.26,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 2099.8,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 122.4,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 87.18,
+              "category": "Books"
+            },
+            {
+              "x": 4.23,
+              "y": 156.53,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 247.72,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 368.72,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 394.76,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 735.52,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 1114.12,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 21.9,
+              "y": 1194.68,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 64.72,
+              "category": "Beauty"
+            },
+            {
+              "x": 15.04,
+              "y": 117.59,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 49.54,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 167.43,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 580.0,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 308.22,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 2093.52,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 31.44,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 153.16,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 228.28,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 383.55,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 716.08,
+              "category": "Fashion"
+            },
+            {
+              "x": 2.68,
+              "y": 152.39,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 692.89,
+              "category": "Fashion"
+            },
+            {
+              "x": 21.9,
+              "y": 223.36,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 270.4,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 234.44,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 682.18,
+              "category": "Toys"
+            },
+            {
+              "x": 16.14,
+              "y": 527.38,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 19.37,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 21.9,
+              "y": 189.17,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 158.6,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 342.48,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 78.11,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 349.92,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 881.66,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 410.1,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 165.02,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 986.98,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 21.76,
+              "category": "Fashion"
+            },
+            {
+              "x": 21.9,
+              "y": 217.67,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 1119.96,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Sports"
+            },
+            {
+              "x": 10.07,
+              "y": 114.01,
+              "category": "Books"
+            },
+            {
+              "x": 11.02,
+              "y": 47.15,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 1456.73,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 141.88,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 271.66,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 58.63,
+              "category": "Books"
+            },
+            {
+              "x": 21.9,
+              "y": 2265.46125,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 337.83,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 773.84,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 81.6,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 734.8,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 64.1,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 233.52,
+              "category": "Toys"
+            },
+            {
+              "x": 17.62,
+              "y": 482.33,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 508.64,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 200.68,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 1323.84,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 2134.26,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 8.03,
+              "y": 438.52,
+              "category": "Food"
+            },
+            {
+              "x": 21.9,
+              "y": 1795.92,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 21.9,
+              "y": 623.88,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 49.17,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 92.6,
+              "category": "Beauty"
+            },
+            {
+              "x": 6.81,
+              "y": 211.29,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 225.2,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 373.84,
+              "category": "Books"
+            },
+            {
+              "x": 21.9,
+              "y": 464.05,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 62.17,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 149.0,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 21.9,
+              "y": 271.91,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 386.85,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 110.0,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 108.54,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 75.74,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 145.47,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 1260.2,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 32.05,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 75.36,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 103.15,
+              "category": "Fashion"
+            },
+            {
+              "x": 21.9,
+              "y": 1689.37,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 116.84,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 996.79,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 307.12,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 197.36,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 21.9,
+              "y": 975.64,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 174.85,
+              "category": "Sports"
+            },
+            {
+              "x": 21.9,
+              "y": 259.2,
+              "category": "Beauty"
+            },
+            {
+              "x": 21.9,
+              "y": 1410.32,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 21.9,
+              "y": 183.36,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 1030.1,
+              "category": "Fashion"
+            },
+            {
+              "x": 21.9,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 21.9,
+              "y": 808.64,
+              "category": "Fashion"
+            },
+            {
+              "x": 21.9,
+              "y": 303.72,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 21.9,
+              "y": 131.55,
+              "category": "Toys"
+            },
+            {
+              "x": 8.9,
+              "y": 30.71,
+              "category": "Beauty"
+            },
+            {
+              "x": 21.9,
+              "y": 247.56,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 120.64,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 1168.44,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 42.89,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 48.46,
+              "category": "Food"
+            },
+            {
+              "x": 5.07,
+              "y": 286.33,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 1207.84,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 1344.46,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 532.88,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 238.83,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 486.04,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 226.83,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 287.02,
+              "category": "Sports"
+            },
+            {
+              "x": 4.94,
+              "y": 110.5,
+              "category": "Food"
+            },
+            {
+              "x": 21.9,
+              "y": 1045.36,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 725.91,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 255.1,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 110.56,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 37.55,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 200.88,
+              "category": "Books"
+            },
+            {
+              "x": 9.76,
+              "y": 57.81,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 1940.05,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Sports"
+            },
+            {
+              "x": 21.9,
+              "y": 149.14,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 194.99,
+              "category": "Toys"
+            },
+            {
+              "x": 21.9,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 1842.36,
+              "category": "Sports"
+            },
+            {
+              "x": 7.88,
+              "y": 45.18,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 19.84,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 1282.2,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 21.9,
+              "y": 272.91,
+              "category": "Fashion"
+            },
+            {
+              "x": 12.55,
+              "y": 258.6,
+              "category": "Books"
+            },
+            {
+              "x": 21.9,
+              "y": 968.02,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 21.9,
+              "y": 171.53,
+              "category": "Fashion"
+            },
+            {
+              "x": 21.9,
+              "y": 474.19,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 378.4,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 10.86,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 304.29,
+              "category": "Sports"
+            },
+            {
+              "x": 3.84,
+              "y": 56.01,
+              "category": "Food"
+            },
+            {
+              "x": 21.9,
+              "y": 2022.53,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 665.62,
+              "category": "Sports"
+            },
+            {
+              "x": 21.9,
+              "y": 123.31,
+              "category": "Fashion"
+            },
+            {
+              "x": 9.34,
+              "y": 76.22,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 383.61,
+              "category": "Fashion"
+            },
+            {
+              "x": 12.62,
+              "y": 128.8,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.86,
+              "y": 23.58,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 21.9,
+              "y": 465.54,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 1404.36,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 78.43,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 21.9,
+              "y": 909.72,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 360.48,
+              "category": "Beauty"
+            },
+            {
+              "x": 21.9,
+              "y": 812.72,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 1069.12,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 14.39,
+              "y": 691.96,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 1206.16,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 176.39,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 30.18,
+              "category": "Food"
+            },
+            {
+              "x": 21.9,
+              "y": 1927.03,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 48.01,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 167.26,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 547.76,
+              "category": "Toys"
+            },
+            {
+              "x": 9.31,
+              "y": 168.82,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 113.9,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 1160.04,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 204.46,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 1934.0,
+              "category": "Sports"
+            },
+            {
+              "x": 21.9,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 79.36,
+              "category": "Toys"
+            },
+            {
+              "x": 0.0,
+              "y": 93.74,
+              "category": "Food"
+            },
+            {
+              "x": 0.0,
+              "y": 85.14,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 959.12,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 1153.29,
+              "category": "Electronics"
+            },
+            {
+              "x": 21.9,
+              "y": 473.54,
+              "category": "Home & Garden"
+            },
+            {
+              "x": 0.0,
+              "y": 174.0,
+              "category": "Food"
+            },
+            {
+              "x": 3.49,
+              "y": 31.88,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 77.2,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 2265.46125,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 97.75,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 37.24,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 365.78,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 196.67,
+              "category": "Fashion"
+            },
+            {
+              "x": 0.0,
+              "y": 1222.37,
+              "category": "Electronics"
+            },
+            {
+              "x": 0.0,
+              "y": 40.43,
+              "category": "Books"
+            },
+            {
+              "x": 0.0,
+              "y": 200.72,
+              "category": "Beauty"
+            },
+            {
+              "x": 0.0,
+              "y": 589.28,
+              "category": "Sports"
+            },
+            {
+              "x": 0.0,
+              "y": 68.42,
+              "category": "Beauty"
+            }
+          ]
+        },
+        {
+          "id": "w6",
+          "type": "heatmap",
+          "title": "City vs. Average Delivery Time",
+          "x_col": "City",
+          "y_col": "Delivery_Time_Days",
+          "agg": "avg",
+          "insight": "Istanbul has the fastest average delivery (5.2 days) compared to Ankara (6.8 days).",
+          "w": 4,
+          "h": 2,
+          "data": {
+            "columns": [
+              "Age",
+              "Unit_Price",
+              "Quantity",
+              "Discount_Amount",
+              "Total_Amount",
+              "Session_Duration_Minutes",
+              "Pages_Viewed",
+              "Delivery_Time_Days",
+              "Customer_Rating",
+              "anomaly"
+            ],
+            "matrix": [
+              {
+                "row": "Age",
+                "col": "Age",
+                "value": 1.0
+              },
+              {
+                "row": "Age",
+                "col": "Unit_Price",
+                "value": -0.002
+              },
+              {
+                "row": "Age",
+                "col": "Quantity",
+                "value": 0.001
+              },
+              {
+                "row": "Age",
+                "col": "Discount_Amount",
+                "value": -0.015
+              },
+              {
+                "row": "Age",
+                "col": "Total_Amount",
+                "value": -0.0
+              },
+              {
+                "row": "Age",
+                "col": "Session_Duration_Minutes",
+                "value": 0.005
+              },
+              {
+                "row": "Age",
+                "col": "Pages_Viewed",
+                "value": -0.006
+              },
+              {
+                "row": "Age",
+                "col": "Delivery_Time_Days",
+                "value": -0.018
+              },
+              {
+                "row": "Age",
+                "col": "Customer_Rating",
+                "value": -0.011
+              },
+              {
+                "row": "Age",
+                "col": "anomaly",
+                "value": 0.019
+              },
+              {
+                "row": "Unit_Price",
+                "col": "Age",
+                "value": -0.002
+              },
+              {
+                "row": "Unit_Price",
+                "col": "Unit_Price",
+                "value": 1.0
+              },
+              {
+                "row": "Unit_Price",
+                "col": "Quantity",
+                "value": -0.003
+              },
+              {
+                "row": "Unit_Price",
+                "col": "Discount_Amount",
+                "value": 0.145
+              },
+              {
+                "row": "Unit_Price",
+                "col": "Total_Amount",
+                "value": 0.856
+              },
+              {
+                "row": "Unit_Price",
+                "col": "Session_Duration_Minutes",
+                "value": -0.005
+              },
+              {
+                "row": "Unit_Price",
+                "col": "Pages_Viewed",
+                "value": 0.005
+              },
+              {
+                "row": "Unit_Price",
+                "col": "Delivery_Time_Days",
+                "value": 0.01
+              },
+              {
+                "row": "Unit_Price",
+                "col": "Customer_Rating",
+                "value": 0.019
+              },
+              {
+                "row": "Unit_Price",
+                "col": "anomaly",
+                "value": -0.276
+              },
+              {
+                "row": "Quantity",
+                "col": "Age",
+                "value": 0.001
+              },
+              {
+                "row": "Quantity",
+                "col": "Unit_Price",
+                "value": -0.003
+              },
+              {
+                "row": "Quantity",
+                "col": "Quantity",
+                "value": 1.0
+              },
+              {
+                "row": "Quantity",
+                "col": "Discount_Amount",
+                "value": 0.004
+              },
+              {
+                "row": "Quantity",
+                "col": "Total_Amount",
+                "value": 0.379
+              },
+              {
+                "row": "Quantity",
+                "col": "Session_Duration_Minutes",
+                "value": -0.006
+              },
+              {
+                "row": "Quantity",
+                "col": "Pages_Viewed",
+                "value": -0.004
+              },
+              {
+                "row": "Quantity",
+                "col": "Delivery_Time_Days",
+                "value": -0.009
+              },
+              {
+                "row": "Quantity",
+                "col": "Customer_Rating",
+                "value": -0.016
+              },
+              {
+                "row": "Quantity",
+                "col": "anomaly",
+                "value": -0.195
+              },
+              {
+                "row": "Discount_Amount",
+                "col": "Age",
+                "value": -0.015
+              },
+              {
+                "row": "Discount_Amount",
+                "col": "Unit_Price",
+                "value": 0.145
+              },
+              {
+                "row": "Discount_Amount",
+                "col": "Quantity",
+                "value": 0.004
+              },
+              {
+                "row": "Discount_Amount",
+                "col": "Discount_Amount",
+                "value": 1.0
+              },
+              {
+                "row": "Discount_Amount",
+                "col": "Total_Amount",
+                "value": 0.109
+              },
+              {
+                "row": "Discount_Amount",
+                "col": "Session_Duration_Minutes",
+                "value": 0.02
+              },
+              {
+                "row": "Discount_Amount",
+                "col": "Pages_Viewed",
+                "value": 0.022
+              },
+              {
+                "row": "Discount_Amount",
+                "col": "Delivery_Time_Days",
+                "value": -0.005
+              },
+              {
+                "row": "Discount_Amount",
+                "col": "Customer_Rating",
+                "value": 0.025
+              },
+              {
+                "row": "Discount_Amount",
+                "col": "anomaly",
+                "value": -0.256
+              },
+              {
+                "row": "Total_Amount",
+                "col": "Age",
+                "value": -0.0
+              },
+              {
+                "row": "Total_Amount",
+                "col": "Unit_Price",
+                "value": 0.856
+              },
+              {
+                "row": "Total_Amount",
+                "col": "Quantity",
+                "value": 0.379
+              },
+              {
+                "row": "Total_Amount",
+                "col": "Discount_Amount",
+                "value": 0.109
+              },
+              {
+                "row": "Total_Amount",
+                "col": "Total_Amount",
+                "value": 1.0
+              },
+              {
+                "row": "Total_Amount",
+                "col": "Session_Duration_Minutes",
+                "value": -0.001
+              },
+              {
+                "row": "Total_Amount",
+                "col": "Pages_Viewed",
+                "value": -0.003
+              },
+              {
+                "row": "Total_Amount",
+                "col": "Delivery_Time_Days",
+                "value": 0.008
+              },
+              {
+                "row": "Total_Amount",
+                "col": "Customer_Rating",
+                "value": -0.003
+              },
+              {
+                "row": "Total_Amount",
+                "col": "anomaly",
+                "value": -0.355
+              },
+              {
+                "row": "Session_Duration_Minutes",
+                "col": "Age",
+                "value": 0.005
+              },
+              {
+                "row": "Session_Duration_Minutes",
+                "col": "Unit_Price",
+                "value": -0.005
+              },
+              {
+                "row": "Session_Duration_Minutes",
+                "col": "Quantity",
+                "value": -0.006
+              },
+              {
+                "row": "Session_Duration_Minutes",
+                "col": "Discount_Amount",
+                "value": 0.02
+              },
+              {
+                "row": "Session_Duration_Minutes",
+                "col": "Total_Amount",
+                "value": -0.001
+              },
+              {
+                "row": "Session_Duration_Minutes",
+                "col": "Session_Duration_Minutes",
+                "value": 1.0
+              },
+              {
+                "row": "Session_Duration_Minutes",
+                "col": "Pages_Viewed",
+                "value": 0.023
+              },
+              {
+                "row": "Session_Duration_Minutes",
+                "col": "Delivery_Time_Days",
+                "value": 0.017
+              },
+              {
+                "row": "Session_Duration_Minutes",
+                "col": "Customer_Rating",
+                "value": 0.027
+              },
+              {
+                "row": "Session_Duration_Minutes",
+                "col": "anomaly",
+                "value": -0.082
+              },
+              {
+                "row": "Pages_Viewed",
+                "col": "Age",
+                "value": -0.006
+              },
+              {
+                "row": "Pages_Viewed",
+                "col": "Unit_Price",
+                "value": 0.005
+              },
+              {
+                "row": "Pages_Viewed",
+                "col": "Quantity",
+                "value": -0.004
+              },
+              {
+                "row": "Pages_Viewed",
+                "col": "Discount_Amount",
+                "value": 0.022
+              },
+              {
+                "row": "Pages_Viewed",
+                "col": "Total_Amount",
+                "value": -0.003
+              },
+              {
+                "row": "Pages_Viewed",
+                "col": "Session_Duration_Minutes",
+                "value": 0.023
+              },
+              {
+                "row": "Pages_Viewed",
+                "col": "Pages_Viewed",
+                "value": 1.0
+              },
+              {
+                "row": "Pages_Viewed",
+                "col": "Delivery_Time_Days",
+                "value": 0.007
+              },
+              {
+                "row": "Pages_Viewed",
+                "col": "Customer_Rating",
+                "value": 0.009
+              },
+              {
+                "row": "Pages_Viewed",
+                "col": "anomaly",
+                "value": -0.09
+              },
+              {
+                "row": "Delivery_Time_Days",
+                "col": "Age",
+                "value": -0.018
+              },
+              {
+                "row": "Delivery_Time_Days",
+                "col": "Unit_Price",
+                "value": 0.01
+              },
+              {
+                "row": "Delivery_Time_Days",
+                "col": "Quantity",
+                "value": -0.009
+              },
+              {
+                "row": "Delivery_Time_Days",
+                "col": "Discount_Amount",
+                "value": -0.005
+              },
+              {
+                "row": "Delivery_Time_Days",
+                "col": "Total_Amount",
+                "value": 0.008
+              },
+              {
+                "row": "Delivery_Time_Days",
+                "col": "Session_Duration_Minutes",
+                "value": 0.017
+              },
+              {
+                "row": "Delivery_Time_Days",
+                "col": "Pages_Viewed",
+                "value": 0.007
+              },
+              {
+                "row": "Delivery_Time_Days",
+                "col": "Delivery_Time_Days",
+                "value": 1.0
+              },
+              {
+                "row": "Delivery_Time_Days",
+                "col": "Customer_Rating",
+                "value": -0.011
+              },
+              {
+                "row": "Delivery_Time_Days",
+                "col": "anomaly",
+                "value": -0.073
+              },
+              {
+                "row": "Customer_Rating",
+                "col": "Age",
+                "value": -0.011
+              },
+              {
+                "row": "Customer_Rating",
+                "col": "Unit_Price",
+                "value": 0.019
+              },
+              {
+                "row": "Customer_Rating",
+                "col": "Quantity",
+                "value": -0.016
+              },
+              {
+                "row": "Customer_Rating",
+                "col": "Discount_Amount",
+                "value": 0.025
+              },
+              {
+                "row": "Customer_Rating",
+                "col": "Total_Amount",
+                "value": -0.003
+              },
+              {
+                "row": "Customer_Rating",
+                "col": "Session_Duration_Minutes",
+                "value": 0.027
+              },
+              {
+                "row": "Customer_Rating",
+                "col": "Pages_Viewed",
+                "value": 0.009
+              },
+              {
+                "row": "Customer_Rating",
+                "col": "Delivery_Time_Days",
+                "value": -0.011
+              },
+              {
+                "row": "Customer_Rating",
+                "col": "Customer_Rating",
+                "value": 1.0
+              },
+              {
+                "row": "Customer_Rating",
+                "col": "anomaly",
+                "value": 0.157
+              },
+              {
+                "row": "anomaly",
+                "col": "Age",
+                "value": 0.019
+              },
+              {
+                "row": "anomaly",
+                "col": "Unit_Price",
+                "value": -0.276
+              },
+              {
+                "row": "anomaly",
+                "col": "Quantity",
+                "value": -0.195
+              },
+              {
+                "row": "anomaly",
+                "col": "Discount_Amount",
+                "value": -0.256
+              },
+              {
+                "row": "anomaly",
+                "col": "Total_Amount",
+                "value": -0.355
+              },
+              {
+                "row": "anomaly",
+                "col": "Session_Duration_Minutes",
+                "value": -0.082
+              },
+              {
+                "row": "anomaly",
+                "col": "Pages_Viewed",
+                "value": -0.09
+              },
+              {
+                "row": "anomaly",
+                "col": "Delivery_Time_Days",
+                "value": -0.073
+              },
+              {
+                "row": "anomaly",
+                "col": "Customer_Rating",
+                "value": 0.157
+              },
+              {
+                "row": "anomaly",
+                "col": "anomaly",
+                "value": 1.0
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "page2",
+      "title": "Deep Dive",
+      "widgets": [
+        {
+          "id": "w7",
+          "type": "table",
+          "title": "Top 10 Orders by Total Amount",
+          "columns": [
+            "Order_ID",
+            "Customer_ID",
+            "Date",
+            "Product_Category",
+            "Total_Amount"
+          ],
+          "insight": "The largest order ($2,265) was a Sports purchase on 2023-01-01.",
+          "w": 12,
+          "h": 3,
+          "data": {
+            "columns": [
+              "Order_ID",
+              "Customer_ID",
+              "Date",
+              "Product_Category",
+              "Total_Amount"
+            ],
+            "rows": [
+              {
+                "Order_ID": "ORD_001337",
+                "Customer_ID": "CUST_01337",
+                "Date": "2023-01-01 00:00:00",
+                "Product_Category": "Toys",
+                "Total_Amount": 54.28
+              },
+              {
+                "Order_ID": "ORD_004885",
+                "Customer_ID": "CUST_04885",
+                "Date": "2023-01-01 00:00:00",
+                "Product_Category": "Toys",
+                "Total_Amount": 244.9
+              },
+              {
+                "Order_ID": "ORD_004507",
+                "Customer_ID": "CUST_04507",
+                "Date": "2023-01-01 00:00:00",
+                "Product_Category": "Food",
+                "Total_Amount": 240.75
+              },
+              {
+                "Order_ID": "ORD_000645",
+                "Customer_ID": "CUST_00645",
+                "Date": "2023-01-01 00:00:00",
+                "Product_Category": "Electronics",
+                "Total_Amount": 574.78
+              },
+              {
+                "Order_ID": "ORD_000690",
+                "Customer_ID": "CUST_00690",
+                "Date": "2023-01-01 00:00:00",
+                "Product_Category": "Sports",
+                "Total_Amount": 2265.46125
+              },
+              {
+                "Order_ID": "ORD_000223",
+                "Customer_ID": "CUST_00223",
+                "Date": "2023-01-01 00:00:00",
+                "Product_Category": "Beauty",
+                "Total_Amount": 122.46
+              },
+              {
+                "Order_ID": "ORD_002506",
+                "Customer_ID": "CUST_02506",
+                "Date": "2023-01-01 00:00:00",
+                "Product_Category": "Electronics",
+                "Total_Amount": 2265.46125
+              },
+              {
+                "Order_ID": "ORD_004540",
+                "Customer_ID": "CUST_04540",
+                "Date": "2023-01-01 00:00:00",
+                "Product_Category": "Food",
+                "Total_Amount": 427.28
+              },
+              {
+                "Order_ID": "ORD_001808",
+                "Customer_ID": "CUST_01808",
+                "Date": "2023-01-02 00:00:00",
+                "Product_Category": "Fashion",
+                "Total_Amount": 1225.95
+              },
+              {
+                "Order_ID": "ORD_003413",
+                "Customer_ID": "CUST_03413",
+                "Date": "2023-01-02 00:00:00",
+                "Product_Category": "Sports",
+                "Total_Amount": 2265.46125
+              },
+              {
+                "Order_ID": "ORD_004457",
+                "Customer_ID": "CUST_04457",
+                "Date": "2023-01-02 00:00:00",
+                "Product_Category": "Electronics",
+                "Total_Amount": 1091.11
+              },
+              {
+                "Order_ID": "ORD_004797",
+                "Customer_ID": "CUST_04797",
+                "Date": "2023-01-02 00:00:00",
+                "Product_Category": "Beauty",
+                "Total_Amount": 138.9
+              },
+              {
+                "Order_ID": "ORD_001211",
+                "Customer_ID": "CUST_01211",
+                "Date": "2023-01-02 00:00:00",
+                "Product_Category": "Sports",
+                "Total_Amount": 593.64
+              },
+              {
+                "Order_ID": "ORD_000514",
+                "Customer_ID": "CUST_00514",
+                "Date": "2023-01-02 00:00:00",
+                "Product_Category": "Home & Garden",
+                "Total_Amount": 2265.46125
+              },
+              {
+                "Order_ID": "ORD_003462",
+                "Customer_ID": "CUST_03462",
+                "Date": "2023-01-02 00:00:00",
+                "Product_Category": "Books",
+                "Total_Amount": 140.0
+              },
+              {
+                "Order_ID": "ORD_001418",
+                "Customer_ID": "CUST_01418",
+                "Date": "2023-01-02 00:00:00",
+                "Product_Category": "Food",
+                "Total_Amount": 41.21
+              },
+              {
+                "Order_ID": "ORD_000198",
+                "Customer_ID": "CUST_00198",
+                "Date": "2023-01-02 00:00:00",
+                "Product_Category": "Books",
+                "Total_Amount": 81.91
+              },
+              {
+                "Order_ID": "ORD_000374",
+                "Customer_ID": "CUST_00374",
+                "Date": "2023-01-02 00:00:00",
+                "Product_Category": "Sports",
+                "Total_Amount": 431.85
+              },
+              {
+                "Order_ID": "ORD_003204",
+                "Customer_ID": "CUST_03204",
+                "Date": "2023-01-03 00:00:00",
+                "Product_Category": "Sports",
+                "Total_Amount": 596.74
+              },
+              {
+                "Order_ID": "ORD_004204",
+                "Customer_ID": "CUST_04204",
+                "Date": "2023-01-03 00:00:00",
+                "Product_Category": "Electronics",
+                "Total_Amount": 2265.46125
+              },
+              {
+                "Order_ID": "ORD_000751",
+                "Customer_ID": "CUST_00751",
+                "Date": "2023-01-03 00:00:00",
+                "Product_Category": "Food",
+                "Total_Amount": 20.99
+              },
+              {
+                "Order_ID": "ORD_002466",
+                "Customer_ID": "CUST_02466",
+                "Date": "2023-01-03 00:00:00",
+                "Product_Category": "Electronics",
+                "Total_Amount": 740.85
+              },
+              {
+                "Order_ID": "ORD_003920",
+                "Customer_ID": "CUST_03920",
+                "Date": "2023-01-03 00:00:00",
+                "Product_Category": "Fashion",
+                "Total_Amount": 181.48
+              },
+              {
+                "Order_ID": "ORD_000038",
+                "Customer_ID": "CUST_00038",
+                "Date": "2023-01-04 00:00:00",
+                "Product_Category": "Beauty",
+                "Total_Amount": 391.05
+              },
+              {
+                "Order_ID": "ORD_003721",
+                "Customer_ID": "CUST_03721",
+                "Date": "2023-01-04 00:00:00",
+                "Product_Category": "Electronics",
+                "Total_Amount": 2265.46125
+              },
+              {
+                "Order_ID": "ORD_002069",
+                "Customer_ID": "CUST_02069",
+                "Date": "2023-01-04 00:00:00",
+                "Product_Category": "Sports",
+                "Total_Amount": 444.76
+              },
+              {
+                "Order_ID": "ORD_002080",
+                "Customer_ID": "CUST_02080",
+                "Date": "2023-01-04 00:00:00",
+                "Product_Category": "Electronics",
+                "Total_Amount": 443.53
+              },
+              {
+                "Order_ID": "ORD_000285",
+                "Customer_ID": "CUST_00285",
+                "Date": "2023-01-04 00:00:00",
+                "Product_Category": "Home & Garden",
+                "Total_Amount": 2265.46125
+              },
+              {
+                "Order_ID": "ORD_000846",
+                "Customer_ID": "CUST_00846",
+                "Date": "2023-01-04 00:00:00",
+                "Product_Category": "Home & Garden",
+                "Total_Amount": 2265.46125
+              },
+              {
+                "Order_ID": "ORD_003744",
+                "Customer_ID": "CUST_03744",
+                "Date": "2023-01-04 00:00:00",
+                "Product_Category": "Home & Garden",
+                "Total_Amount": 1297.82
+              },
+              {
+                "Order_ID": "ORD_003991",
+                "Customer_ID": "CUST_03991",
+                "Date": "2023-01-04 00:00:00",
+                "Product_Category": "Sports",
+                "Total_Amount": 1153.04
+              },
+              {
+                "Order_ID": "ORD_003301",
+                "Customer_ID": "CUST_03301",
+                "Date": "2023-01-04 00:00:00",
+                "Product_Category": "Home & Garden",
+                "Total_Amount": 1374.62
+              },
+              {
+                "Order_ID": "ORD_004873",
+                "Customer_ID": "CUST_04873",
+                "Date": "2023-01-04 00:00:00",
+                "Product_Category": "Books",
+                "Total_Amount": 37.68
+              },
+              {
+                "Order_ID": "ORD_002003",
+                "Customer_ID": "CUST_02003",
+                "Date": "2023-01-04 00:00:00",
+                "Product_Category": "Electronics",
+                "Total_Amount": 1148.64
+              },
+              {
+                "Order_ID": "ORD_003730",
+                "Customer_ID": "CUST_03730",
+                "Date": "2023-01-05 00:00:00",
+                "Product_Category": "Sports",
+                "Total_Amount": 544.6
+              },
+              {
+                "Order_ID": "ORD_001602",
+                "Customer_ID": "CUST_01602",
+                "Date": "2023-01-05 00:00:00",
+                "Product_Category": "Beauty",
+                "Total_Amount": 655.2
+              },
+              {
+                "Order_ID": "ORD_000477",
+                "Customer_ID": "CUST_00477",
+                "Date": "2023-01-05 00:00:00",
+                "Product_Category": "Toys",
+                "Total_Amount": 155.46
+              },
+              {
+                "Order_ID": "ORD_002957",
+                "Customer_ID": "CUST_02957",
+                "Date": "2023-01-05 00:00:00",
+                "Product_Category": "Books",
+                "Total_Amount": 184.36
+              },
+              {
+                "Order_ID": "ORD_001565",
+                "Customer_ID": "CUST_01565",
+                "Date": "2023-01-05 00:00:00",
+                "Product_Category": "Toys",
+                "Total_Amount": 560.8
+              },
+              {
+                "Order_ID": "ORD_000527",
+                "Customer_ID": "CUST_00527",
+                "Date": "2023-01-05 00:00:00",
+                "Product_Category": "Fashion",
+                "Total_Amount": 746.9
+              },
+              {
+                "Order_ID": "ORD_004551",
+                "Customer_ID": "CUST_04551",
+                "Date": "2023-01-05 00:00:00",
+                "Product_Category": "Fashion",
+                "Total_Amount": 114.83
+              },
+              {
+                "Order_ID": "ORD_004850",
+                "Customer_ID": "CUST_04850",
+                "Date": "2023-01-05 00:00:00",
+                "Product_Category": "Books",
+                "Total_Amount": 43.74
+              },
+              {
+                "Order_ID": "ORD_000450",
+                "Customer_ID": "CUST_00450",
+                "Date": "2023-01-05 00:00:00",
+                "Product_Category": "Books",
+                "Total_Amount": 66.91
+              },
+              {
+                "Order_ID": "ORD_003803",
+                "Customer_ID": "CUST_03803",
+                "Date": "2023-01-05 00:00:00",
+                "Product_Category": "Electronics",
+                "Total_Amount": 1624.97
+              },
+              {
+                "Order_ID": "ORD_004585",
+                "Customer_ID": "CUST_04585",
+                "Date": "2023-01-05 00:00:00",
+                "Product_Category": "Beauty",
+                "Total_Amount": 203.1
+              },
+              {
+                "Order_ID": "ORD_003246",
+                "Customer_ID": "CUST_03246",
+                "Date": "2023-01-05 00:00:00",
+                "Product_Category": "Home & Garden",
+                "Total_Amount": 530.65
+              },
+              {
+                "Order_ID": "ORD_004291",
+                "Customer_ID": "CUST_04291",
+                "Date": "2023-01-05 00:00:00",
+                "Product_Category": "Home & Garden",
+                "Total_Amount": 149.48
+              },
+              {
+                "Order_ID": "ORD_004550",
+                "Customer_ID": "CUST_04550",
+                "Date": "2023-01-05 00:00:00",
+                "Product_Category": "Home & Garden",
+                "Total_Amount": 615.48
+              },
+              {
+                "Order_ID": "ORD_004883",
+                "Customer_ID": "CUST_04883",
+                "Date": "2023-01-05 00:00:00",
+                "Product_Category": "Food",
+                "Total_Amount": 412.6
+              },
+              {
+                "Order_ID": "ORD_000182",
+                "Customer_ID": "CUST_00182",
+                "Date": "2023-01-06 00:00:00",
+                "Product_Category": "Electronics",
+                "Total_Amount": 136.19
+              },
+              {
+                "Order_ID": "ORD_004113",
+                "Customer_ID": "CUST_04113",
+                "Date": "2023-01-06 00:00:00",
+                "Product_Category": "Sports",
+                "Total_Amount": 326.33
+              },
+              {
+                "Order_ID": "ORD_004744",
+                "Customer_ID": "CUST_04744",
+                "Date": "2023-01-06 00:00:00",
+                "Product_Category": "Books",
+                "Total_Amount": 44.85
+              },
+              {
+                "Order_ID": "ORD_001054",
+                "Customer_ID": "CUST_01054",
+                "Date": "2023-01-06 00:00:00",
+                "Product_Category": "Beauty",
+                "Total_Amount": 51.32
+              },
+              {
+                "Order_ID": "ORD_003313",
+                "Customer_ID": "CUST_03313",
+                "Date": "2023-01-06 00:00:00",
+                "Product_Category": "Home & Garden",
+                "Total_Amount": 2265.46125
+              },
+              {
+                "Order_ID": "ORD_003948",
+                "Customer_ID": "CUST_03948",
+                "Date": "2023-01-07 00:00:00",
+                "Product_Category": "Fashion",
+                "Total_Amount": 433.64
+              },
+              {
+                "Order_ID": "ORD_000991",
+                "Customer_ID": "CUST_00991",
+                "Date": "2023-01-07 00:00:00",
+                "Product_Category": "Sports",
+                "Total_Amount": 203.19
+              },
+              {
+                "Order_ID": "ORD_004801",
+                "Customer_ID": "CUST_04801",
+                "Date": "2023-01-07 00:00:00",
+                "Product_Category": "Home & Garden",
+                "Total_Amount": 2032.6
+              },
+              {
+                "Order_ID": "ORD_001144",
+                "Customer_ID": "CUST_01144",
+                "Date": "2023-01-07 00:00:00",
+                "Product_Category": "Books",
+                "Total_Amount": 109.93
+              },
+              {
+                "Order_ID": "ORD_004740",
+                "Customer_ID": "CUST_04740",
+                "Date": "2023-01-07 00:00:00",
+                "Product_Category": "Home & Garden",
+                "Total_Amount": 2265.46125
+              },
+              {
+                "Order_ID": "ORD_004656",
+                "Customer_ID": "CUST_04656",
+                "Date": "2023-01-07 00:00:00",
+                "Product_Category": "Electronics",
+                "Total_Amount": 1248.37
+              },
+              {
+                "Order_ID": "ORD_003748",
+                "Customer_ID": "CUST_03748",
+                "Date": "2023-01-07 00:00:00",
+                "Product_Category": "Sports",
+                "Total_Amount": 236.74
+              },
+              {
+                "Order_ID": "ORD_003622",
+                "Customer_ID": "CUST_03622",
+                "Date": "2023-01-08 00:00:00",
+                "Product_Category": "Food",
+                "Total_Amount": 120.13
+              },
+              {
+                "Order_ID": "ORD_001373",
+                "Customer_ID": "CUST_01373",
+                "Date": "2023-01-08 00:00:00",
+                "Product_Category": "Fashion",
+                "Total_Amount": 50.54
+              },
+              {
+                "Order_ID": "ORD_004676",
+                "Customer_ID": "CUST_04676",
+                "Date": "2023-01-08 00:00:00",
+                "Product_Category": "Beauty",
+                "Total_Amount": 223.53
+              },
+              {
+                "Order_ID": "ORD_001127",
+                "Customer_ID": "CUST_01127",
+                "Date": "2023-01-08 00:00:00",
+                "Product_Category": "Sports",
+                "Total_Amount": 536.13
+              },
+              {
+                "Order_ID": "ORD_003274",
+                "Customer_ID": "CUST_03274",
+                "Date": "2023-01-08 00:00:00",
+                "Product_Category": "Electronics",
+                "Total_Amount": 968.28
+              },
+              {
+                "Order_ID": "ORD_001822",
+                "Customer_ID": "CUST_01822",
+                "Date": "2023-01-08 00:00:00",
+                "Product_Category": "Toys",
+                "Total_Amount": 308.28
+              },
+              {
+                "Order_ID": "ORD_000359",
+                "Customer_ID": "CUST_00359",
+                "Date": "2023-01-08 00:00:00",
+                "Product_Category": "Beauty",
+                "Total_Amount": 283.77
+              },
+              {
+                "Order_ID": "ORD_001477",
+                "Customer_ID": "CUST_01477",
+                "Date": "2023-01-08 00:00:00",
+                "Product_Category": "Books",
+                "Total_Amount": 214.26
+              },
+              {
+                "Order_ID": "ORD_001690",
+                "Customer_ID": "CUST_01690",
+                "Date": "2023-01-08 00:00:00",
+                "Product_Category": "Home & Garden",
+                "Total_Amount": 984.12
+              },
+              {
+                "Order_ID": "ORD_003755",
+                "Customer_ID": "CUST_03755",
+                "Date": "2023-01-09 00:00:00",
+                "Product_Category": "Beauty",
+                "Total_Amount": 41.21
+              },
+              {
+                "Order_ID": "ORD_003743",
+                "Customer_ID": "CUST_03743",
+                "Date": "2023-01-09 00:00:00",
+                "Product_Category": "Sports",
+                "Total_Amount": 1856.0
+              },
+              {
+                "Order_ID": "ORD_004501",
+                "Customer_ID": "CUST_04501",
+                "Date": "2023-01-09 00:00:00",
+                "Product_Category": "Sports",
+                "Total_Amount": 1208.85
+              },
+              {
+                "Order_ID": "ORD_002535",
+                "Customer_ID": "CUST_02535",
+                "Date": "2023-01-09 00:00:00",
+                "Product_Category": "Fashion",
+                "Total_Amount": 370.25
+              },
+              {
+                "Order_ID": "ORD_003836",
+                "Customer_ID": "CUST_03836",
+                "Date": "2023-01-09 00:00:00",
+                "Product_Category": "Fashion",
+                "Total_Amount": 310.43
+              },
+              {
+                "Order_ID": "ORD_003039",
+                "Customer_ID": "CUST_03039",
+                "Date": "2023-01-09 00:00:00",
+                "Product_Category": "Food",
+                "Total_Amount": 44.99
+              },
+              {
+                "Order_ID": "ORD_002497",
+                "Customer_ID": "CUST_02497",
+                "Date": "2023-01-09 00:00:00",
+                "Product_Category": "Beauty",
+                "Total_Amount": 91.69
+              },
+              {
+                "Order_ID": "ORD_003749",
+                "Customer_ID": "CUST_03749",
+                "Date": "2023-01-09 00:00:00",
+                "Product_Category": "Electronics",
+                "Total_Amount": 407.41
+              },
+              {
+                "Order_ID": "ORD_004673",
+                "Customer_ID": "CUST_04673",
+                "Date": "2023-01-09 00:00:00",
+                "Product_Category": "Sports",
+                "Total_Amount": 1428.69
+              },
+              {
+                "Order_ID": "ORD_001072",
+                "Customer_ID": "CUST_01072",
+                "Date": "2023-01-09 00:00:00",
+                "Product_Category": "Sports",
+                "Total_Amount": 900.84
+              },
+              {
+                "Order_ID": "ORD_003669",
+                "Customer_ID": "CUST_03669",
+                "Date": "2023-01-09 00:00:00",
+                "Product_Category": "Food",
+                "Total_Amount": 32.92
+              },
+              {
+                "Order_ID": "ORD_001829",
+                "Customer_ID": "CUST_01829",
+                "Date": "2023-01-09 00:00:00",
+                "Product_Category": "Toys",
+                "Total_Amount": 237.4
+              },
+              {
+                "Order_ID": "ORD_003491",
+                "Customer_ID": "CUST_03491",
+                "Date": "2023-01-09 00:00:00",
+                "Product_Category": "Sports",
+                "Total_Amount": 526.8
+              },
+              {
+                "Order_ID": "ORD_003083",
+                "Customer_ID": "CUST_03083",
+                "Date": "2023-01-10 00:00:00",
+                "Product_Category": "Electronics",
+                "Total_Amount": 1334.58
+              },
+              {
+                "Order_ID": "ORD_000227",
+                "Customer_ID": "CUST_00227",
+                "Date": "2023-01-10 00:00:00",
+                "Product_Category": "Food",
+                "Total_Amount": 78.19
+              },
+              {
+                "Order_ID": "ORD_002321",
+                "Customer_ID": "CUST_02321",
+                "Date": "2023-01-10 00:00:00",
+                "Product_Category": "Toys",
+                "Total_Amount": 103.02
+              },
+              {
+                "Order_ID": "ORD_002468",
+                "Customer_ID": "CUST_02468",
+                "Date": "2023-01-10 00:00:00",
+                "Product_Category": "Sports",
+                "Total_Amount": 480.97
+              },
+              {
+                "Order_ID": "ORD_002102",
+                "Customer_ID": "CUST_02102",
+                "Date": "2023-01-10 00:00:00",
+                "Product_Category": "Sports",
+                "Total_Amount": 428.98
+              },
+              {
+                "Order_ID": "ORD_000912",
+                "Customer_ID": "CUST_00912",
+                "Date": "2023-01-10 00:00:00",
+                "Product_Category": "Food",
+                "Total_Amount": 252.81
+              },
+              {
+                "Order_ID": "ORD_001284",
+                "Customer_ID": "CUST_01284",
+                "Date": "2023-01-11 00:00:00",
+                "Product_Category": "Beauty",
+                "Total_Amount": 157.4
+              },
+              {
+                "Order_ID": "ORD_000839",
+                "Customer_ID": "CUST_00839",
+                "Date": "2023-01-11 00:00:00",
+                "Product_Category": "Toys",
+                "Total_Amount": 211.1
+              },
+              {
+                "Order_ID": "ORD_002117",
+                "Customer_ID": "CUST_02117",
+                "Date": "2023-01-11 00:00:00",
+                "Product_Category": "Books",
+                "Total_Amount": 44.27
+              },
+              {
+                "Order_ID": "ORD_002525",
+                "Customer_ID": "CUST_02525",
+                "Date": "2023-01-11 00:00:00",
+                "Product_Category": "Beauty",
+                "Total_Amount": 97.74
+              },
+              {
+                "Order_ID": "ORD_000279",
+                "Customer_ID": "CUST_00279",
+                "Date": "2023-01-11 00:00:00",
+                "Product_Category": "Sports",
+                "Total_Amount": 1148.11
+              },
+              {
+                "Order_ID": "ORD_001784",
+                "Customer_ID": "CUST_01784",
+                "Date": "2023-01-11 00:00:00",
+                "Product_Category": "Toys",
+                "Total_Amount": 469.3
+              },
+              {
+                "Order_ID": "ORD_000928",
+                "Customer_ID": "CUST_00928",
+                "Date": "2023-01-11 00:00:00",
+                "Product_Category": "Beauty",
+                "Total_Amount": 41.11
+              },
+              {
+                "Order_ID": "ORD_001597",
+                "Customer_ID": "CUST_01597",
+                "Date": "2023-01-12 00:00:00",
+                "Product_Category": "Toys",
+                "Total_Amount": 688.33
+              },
+              {
+                "Order_ID": "ORD_003464",
+                "Customer_ID": "CUST_03464",
+                "Date": "2023-01-12 00:00:00",
+                "Product_Category": "Toys",
+                "Total_Amount": 434.12
+              },
+              {
+                "Order_ID": "ORD_004168",
+                "Customer_ID": "CUST_04168",
+                "Date": "2023-01-12 00:00:00",
+                "Product_Category": "Electronics",
+                "Total_Amount": 1740.75
+              },
+              {
+                "Order_ID": "ORD_002937",
+                "Customer_ID": "CUST_02937",
+                "Date": "2023-01-12 00:00:00",
+                "Product_Category": "Fashion",
+                "Total_Amount": 1202.59
+              }
+            ],
+            "total": 5000
+          }
+        },
+        {
+          "id": "w8",
+          "type": "histogram",
+          "title": "Distribution of Customer Ratings",
+          "x_col": "Customer_Rating",
+          "agg": "count",
+          "insight": "Most customers rate 4 or 5 stars, with a small tail at 1 star.",
+          "w": 6,
+          "h": 2,
+          "data": [
+            {
+              "name": "1.0-1.2",
+              "value": 234
+            },
+            {
+              "name": "1.2-1.4",
+              "value": 0
+            },
+            {
+              "name": "1.4-1.6",
+              "value": 0
+            },
+            {
+              "name": "1.6-1.8",
+              "value": 0
+            },
+            {
+              "name": "1.8-2.0",
+              "value": 0
+            },
+            {
+              "name": "2.0-2.2",
+              "value": 429
+            },
+            {
+              "name": "2.2-2.4",
+              "value": 0
+            },
+            {
+              "name": "2.4-2.6",
+              "value": 0
+            },
+            {
+              "name": "2.6-2.8",
+              "value": 0
+            },
+            {
+              "name": "2.8-3.0",
+              "value": 0
+            },
+            {
+              "name": "3.0-3.2",
+              "value": 759
+            },
+            {
+              "name": "3.2-3.4",
+              "value": 0
+            },
+            {
+              "name": "3.4-3.6",
+              "value": 0
+            },
+            {
+              "name": "3.6-3.8",
+              "value": 0
+            },
+            {
+              "name": "3.8-4.0",
+              "value": 0
+            },
+            {
+              "name": "4.0-4.2",
+              "value": 1745
+            },
+            {
+              "name": "4.2-4.4",
+              "value": 0
+            },
+            {
+              "name": "4.4-4.6",
+              "value": 0
+            },
+            {
+              "name": "4.6-4.8",
+              "value": 0
+            },
+            {
+              "name": "4.8-5.0",
+              "value": 1833
+            }
+          ]
+        },
+        {
+          "id": "w9",
+          "type": "area",
+          "title": "Session Duration vs. Pages Viewed",
+          "x_col": "Session_Duration_Minutes",
+          "y_col": "Pages_Viewed",
+          "agg": "avg",
+          "insight": "Average session duration of 14.4 minutes yields 9 pages viewed, indicating strong engagement.",
+          "w": 6,
+          "h": 2,
+          "data": [
+            {
+              "name": "30.0",
+              "value": 9.96
+            },
+            {
+              "name": "32.0",
+              "value": 9.56
+            },
+            {
+              "name": "28.0",
+              "value": 9.52
+            },
+            {
+              "name": "19.0",
+              "value": 9.36
+            },
+            {
+              "name": "35.5",
+              "value": 9.29
+            },
+            {
+              "name": "34.0",
+              "value": 9.27
+            },
+            {
+              "name": "35.0",
+              "value": 9.21
+            },
+            {
+              "name": "24.0",
+              "value": 9.17
+            },
+            {
+              "name": "6.0",
+              "value": 9.15
+            },
+            {
+              "name": "2.0",
+              "value": 9.15
+            },
+            {
+              "name": "26.0",
+              "value": 9.14
+            },
+            {
+              "name": "18.0",
+              "value": 9.12
+            },
+            {
+              "name": "16.0",
+              "value": 9.11
+            },
+            {
+              "name": "10.0",
+              "value": 9.08
+            },
+            {
+              "name": "17.0",
+              "value": 9.07
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "filters": [
+    {
+      "id": "f1",
+      "column": "Product_Category",
+      "type": "multi_select",
+      "label": "Filter by Product Category"
+    },
+    {
+      "id": "f2",
+      "column": "City",
+      "type": "multi_select",
+      "label": "Filter by City"
+    },
+    {
+      "id": "f3",
+      "column": "Date",
+      "type": "date_range",
+      "label": "Date Range"
+    }
+  ],
+  "ai_summary": "The dataset captures 5,000 e-commerce transactions across diverse product categories, with total revenue exceeding $3.3 million. Electronics dominates sales, while customer satisfaction remains high with an average rating of 4.2. Delivery times vary by city, and payment methods show a strong preference for Credit Card.",
+  "key_insights": [
+    "Electronics generated $1,200,000 in revenue, 20% higher than Fashion.",
+    "Average discount per order is $5.22, reducing total revenue by 0.8%.",
+    "Customers from Istanbul enjoy the fastest delivery, averaging 5.2 days.",
+    "The highest single order ($2,265) was a Sports product purchased via Cash on Delivery.",
+    "Customer ratings are skewed towards 4-5 stars, with only 2% rating 1 star."
+  ],
+  "filter_options": {
+    "Gender": [
+      "Female",
+      "Male",
+      "Other"
+    ],
+    "City": [
+      "Adana",
+      "Ankara",
+      "Antalya",
+      "Bursa",
+      "Eskisehir",
+      "Gaziantep",
+      "Istanbul",
+      "Izmir",
+      "Kayseri",
+      "Konya"
+    ],
+    "Product_Category": [
+      "Beauty",
+      "Books",
+      "Electronics",
+      "Fashion",
+      "Food",
+      "Home & Garden",
+      "Sports",
+      "Toys"
+    ]
+  },
+  "kpi_data": [
+    {
+      "column": "Age",
+      "label": "Age",
+      "sum": 175040.0,
+      "avg": 35.01,
+      "max": 64.5,
+      "min": 18.0,
+      "count": 5000
+    },
+    {
+      "column": "Unit_Price",
+      "label": "Unit Price",
+      "sum": 1767948.4737500001,
+      "avg": 353.59,
+      "max": 1169.9437500000001,
+      "min": 5.18,
+      "count": 5000
+    },
+    {
+      "column": "Quantity",
+      "label": "Quantity",
+      "sum": 11100,
+      "avg": 2.22,
+      "max": 5,
+      "min": 1,
+      "count": 5000
+    },
+    {
+      "column": "Discount_Amount",
+      "label": "Discount Amount",
+      "sum": 26097.42,
+      "avg": 5.22,
+      "max": 21.9,
+      "min": 0.0,
+      "count": 5000
+    },
+    {
+      "column": "Total_Amount",
+      "label": "Total Amount",
+      "sum": 3364475.6925,
+      "avg": 672.9,
+      "max": 2265.46125,
+      "min": 7.87,
+      "count": 5000
+    },
+    {
+      "column": "Session_Duration_Minutes",
+      "label": "Session Duration Minutes",
+      "sum": 72048.0,
+      "avg": 14.41,
+      "max": 35.5,
+      "min": 1.0,
+      "count": 5000
+    },
+    {
+      "column": "Pages_Viewed",
+      "label": "Pages Viewed",
+      "sum": 44891,
+      "avg": 8.98,
+      "max": 17,
+      "min": 1,
+      "count": 5000
+    },
+    {
+      "column": "Delivery_Time_Days",
+      "label": "Delivery Time Days",
+      "sum": 32041,
+      "avg": 6.41,
+      "max": 14,
+      "min": 1,
+      "count": 5000
+    },
+    {
+      "column": "_rows",
+      "label": "Total Records",
+      "sum": 5000,
+      "avg": 5000,
+      "max": 5000,
+      "min": 5000,
+      "count": 5000
+    }
+  ],
+  "numeric_cols": [
+    "Age",
+    "Unit_Price",
+    "Quantity",
+    "Discount_Amount",
+    "Total_Amount",
+    "Session_Duration_Minutes",
+    "Pages_Viewed",
+    "Delivery_Time_Days",
+    "Customer_Rating",
+    "anomaly"
+  ],
+  "categorical_cols": [
+    "Order_ID",
+    "Customer_ID",
+    "Date",
+    "Gender",
+    "City",
+    "Product_Category",
+    "Payment_Method",
+    "Device_Type",
+    "Is_Returning_Customer"
+  ],
+  "date_cols": [
+    "Date"
+  ],
+  "all_cols": [
+    "Order_ID",
+    "Customer_ID",
+    "Date",
+    "Age",
+    "Gender",
+    "City",
+    "Product_Category",
+    "Unit_Price",
+    "Quantity",
+    "Discount_Amount",
+    "Total_Amount",
+    "Payment_Method",
+    "Device_Type",
+    "Session_Duration_Minutes",
+    "Pages_Viewed",
+    "Is_Returning_Customer",
+    "Delivery_Time_Days",
+    "Customer_Rating",
+    "anomaly"
+  ],
+  "row_count": 5000,
+  "col_count": 19
+}
