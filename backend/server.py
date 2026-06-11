@@ -477,8 +477,8 @@ async def get_result(job_id: str):
 @app.post("/api/filter/{job_id}")
 async def apply_filters(job_id: str, body: FilterRequest):
     """
-    Apply filters to the dataset and return updated widget data for all widgets
-    on the requested page.  Powers the real-time cross-filtering experience.
+    Apply filters and recompute ALL pages' widget data.
+    Supports: multi_select, date_range, numeric_range filters.
     """
     if job_id not in JOBS or JOBS[job_id]["status"] != "done":
         raise HTTPException(400, "Dashboard not ready yet.")
@@ -491,74 +491,81 @@ async def apply_filters(job_id: str, body: FilterRequest):
     schema = JOBS[job_id]["result"].get("dashboard_schema", {})
     df = df0.copy()
 
-    # Apply each filter
+    # ── Apply every filter ────────────────────────────────────────────
     for col, val in body.filters.items():
         if col not in df.columns:
             continue
-        if isinstance(val, list) and val:
-            df = df[df[col].astype(str).isin([str(v) for v in val])]
-        elif isinstance(val, dict):
-            frm = val.get("from")
-            to  = val.get("to")
-            try:
-                ts = pd.to_datetime(df[col], errors="coerce")
-                if frm:
-                    df = df[ts >= pd.to_datetime(frm)]
-                if to:
-                    df = df[ts <= pd.to_datetime(to)]
-            except Exception:
-                pass
+        try:
+            if isinstance(val, list) and val:
+                # Multi-select: match any selected value (string cast for safety)
+                mask = df[col].astype(str).isin([str(v) for v in val])
+                df = df[mask]
 
-    # Recompute widget data on the requested page
-    from agents.dashboard_schema_agent import (
-        _build_kpi_data, _build_bar_data, _build_line_data,
-        _build_pie_data, _build_scatter_data, _build_histogram_data,
-        _build_table_data, _build_correlation_data,
-    )
+            elif isinstance(val, dict):
+                frm = val.get("from")
+                to  = val.get("to")
+                mn  = val.get("min")
+                mx  = val.get("max")
 
-    numeric_cols     = df.select_dtypes(include=np.number).columns.tolist()
-    categorical_cols = df.select_dtypes(exclude=np.number).columns.tolist()
-    kpi_data = _build_kpi_data(df, numeric_cols)
+                if frm is not None or to is not None:
+                    # Date range filter
+                    if pd.api.types.is_datetime64_any_dtype(df[col]):
+                        ts = df[col]
+                    else:
+                        ts = pd.to_datetime(df[col], errors="coerce")
+                    ts = ts.reset_index(drop=True)
+                    df = df.reset_index(drop=True)
+                    mask = pd.Series([True] * len(df))
+                    if frm:
+                        mask &= ts >= pd.to_datetime(frm)
+                    if to:
+                        mask &= ts <= pd.to_datetime(to)
+                    df = df[mask.values]
+
+                elif mn is not None or mx is not None:
+                    # Numeric range filter
+                    num_series = pd.to_numeric(df[col], errors="coerce")
+                    mask = pd.Series([True] * len(df), index=df.index)
+                    if mn is not None:
+                        mask &= num_series >= float(mn)
+                    if mx is not None:
+                        mask &= num_series <= float(mx)
+                    df = df[mask]
+        except Exception as e:
+            print(f"[filter] error applying filter on '{col}': {e}")
+            continue
+
+    # ── Recompute all widgets across ALL pages ────────────────────────
+    from agents.dashboard_schema_agent import _compute_widget_data, _build_kpi_data, _profile_and_engineer
+
+    # Re-run profile on filtered df so column types are correct
+    try:
+        filtered_df, fprofile = _profile_and_engineer(df)
+    except Exception:
+        filtered_df = df
+        fprofile = {
+            "numeric_cols": df.select_dtypes(include=np.number).columns.tolist(),
+            "categorical_cols": df.select_dtypes(exclude=np.number).columns.tolist(),
+            "good_cat_cols": df.select_dtypes(exclude=np.number).columns.tolist(),
+            "date_cols": [], "engineered_cols": [], "all_cols": df.columns.tolist(),
+        }
+
+    nc       = fprofile["numeric_cols"]
+    kpi_data = _build_kpi_data(filtered_df, nc)
 
     updated_widgets = {}
-    page_id = body.page_id or (schema.get("pages") or [{}])[0].get("id", "page1")
-
     for page in schema.get("pages", []):
-        if page.get("id") != page_id:
-            continue
         for w in page.get("widgets", []):
-            wid   = w["id"]
-            wtype = w.get("type","")
-            x_col = w.get("x_col","")
-            y_col = w.get("y_col","")
-            agg   = w.get("agg","sum")
-
+            wid = w["id"]
             try:
-                if wtype == "kpi_row":
-                    updated_widgets[wid] = kpi_data
-                elif wtype in ("bar","area"):
-                    updated_widgets[wid] = _build_bar_data(df, x_col, y_col, agg) if x_col and y_col else []
-                elif wtype == "line":
-                    d = _build_line_data(df, x_col, y_col, agg) if x_col and y_col else []
-                    updated_widgets[wid] = d or _build_bar_data(df, x_col, y_col, agg)
-                elif wtype == "pie":
-                    updated_widgets[wid] = _build_pie_data(df, x_col, y_col) if x_col else []
-                elif wtype == "scatter":
-                    updated_widgets[wid] = _build_scatter_data(df, x_col, y_col, w.get("color_col")) if x_col and y_col else []
-                elif wtype == "histogram":
-                    col = y_col or x_col
-                    updated_widgets[wid] = _build_histogram_data(df, col) if col in numeric_cols else []
-                elif wtype == "table":
-                    updated_widgets[wid] = _build_table_data(df, w.get("columns", df.columns.tolist()[:8]))
-                elif wtype == "heatmap":
-                    updated_widgets[wid] = _build_correlation_data(df, numeric_cols)
+                updated_widgets[wid] = _compute_widget_data(dict(w), filtered_df, fprofile)
             except Exception as e:
                 print(f"[filter] widget {wid} error: {e}")
                 updated_widgets[wid] = []
 
     return JSONResponse(content=_sanitize({
         "updated_widgets": updated_widgets,
-        "row_count": len(df),
+        "row_count": len(filtered_df),
         "kpi_data": kpi_data,
     }))
 

@@ -53,9 +53,9 @@ export function BarWidget({ data, xKey="name", yKey="value", onBarClick }) {
         <CartesianGrid {...GRID} />
         <XAxis dataKey={xKey} tick={TICK} angle={-35} textAnchor="end" interval="preserveStartEnd" />
         <YAxis tick={TICK} tickFormatter={fmt} width={48} />
-        <Tooltip content={<Tip />} cursor={{ fill:"rgba(255,255,255,0.04)" }} />
+        <Tooltip content={<Tip />} cursor={false} />
         <Bar dataKey={yKey} radius={[4,4,0,0]} maxBarSize={44}
-          activeBar={{ fill:"inherit", stroke:"none" }}>
+          activeBar={false}>
           {data.map((_,i) => <Cell key={i} fill={PALETTE[i % PALETTE.length]} />)}
         </Bar>
       </BarChart>
@@ -171,9 +171,9 @@ export function HistogramWidget({ data }) {
         <CartesianGrid {...GRID} />
         <XAxis dataKey="name" tick={TICK} angle={-35} textAnchor="end" interval="preserveStartEnd" />
         <YAxis tick={TICK} tickFormatter={fmt} width={48} />
-        <Tooltip content={<Tip />} cursor={{ fill:"rgba(255,255,255,0.04)" }} />
+        <Tooltip content={<Tip />} cursor={false} />
         <Bar dataKey="value" fill={PALETTE[2]} radius={[2,2,0,0]}
-          activeBar={{ fill:PALETTE[2], stroke:"none" }} />
+          activeBar={false} />
       </BarChart>
     </ResponsiveContainer>
   );

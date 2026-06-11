@@ -31,7 +31,7 @@ uploads/
 .coverage
 htmlcov/
 .tox/
-
+text.ipynb
 # IDE
 .vscode/
 .idea/

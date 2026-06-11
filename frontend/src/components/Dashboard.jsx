@@ -162,7 +162,6 @@ function Insight({ text }) {
 /* ── Single widget card ────────────────────────────────────────────────── */
 function WidgetShell({ widget, onDrillDown, filterApplied }) {
   const [expanded, setExpanded] = useState(false);
-  const [showStats, setShowStats] = useState(false);
   const data = widget.data;
   const chartH = CHART_H[widget.type];
 
@@ -242,14 +241,7 @@ function WidgetShell({ widget, onDrillDown, filterApplied }) {
               padding:"12px 18px", borderBottom:"1px solid #1e2a40", background:"#1a2030", flexShrink:0 }}>
               <h3 style={{ fontWeight:800, fontSize:15, color:"#e8edf8" }}>{widget.title}</h3>
               <div style={{ display:"flex", gap:8 }}>
-                {computeStats(widget) && (
-                  <button onClick={() => setShowStats(s => !s)}
-                    style={{ background: showStats ? "#7c5cfc" : "none",
-                      border:"1px solid #2a3550", borderRadius:7, color: showStats ? "#fff" : "#8899bb",
-                      padding:"5px 12px", fontSize:12, cursor:"pointer" }}>
-                    {showStats ? "Hide Stats" : "📊 Stats"}
-                  </button>
-                )}
+
                 <button onClick={() => setExpanded(false)}
                   style={{ background:"none", border:"1px solid #2a3550", borderRadius:7,
                     color:"#8899bb", padding:"5px 12px", fontSize:12, cursor:"pointer" }}>✕ Close</button>
@@ -269,8 +261,8 @@ function WidgetShell({ widget, onDrillDown, filterApplied }) {
                 )}
               </div>
 
-              {/* Stats sidebar */}
-              {showStats && computeStats(widget) && (
+              {/* Stats sidebar — always visible when stats exist */}
+              {computeStats(widget) && (
                 <div style={{ width:300, flexShrink:0, borderLeft:"1px solid #1e2a40",
                   overflowY:"auto", padding:"14px 16px", background:"#12171f" }}>
                   <div style={{ fontSize:11, fontWeight:700, color:"#6b7a99",
