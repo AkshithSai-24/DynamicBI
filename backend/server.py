@@ -264,6 +264,7 @@ def _collect_result(final_state: dict) -> dict:
         "profile":          "",
         "forecasts":        [],
         "anomaly_data":     None,
+        "anomaly_image":    None,
     }
 
     # KPIs
@@ -327,6 +328,15 @@ def _collect_result(final_state: dict) -> dict:
                               "std":  _ss(df_an[c].dropna(), lambda s:s.std())}
                           for c in num_c[:8]},
             }
+        except Exception:
+            pass
+
+    # Anomaly image (base64 PNG)
+    img_path = DASHBOARD_DIR / "anomaly_visual.png"
+    if img_path.exists():
+        try:
+            with open(img_path, "rb") as img_f:
+                result["anomaly_image"] = base64.b64encode(img_f.read()).decode("utf-8")
         except Exception:
             pass
 

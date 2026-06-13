@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import FilterPanel from "./FilterPanel.jsx";
 import KpiRow from "./KpiRow.jsx";
 import AiChat from "./AiChat.jsx";
+import MarkdownRenderer from "./MarkdownRenderer.jsx";
 import DrillDownModal from "./DrillDownModal.jsx";
 import {
   BarWidget, LineWidget, AreaWidget, PieWidget,
@@ -471,7 +472,7 @@ export default function Dashboard({ result, jobId, sourceName, onReset }) {
                     borderLeft:`3px solid ${PALETTE[i%PALETTE.length]}` }}>
                     <div style={{ display:"flex", gap:9, alignItems:"flex-start" }}>
                       <span style={{ color:PALETTE[i%PALETTE.length], fontWeight:800, fontSize:14, flexShrink:0 }}>{i+1}</span>
-                      <p style={{ fontSize:12, color:"#b0bdd4", lineHeight:1.65 }}>{ins}</p>
+                      <span style={{ fontSize:12, color:"#b0bdd4", lineHeight:1.65 }}>{ins}</span>
                     </div>
                   </div>
                 ))}
@@ -479,11 +480,11 @@ export default function Dashboard({ result, jobId, sourceName, onReset }) {
             )}
 
             {result?.insights && (
-              <div style={{ background:"#161b27", border:"1px solid #1e2a40", borderRadius:10, padding:"18px 20px" }}>
-                <h3 style={{ fontSize:13, fontWeight:700, marginBottom:12, color:"#00e5a0" }}>📋 Detailed Analysis</h3>
-                <pre style={{ whiteSpace:"pre-wrap", fontSize:12, color:"#b0bdd4", lineHeight:1.7, fontFamily:"inherit" }}>
-                  {result.insights}
-                </pre>
+              <div style={{ background:"#161b27", border:"1px solid #1e2a40", borderRadius:10, padding:"20px 24px" }}>
+                <div style={{ fontSize:13, fontWeight:700, marginBottom:14, color:"#00e5a0", display:"flex", alignItems:"center", gap:8 }}>
+                  <span>📋</span> Detailed Analysis
+                </div>
+                <MarkdownRenderer content={result.insights} />
               </div>
             )}
           </div>
@@ -494,26 +495,47 @@ export default function Dashboard({ result, jobId, sourceName, onReset }) {
           <div style={{ flex:1, overflowY:"auto", padding:"22px 26px" }}>
             <h2 style={{ fontSize:18, fontWeight:800, marginBottom:18, color:"#e8edf8" }}>🔍 Anomaly Detection</h2>
 
+            {/* KPI strip */}
             {result?.anomaly_data && (
-              <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:10, marginBottom:22 }}>
+              <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))", gap:10, marginBottom:22 }}>
                 <SB label="Anomalies Found" value={result.anomaly_data.count} accent="#ff6b6b" />
                 <SB label="Columns Analysed" value={result.anomaly_data.numeric_columns?.length} accent="#00d4ff" />
-                {Object.entries(result.anomaly_data.stats||{}).slice(0,4).map(([col,s])=>(
+                {Object.entries(result.anomaly_data.stats||{}).slice(0,5).map(([col,s])=>(
                   <SB key={col} label={col} value={s.mean?.toFixed?.(1)}
                     sub={`min ${s.min?.toFixed?.(1)} · max ${s.max?.toFixed?.(1)}`} accent="#fb923c" />
                 ))}
               </div>
             )}
 
-            {result?.anomaly_report && (
-              <div style={{ background:"#161b27", border:"1px solid #1e2a40", borderRadius:10, padding:"18px 20px", marginBottom:20 }}>
-                <h3 style={{ fontSize:13, fontWeight:700, marginBottom:12, color:"#ff6b6b" }}>Anomaly Report</h3>
-                <pre style={{ whiteSpace:"pre-wrap", fontSize:12, color:"#b0bdd4", lineHeight:1.7, fontFamily:"inherit" }}>
-                  {result.anomaly_report}
-                </pre>
+            {/* Anomaly scatter chart */}
+            {result?.anomaly_image && (
+              <div style={{ background:"#161b27", border:"1px solid #1e2a40", borderRadius:10,
+                padding:"16px 18px", marginBottom:20 }}>
+                <div style={{ fontSize:13, fontWeight:700, marginBottom:12, color:"#00d4ff",
+                  display:"flex", alignItems:"center", gap:8 }}>
+                  <span>📈</span> Anomaly Scatter Plot
+                </div>
+                <img
+                  src={`data:image/png;base64,${result.anomaly_image}`}
+                  alt="Anomaly scatter plot"
+                  style={{ width:"100%", borderRadius:8, display:"block" }}
+                />
               </div>
             )}
 
+            {/* AI markdown report */}
+            {result?.anomaly_report && (
+              <div style={{ background:"#161b27", border:"1px solid #1e2a40", borderRadius:10,
+                padding:"20px 24px", marginBottom:20 }}>
+                <div style={{ fontSize:13, fontWeight:700, marginBottom:14, color:"#ff6b6b",
+                  display:"flex", alignItems:"center", gap:8, borderBottom:"1px solid #1e2a40", paddingBottom:10 }}>
+                  <span>🔬</span> AI Analysis Report
+                </div>
+                <MarkdownRenderer content={result.anomaly_report} />
+              </div>
+            )}
+
+            {/* Forecasts */}
             {result?.forecasts?.length > 0 && (
               <div>
                 <h3 style={{ fontSize:15, fontWeight:700, marginBottom:12, color:"#00e5a0" }}>📈 Forecasts</h3>
