@@ -287,19 +287,46 @@ def _collect_result(final_state: dict) -> dict:
         if p.exists():
             result[key] = p.read_text(encoding="utf-8", errors="replace")
 
-    # Forecasts
-    for f in sorted(DASHBOARD_DIR.iterdir()):
-        if f.name.startswith("forecast_") and f.suffix == ".csv":
-            col = f.stem[len("forecast_"):]
-            try:
-                df_fc = pd.read_csv(str(f))
-                keep  = [c for c in ["ds","yhat","yhat_lower","yhat_upper","trend"] if c in df_fc.columns]
-                rows  = df_fc[keep].tail(60).round(4).to_dict(orient="records")
-                rows  = [{k: (None if isinstance(v,float) and (math.isnan(v) or math.isinf(v)) else v)
-                          for k,v in row.items()} for row in rows]
-                result["forecasts"].append({"col": col, "rows": rows})
-            except Exception:
-                pass
+    # Forecasts — prefer rich state output (includes chart_b64 from NeuralProphet agent)
+    state_forecasts = final_state.get("forecasts", [])
+    if state_forecasts:
+        for fc in state_forecasts:
+            # Sanitise any NaN/Inf in rows
+            clean_rows = []
+            for row in fc.get("rows", []):
+                clean_rows.append({
+                    k: (None if isinstance(v, float) and (math.isnan(v) or math.isinf(v)) else v)
+                    for k, v in row.items()
+                })
+            result["forecasts"].append({
+                "col":        fc.get("col"),
+                "method":     fc.get("method", ""),
+                "freq":       fc.get("freq", ""),
+                "freq_label": fc.get("freq_label", ""),
+                "periods":    fc.get("periods", 0),
+                "chart_b64":  fc.get("chart_b64", ""),   # pre-rendered PNG from agent
+                "rows":       clean_rows,
+            })
+    else:
+        # Fallback: read from CSV files on disk (legacy / if agent didn't write state)
+        for f in sorted(DASHBOARD_DIR.iterdir()):
+            if f.name.startswith("forecast_") and f.suffix == ".csv":
+                col = f.stem[len("forecast_"):]
+                try:
+                    df_fc = pd.read_csv(str(f))
+                    keep  = [c for c in ["ds", "yhat", "yhat_lower", "yhat_upper"] if c in df_fc.columns]
+                    rows  = df_fc[keep].tail(60).round(4).to_dict(orient="records")
+                    rows  = [{k: (None if isinstance(v, float) and (math.isnan(v) or math.isinf(v)) else v)
+                              for k, v in row.items()} for row in rows]
+                    # Try to load matching PNG as base64
+                    chart_b64 = ""
+                    png_path  = DASHBOARD_DIR / f"forecast_{col}.png"
+                    if png_path.exists():
+                        import base64 as _b64
+                        chart_b64 = _b64.b64encode(png_path.read_bytes()).decode()
+                    result["forecasts"].append({"col": col, "rows": rows, "chart_b64": chart_b64})
+                except Exception:
+                    pass
 
     # Anomaly data
     anm_path = DASHBOARD_DIR / "anomalies.csv"

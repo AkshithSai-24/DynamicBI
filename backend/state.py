@@ -26,3 +26,5 @@ class AgentState(TypedDict, total=False):
     anomalies: pd.DataFrame
     dashboard_schema: Dict   # AI-generated PowerBI layout schema
     ai_analysis: Dict        # Full AI data analysis
+
+    forecasts: List[Dict]
