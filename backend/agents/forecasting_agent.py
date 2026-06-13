@@ -1,7 +1,7 @@
 """
 forecasting_agent.py — DynamicBI
 =================================
-Pure statsmodels forecasting — no Prophet, no NeuralProphet, no heavy deps.
+Pure statsmodels forecasting
 
 Model selection (automatic, per column):
   1. SARIMA  — when enough data AND seasonal period is detectable
@@ -497,21 +497,7 @@ Return ONLY valid JSON — no explanation, no markdown:
         fc_lower = fc_dict["lower"]
         fc_upper = fc_dict["upper"]
 
-        # ── Render chart ───────────────────────────────────────────────────────
-        chart_b64 = _build_chart(
-            col        = col,
-            hist_ds    = ts["ds"],
-            hist_y     = ts["y"],
-            fc_ds      = future_ds,
-            fc_yhat    = fc_yhat,
-            fc_lower   = fc_lower,
-            fc_upper   = fc_upper,
-            freq_label = freq_label,
-            periods    = periods,
-            method     = method,
-        )
-
-        # ── Save artefacts ─────────────────────────────────────────────────────
+        # ── Save artefacts (full history retained on disk) ─────────────────────
         future_df = pd.DataFrame({
             "ds":         future_ds.astype(str),
             "yhat":       fc_yhat.round(4),
@@ -520,11 +506,37 @@ Return ONLY valid JSON — no explanation, no markdown:
         })
         future_df.to_csv(f"dashboard/forecast_{col}.csv", index=False)
 
-        png_bytes = base64.b64decode(chart_b64)
-        with open(f"dashboard/forecast_{col}.png", "wb") as fh:
-            fh.write(png_bytes)
-
         print(f"[forecast] ✓ {col}  method={method}")
+
+        # ── Build interactive chart_data: minimal trailing history + full future ─
+        n_hist_ctx = min(8, len(ts))
+        hist_tail_ds = ts["ds"].iloc[-n_hist_ctx:]
+        hist_tail_y  = ts["y"].iloc[-n_hist_ctx:]
+
+        chart_data = []
+        for ds_val, y_val in zip(hist_tail_ds, hist_tail_y):
+            chart_data.append({
+                "date":     str(pd.Timestamp(ds_val).date()),
+                "actual":   round(float(y_val), 4),
+                "forecast": None,
+                "lower":    None,
+                "upper":    None,
+            })
+
+        # bridge point — connects actual line to forecast line at the boundary
+        if chart_data:
+            chart_data[-1]["forecast"] = chart_data[-1]["actual"]
+            chart_data[-1]["lower"]    = chart_data[-1]["actual"]
+            chart_data[-1]["upper"]    = chart_data[-1]["actual"]
+
+        for ds_val, yh, lo, up in zip(future_ds, fc_yhat, fc_lower, fc_upper):
+            chart_data.append({
+                "date":     str(pd.Timestamp(ds_val).date()),
+                "actual":   None,
+                "forecast": round(float(yh), 4),
+                "lower":    round(float(lo), 4),
+                "upper":    round(float(up), 4),
+            })
 
         forecasts_out.append({
             "col":        col,
@@ -532,7 +544,7 @@ Return ONLY valid JSON — no explanation, no markdown:
             "freq":       freq_alias,
             "freq_label": freq_label,
             "periods":    periods,
-            "chart_b64":  chart_b64,
+            "chart_data": chart_data,
             "rows":       future_df.to_dict(orient="records"),
         })
 

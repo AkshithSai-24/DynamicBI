@@ -269,6 +269,62 @@ export function TableWidget({ data }) {
   );
 }
 
+/* ── Forecast (interactive) ───────────────────────────────────────────────── */
+export function ForecastWidget({ data }) {
+  if (!data?.length) return <Empty />;
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <AreaChart data={data} margin={{ top:6, right:14, bottom:36, left:4 }}>
+        <defs>
+          <linearGradient id="fcBand" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%"  stopColor="#4d9fff" stopOpacity={0.25} />
+            <stop offset="95%" stopColor="#4d9fff" stopOpacity={0.02} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid {...GRID} />
+        <XAxis dataKey="date" tick={TICK} angle={-35} textAnchor="end" interval="preserveStartEnd" />
+        <YAxis tick={TICK} tickFormatter={fmt} width={50} domain={["auto","auto"]} />
+        <Tooltip content={<Tip />} cursor={{ stroke:"#2a3550", strokeWidth:1 }} />
+        <Legend wrapperStyle={{ fontSize:10, color:"#6b7a99" }} />
+        {/* confidence band */}
+        <Area type="monotone" dataKey="upper" name="Upper bound" stroke="none"
+          fill="url(#fcBand)" connectNulls activeDot={false} legendType="none" />
+        <Area type="monotone" dataKey="lower" name="Lower bound" stroke="none"
+          fill="#0e1117" fillOpacity={1} connectNulls activeDot={false} legendType="none" />
+        {/* actual history */}
+        <Line type="monotone" dataKey="actual" name="Actual" stroke="#00e5a0" strokeWidth={2.5}
+          dot={{ r:3, fill:"#00e5a0", stroke:"none" }} connectNulls
+          activeDot={{ r:5, fill:"#00e5a0", stroke:"none" }} />
+        {/* forecast */}
+        <Line type="monotone" dataKey="forecast" name="Forecast" stroke="#4d9fff" strokeWidth={2.5}
+          strokeDasharray="6 4" dot={{ r:3, fill:"#4d9fff", stroke:"none" }} connectNulls
+          activeDot={{ r:5, fill:"#4d9fff", stroke:"none" }} />
+      </AreaChart>
+    </ResponsiveContainer>
+  );
+}
+
+/* ── Anomaly scatter (interactive) ────────────────────────────────────────── */
+export function AnomalyScatterWidget({ panel }) {
+  if (!panel) return <Empty />;
+  const { normal=[], anomaly=[], x_label, y_label, x_range, y_range } = panel;
+  return (
+    <ResponsiveContainer width="100%" height="100%">
+      <ScatterChart margin={{ top:6, right:14, bottom:16, left:4 }}>
+        <CartesianGrid {...GRID} />
+        <XAxis dataKey="x" type="number" tick={TICK} tickFormatter={fmt}
+          name={x_label} domain={x_range || ["auto","auto"]} />
+        <YAxis dataKey="y" type="number" tick={TICK} tickFormatter={fmt}
+          name={y_label} width={50} domain={y_range || ["auto","auto"]} />
+        <Tooltip content={<Tip />} cursor={{ strokeDasharray:"3 3", stroke:"#2a3550" }} />
+        <Legend wrapperStyle={{ fontSize:10, color:"#6b7a99" }} />
+        <Scatter name="Normal" data={normal} fill="#00d4ff" opacity={0.35} />
+        <Scatter name="Anomaly" data={anomaly} fill="#ff6b6b" opacity={0.9} />
+      </ScatterChart>
+    </ResponsiveContainer>
+  );
+}
+
 /* ── Shared empty state ───────────────────────────────────────────────────── */
 function Empty() {
   return (

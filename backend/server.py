@@ -265,6 +265,7 @@ def _collect_result(final_state: dict) -> dict:
         "forecasts":        [],
         "anomaly_data":     None,
         "anomaly_image":    None,
+        "anomaly_scatter_panels": [],
     }
 
     # KPIs
@@ -287,7 +288,7 @@ def _collect_result(final_state: dict) -> dict:
         if p.exists():
             result[key] = p.read_text(encoding="utf-8", errors="replace")
 
-    # Forecasts — prefer rich state output (includes chart_b64 from NeuralProphet agent)
+    # Forecasts — use interactive chart_data from forecasting agent
     state_forecasts = final_state.get("forecasts", [])
     if state_forecasts:
         for fc in state_forecasts:
@@ -298,13 +299,19 @@ def _collect_result(final_state: dict) -> dict:
                     k: (None if isinstance(v, float) and (math.isnan(v) or math.isinf(v)) else v)
                     for k, v in row.items()
                 })
+            clean_chart_data = []
+            for row in fc.get("chart_data", []):
+                clean_chart_data.append({
+                    k: (None if isinstance(v, float) and (math.isnan(v) or math.isinf(v)) else v)
+                    for k, v in row.items()
+                })
             result["forecasts"].append({
                 "col":        fc.get("col"),
                 "method":     fc.get("method", ""),
                 "freq":       fc.get("freq", ""),
                 "freq_label": fc.get("freq_label", ""),
                 "periods":    fc.get("periods", 0),
-                "chart_b64":  fc.get("chart_b64", ""),   # pre-rendered PNG from agent
+                "chart_data": clean_chart_data,
                 "rows":       clean_rows,
             })
     else:
@@ -318,13 +325,14 @@ def _collect_result(final_state: dict) -> dict:
                     rows  = df_fc[keep].tail(60).round(4).to_dict(orient="records")
                     rows  = [{k: (None if isinstance(v, float) and (math.isnan(v) or math.isinf(v)) else v)
                               for k, v in row.items()} for row in rows]
-                    # Try to load matching PNG as base64
-                    chart_b64 = ""
-                    png_path  = DASHBOARD_DIR / f"forecast_{col}.png"
-                    if png_path.exists():
-                        import base64 as _b64
-                        chart_b64 = _b64.b64encode(png_path.read_bytes()).decode()
-                    result["forecasts"].append({"col": col, "rows": rows, "chart_b64": chart_b64})
+                    chart_data = [{
+                        "date":     str(r["ds"])[:10],
+                        "actual":   None,
+                        "forecast": r.get("yhat"),
+                        "lower":    r.get("yhat_lower"),
+                        "upper":    r.get("yhat_upper"),
+                    } for r in rows]
+                    result["forecasts"].append({"col": col, "rows": rows, "chart_data": chart_data})
                 except Exception:
                     pass
 
@@ -366,6 +374,9 @@ def _collect_result(final_state: dict) -> dict:
                 result["anomaly_image"] = base64.b64encode(img_f.read()).decode("utf-8")
         except Exception:
             pass
+
+    # Anomaly scatter panels (interactive)
+    result["anomaly_scatter_panels"] = final_state.get("anomaly_scatter_panels", [])
 
     return result
 

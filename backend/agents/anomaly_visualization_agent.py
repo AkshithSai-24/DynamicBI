@@ -92,38 +92,61 @@ def anomaly_visualization_agent(state):
         pairs.append((top_metrics[1], top_metrics[2]))
 
     pairs = pairs[:3]   # max 3 panels
-    n_panels = len(pairs)
 
+    normal_df = df[df["anomaly"] != -1] if "anomaly" in df.columns else df
+
+    # ── Build interactive scatter JSON for each pair ───────────────────────────
+    scatter_panels = []
+    for xcol, ycol in pairs:
+        xdata = df[xcol].replace([np.inf, -np.inf], np.nan).dropna()
+        ydata = df[ycol].replace([np.inf, -np.inf], np.nan).dropna()
+        xlim  = (float(xdata.quantile(0.01)), float(xdata.quantile(0.99)))
+        ylim  = (float(ydata.quantile(0.01)), float(ydata.quantile(0.99)))
+
+        def _pts(sub_df, max_n=400):
+            sub = sub_df[[xcol, ycol]].replace([np.inf, -np.inf], np.nan).dropna()
+            if len(sub) > max_n:
+                sub = sub.sample(max_n, random_state=42)
+            return [{"x": round(float(r[xcol]), 4), "y": round(float(r[ycol]), 4)}
+                    for _, r in sub.iterrows()]
+
+        scatter_panels.append({
+            "x_col": xcol,
+            "y_col": ycol,
+            "x_label": xcol.replace("_", " "),
+            "y_label": ycol.replace("_", " "),
+            "x_range": [round(xlim[0], 4), round(xlim[1], 4)],
+            "y_range": [round(ylim[0], 4), round(ylim[1], 4)],
+            "normal": _pts(normal_df),
+            "anomaly": _pts(anomalies),
+        })
+
+    state["anomaly_scatter_panels"] = scatter_panels
+
+    # ── Static fallback PNG (legacy) ───────────────────────────────────────────
+    n_panels = len(pairs)
     fig, axes = plt.subplots(1, n_panels,
                               figsize=(5.5 * n_panels, 5),
                               facecolor=DARK_BG)
     if n_panels == 1:
         axes = [axes]
 
-    normal_df = df[df["anomaly"] != -1] if "anomaly" in df.columns else df
-
-    for ax, (xcol, ycol) in zip(axes, pairs):
-        # clip to 99th percentile for readability
-        xdata = df[xcol].replace([np.inf,-np.inf], np.nan).dropna()
-        ydata = df[ycol].replace([np.inf,-np.inf], np.nan).dropna()
-        xlim  = (float(xdata.quantile(0.01)), float(xdata.quantile(0.99)))
-        ylim  = (float(ydata.quantile(0.01)), float(ydata.quantile(0.99)))
-
+    for ax, (xcol, ycol), panel in zip(axes, pairs, scatter_panels):
         ax.scatter(normal_df[xcol], normal_df[ycol],
                    alpha=0.25, s=18, c=NORMAL_C, label="Normal", zorder=2)
         ax.scatter(anomalies[xcol], anomalies[ycol],
                    alpha=0.85, s=35, c=ANOMALY_C, label="Anomaly",
                    edgecolors="#ff0000", linewidths=0.5, zorder=3)
 
-        ax.set_xlim(xlim)
-        ax.set_ylim(ylim)
+        ax.set_xlim(panel["x_range"])
+        ax.set_ylim(panel["y_range"])
         _style_ax(ax,
                   f"Anomalies: {xcol.replace('_',' ')} vs {ycol.replace('_',' ')}",
                   xcol.replace("_"," "),
                   ycol.replace("_"," "))
 
-        legend = ax.legend(facecolor=PANEL_BG, edgecolor=GRID_CLR,
-                           labelcolor=TEXT_CLR, fontsize=8)
+        ax.legend(facecolor=PANEL_BG, edgecolor=GRID_CLR,
+                  labelcolor=TEXT_CLR, fontsize=8)
 
     fig.suptitle(f"Anomaly Detection  ·  {len(anomalies)} anomalies detected "
                  f"({len(anomalies)/max(len(df),1)*100:.1f}% of data)",

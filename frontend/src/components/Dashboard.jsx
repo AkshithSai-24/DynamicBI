@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useRef, useEffect } from "react";
 import FilterPanel from "./FilterPanel.jsx";
 import KpiRow from "./KpiRow.jsx";
@@ -7,6 +8,7 @@ import DrillDownModal from "./DrillDownModal.jsx";
 import {
   BarWidget, LineWidget, AreaWidget, PieWidget,
   ScatterWidget, HistogramWidget, HeatmapWidget, TableWidget, PALETTE,
+  ForecastWidget, AnomalyScatterWidget,
 } from "./ChartWidgets.jsx";
 
 const API = import.meta.env.VITE_API_URL || "";
@@ -345,6 +347,7 @@ export default function Dashboard({ result, jobId, sourceName, onReset }) {
   const TABS = [
     { id:"dashboard", label:"📊 Dashboard" },
     { id:"insights",  label:"💡 Insights"  },
+    { id:"forecasting", label:"📈 Forecasting" },
     { id:"anomalies", label:"🔍 Anomalies" },
     { id:"chat",      label:"🤖 AI Chat"   },
   ];
@@ -507,8 +510,26 @@ export default function Dashboard({ result, jobId, sourceName, onReset }) {
               </div>
             )}
 
-            {/* Anomaly scatter chart */}
-            {result?.anomaly_image && (
+            {/* Anomaly scatter charts — interactive */}
+            {result?.anomaly_scatter_panels?.length > 0 && (
+              <div style={{ display:"grid", gridTemplateColumns:`repeat(${Math.min(result.anomaly_scatter_panels.length,3)},1fr)`, gap:14, marginBottom:20 }}>
+                {result.anomaly_scatter_panels.map((panel,i) => (
+                  <div key={i} style={{ background:"#161b27", border:"1px solid #1e2a40", borderRadius:10,
+                    padding:"14px 16px" }}>
+                    <div style={{ fontSize:12, fontWeight:700, marginBottom:10, color:"#00d4ff",
+                      display:"flex", alignItems:"center", gap:8 }}>
+                      <span>📈</span> {panel.x_label} vs {panel.y_label}
+                    </div>
+                    <div style={{ height:280 }}>
+                      <AnomalyScatterWidget panel={panel} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Fallback: static anomaly image if no interactive panels */}
+            {!result?.anomaly_scatter_panels?.length && result?.anomaly_image && (
               <div style={{ background:"#161b27", border:"1px solid #1e2a40", borderRadius:10,
                 padding:"16px 18px", marginBottom:20 }}>
                 <div style={{ fontSize:13, fontWeight:700, marginBottom:12, color:"#00d4ff",
@@ -534,34 +555,52 @@ export default function Dashboard({ result, jobId, sourceName, onReset }) {
                 <MarkdownRenderer content={result.anomaly_report} />
               </div>
             )}
+          </div>
+        )}
 
-            {/* Forecasts */}
-            {result?.forecasts?.length > 0 && (
-              <div>
-                <h3 style={{ fontSize:15, fontWeight:700, marginBottom:12, color:"#00e5a0" }}>📈 Forecasts</h3>
-                {result.forecasts.map(fc => (
-                  <div key={fc.col} style={{ background:"#161b27", border:"1px solid #1e2a40", borderRadius:10, padding:"14px 16px", marginBottom:12 }}>
-                    <h4 style={{ fontSize:12, fontWeight:700, marginBottom:10, color:"#00d4ff" }}>Forecast: {fc.col}</h4>
-                    <div style={{ overflowX:"auto" }}>
-                      <table style={{ fontSize:11, borderCollapse:"collapse" }}>
-                        <thead><tr>{["Period","Forecast","Lower","Upper"].map(h =>
-                          <th key={h} style={{ padding:"4px 10px", color:"#6b7a99", borderBottom:"1px solid #1e2a40", textAlign:"left" }}>{h}</th>
-                        )}</tr></thead>
-                        <tbody>
-                          {fc.rows.slice(-10).map((row,i) => (
-                            <tr key={i} style={{ borderBottom:"1px solid #1a2235" }}>
-                              <td style={{ padding:"4px 10px", color:"#b0bdd4" }}>{row.ds}</td>
-                              <td style={{ padding:"4px 10px", color:"#00e5a0", fontWeight:600 }}>{row.yhat?.toFixed?.(2)}</td>
-                              <td style={{ padding:"4px 10px", color:"#6b7a99" }}>{row.yhat_lower?.toFixed?.(2)}</td>
-                              <td style={{ padding:"4px 10px", color:"#6b7a99" }}>{row.yhat_upper?.toFixed?.(2)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+        {/* ════ FORECASTING TAB ══════════════════════════════════════ */}
+        {activeTab === "forecasting" && (
+          <div style={{ flex:1, overflowY:"auto", padding:"22px 26px" }}>
+            <h2 style={{ fontSize:18, fontWeight:800, marginBottom:18, color:"#e8edf8" }}>📈 Forecasting</h2>
+
+            {result?.forecasts?.length > 0 ? (
+              result.forecasts.map(fc => (
+                <div key={fc.col} style={{ background:"#161b27", border:"1px solid #1e2a40", borderRadius:10, padding:"16px 18px", marginBottom:16 }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+                    <h4 style={{ fontSize:13, fontWeight:700, color:"#00d4ff" }}>
+                      {fc.col?.replace(/_/g," ")} — {fc.periods} {fc.freq_label} forecast
+                    </h4>
+                    {fc.method && (
+                      <span style={{ fontSize:10, color:"#6b7a99", background:"#0e1117",
+                        border:"1px solid #1e2a40", borderRadius:99, padding:"2px 10px" }}>
+                        Model: {fc.method}
+                      </span>
+                    )}
                   </div>
-                ))}
-              </div>
+                  <div style={{ height:300, marginBottom:14 }}>
+                    <ForecastWidget data={fc.chart_data} />
+                  </div>
+                  <div style={{ overflowX:"auto" }}>
+                    <table style={{ fontSize:11, borderCollapse:"collapse", width:"100%" }}>
+                      <thead><tr>{["Period","Forecast","Lower","Upper"].map(h =>
+                        <th key={h} style={{ padding:"4px 10px", color:"#6b7a99", borderBottom:"1px solid #1e2a40", textAlign:"left" }}>{h}</th>
+                      )}</tr></thead>
+                      <tbody>
+                        {fc.rows.map((row,i) => (
+                          <tr key={i} style={{ borderBottom:"1px solid #1a2235" }}>
+                            <td style={{ padding:"4px 10px", color:"#b0bdd4" }}>{row.ds}</td>
+                            <td style={{ padding:"4px 10px", color:"#00e5a0", fontWeight:600 }}>{row.yhat?.toFixed?.(2)}</td>
+                            <td style={{ padding:"4px 10px", color:"#6b7a99" }}>{row.yhat_lower?.toFixed?.(2)}</td>
+                            <td style={{ padding:"4px 10px", color:"#6b7a99" }}>{row.yhat_upper?.toFixed?.(2)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div style={{ color:"#6b7a99", fontSize:13 }}>No forecast data available for this dataset.</div>
             )}
           </div>
         )}
