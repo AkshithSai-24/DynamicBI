@@ -5,6 +5,7 @@ import KpiRow from "./KpiRow.jsx";
 import AiChat from "./AiChat.jsx";
 import MarkdownRenderer from "./MarkdownRenderer.jsx";
 import DrillDownModal from "./DrillDownModal.jsx";
+import GithubBadge from "./GithubBadge.jsx";
 import {
   BarWidget, LineWidget, AreaWidget, PieWidget,
   ScatterWidget, HistogramWidget, HeatmapWidget, TableWidget, PALETTE,
@@ -377,7 +378,7 @@ function ForecastCard({ fc }) {
 }
 
 /* ── Main Dashboard ────────────────────────────────────────────────────── */
-export default function Dashboard({ result, jobId, sourceName, onReset }) {
+export default function Dashboard({ result, jobId, sourceName, onReset, isImported }) {
   const schema = result?.dashboard_schema || {};
   const pages  = schema.pages || [];
 
@@ -393,6 +394,7 @@ export default function Dashboard({ result, jobId, sourceName, onReset }) {
   /* Apply filters with debounce */
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!jobId) { setFilteredData({}); setRowCount(null); return; }
     const hasFilters = Object.keys(filters).some(k => {
       const v = filters[k];
       return Array.isArray(v) ? v.length > 0 : v?.from || v?.to;
@@ -427,13 +429,18 @@ export default function Dashboard({ result, jobId, sourceName, onReset }) {
   const currentPage = pages[activePage];
 
   /* ── Tabs ─────────────────────────────────────────────────────────── */
-  const TABS = [
+  const ALL_TABS = [
     { id:"dashboard", label:"📊 Dashboard" },
     { id:"insights",  label:"💡 Insights"  },
     { id:"forecasting", label:"📈 Forecasting" },
     { id:"anomalies", label:"🔍 Anomalies" },
     { id:"chat",      label:"🤖 AI Chat"   },
   ];
+  // Imported (offline) dashboards only contain the static schema —
+  // forecasting/anomalies/chat rely on live backend data tied to a job.
+  const TABS = isImported
+    ? ALL_TABS.filter(t => ["dashboard","insights"].includes(t.id))
+    : ALL_TABS;
 
   return (
     <div style={{ display:"flex", flexDirection:"column", height:"100vh", overflow:"hidden", background:"#0e1117" }}>
@@ -446,21 +453,31 @@ export default function Dashboard({ result, jobId, sourceName, onReset }) {
           <span style={{ fontSize:18 }}>⚡</span>
           <span style={{ fontWeight:800, fontSize:14, color:"#e8edf8" }}>{schema.title || "Dashboard"}</span>
           <span style={{ fontSize:11, color:"#6b7a99" }}>{sourceName}</span>
+          <span style={{ fontSize:13, color:"#9aa8c7", fontWeight:700 }}>· Developed By Akshith Sai Kondamadugu</span>
           {schema.domain && (
             <span style={{ background:"#1a2030", border:"1px solid #2a3550",
               borderRadius:99, padding:"2px 9px", fontSize:10, color:"#7c5cfc", fontWeight:700, textTransform:"uppercase" }}>
               {schema.domain}
             </span>
           )}
+          {isImported && (
+            <span style={{ background:"#1a2030", border:"1px solid #2a3550",
+              borderRadius:99, padding:"2px 9px", fontSize:10, color:"#00e5a0", fontWeight:700, textTransform:"uppercase" }}>
+              Imported · Read-only
+            </span>
+          )}
         </div>
         <div style={{ display:"flex", gap:8, alignItems:"center" }}>
           {filtering && <span style={{ fontSize:11, color:"#00d4ff", animation:"pulse 1s infinite" }}>● filtering…</span>}
-          <button onClick={() => window.open(`${API}/api/export/${jobId}`, "_blank")}
-            style={{ background:"#1a2030", border:"1px solid #2a3550", borderRadius:7,
-              color:"#b0bdd4", padding:"5px 13px", fontSize:12, fontWeight:600, cursor:"pointer" }}>↓ Export</button>
+          {jobId && (
+            <button onClick={() => window.open(`${API}/api/export/${jobId}`, "_blank")}
+              style={{ background:"#1a2030", border:"1px solid #2a3550", borderRadius:7,
+                color:"#b0bdd4", padding:"5px 13px", fontSize:12, fontWeight:600, cursor:"pointer" }}>↓ Export</button>
+          )}
           <button onClick={onReset}
             style={{ background:"none", border:"1px solid #1e2a40", borderRadius:7,
               color:"#6b7a99", padding:"5px 13px", fontSize:12, cursor:"pointer" }}>← New</button>
+          <GithubBadge />
         </div>
       </header>
 
@@ -534,7 +551,7 @@ export default function Dashboard({ result, jobId, sourceName, onReset }) {
                       <WidgetShell
                         widget={{ ...widget, data: getWidgetData(widget) }}
                         jobId={jobId}
-                        onDrillDown={(dim,val) => setDrillDown({ dimension:dim, value:val })}
+                        onDrillDown={(dim,val) => { if (jobId) setDrillDown({ dimension:dim, value:val }); }}
                         filterApplied={filteredData[widget.id] !== undefined}
                       />
                     </div>

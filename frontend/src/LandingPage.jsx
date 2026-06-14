@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from "react";
+import Footer from "./components/Footer.jsx";
 
 const SOURCES = [
   { id: "file",    label: "File Upload",  icon: "📁", desc: "CSV or Excel file" },
@@ -17,7 +18,7 @@ const SAMPLE_STRINGS = {
   oracle:   "oracle+cx_oracle://user:password@localhost:1521/orcl",
 };
 
-export default function LandingPage({ onJobStart }) {
+export default function LandingPage({ onJobStart, onImport }) {
   const [activeSource, setActiveSource] = useState("file");
   const [dragging, setDragging]         = useState(false);
   const [connStr, setConnStr]           = useState("");
@@ -26,7 +27,10 @@ export default function LandingPage({ onJobStart }) {
   const [selectedDb, setSelectedDb]     = useState("");
   const [inspecting, setInspecting]     = useState(false);
   const [err, setErr]                   = useState("");
+  const [importErr, setImportErr]       = useState("");
+  const [importDragging, setImportDragging] = useState(false);
   const fileRef = useRef();
+  const importRef = useRef();
 
   const API = import.meta.env.VITE_API_URL || "";
 
@@ -51,6 +55,33 @@ export default function LandingPage({ onJobStart }) {
     e.preventDefault(); setDragging(false);
     handleFile(e.dataTransfer.files[0]);
   }, [handleFile]);
+
+  const handleImportFile = useCallback(async (file) => {
+    if (!file) return;
+    const ext = file.name.split(".").pop().toLowerCase();
+    if (ext !== "json") {
+      setImportErr("Only .json files exported from DynamicBI are supported.");
+      return;
+    }
+    setImportErr("");
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const schema = parsed?.dashboard_schema || (Array.isArray(parsed?.pages) ? parsed : null);
+      if (!schema || !Array.isArray(schema.pages)) {
+        throw new Error("This file doesn't look like a valid DynamicBI dashboard export.");
+      }
+      const payload = parsed?.dashboard_schema ? parsed : { dashboard_schema: schema };
+      onImport?.(payload, file.name.replace(/\.json$/i, ""));
+    } catch (e) {
+      setImportErr(e.message?.includes("JSON") ? "Couldn't parse this file — it isn't valid JSON." : e.message);
+    }
+  }, [onImport]);
+
+  const handleImportDrop = useCallback((e) => {
+    e.preventDefault(); setImportDragging(false);
+    handleImportFile(e.dataTransfer.files[0]);
+  }, [handleImportFile]);
 
   const inspect = async () => {
     setErr(""); setInspecting(true); setDbInfo(null);
@@ -98,6 +129,10 @@ export default function LandingPage({ onJobStart }) {
         <p style={{ color:"var(--text2)", fontSize:15, maxWidth:480, margin:"0 auto" }}>
           AI-powered PowerBI-style dashboards — connect any data source, get instant interactive analytics.
         </p>
+      </div>
+
+      <div style={{ textAlign:"center", marginBottom:28, color:"var(--text2)", fontSize:15, fontWeight:700 }}>
+        Developed By <span style={{ color:"var(--accent)" }}>Akshith Sai Kondamadugu</span>
       </div>
 
       {/* Source selector */}
@@ -243,9 +278,48 @@ export default function LandingPage({ onJobStart }) {
         )}
       </div>
 
+      {/* Import dashboard from JSON */}
+      <div style={{ width:"100%", maxWidth:600, marginTop:20 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:10, margin:"4px 0 14px" }}>
+          <div style={{ flex:1, height:1, background:"var(--border)" }} />
+          <span style={{ color:"var(--muted)", fontSize:12, fontWeight:600 }}>OR</span>
+          <div style={{ flex:1, height:1, background:"var(--border)" }} />
+        </div>
+
+        <div
+          onDragOver={e => { e.preventDefault(); setImportDragging(true); }}
+          onDragLeave={() => setImportDragging(false)}
+          onDrop={handleImportDrop}
+          onClick={() => importRef.current?.click()}
+          style={{
+            border: `2px dashed ${importDragging ? "var(--accent2)" : "var(--border2)"}`,
+            borderRadius: 12, padding: "20px 24px", textAlign:"center", cursor:"pointer",
+            background: importDragging ? "rgba(124,92,252,0.05)" : "var(--bg2)",
+            transition: "all 0.2s",
+          }}
+        >
+          <div style={{ fontSize:24, marginBottom:8 }}>📥</div>
+          <p style={{ color:"var(--text)", fontWeight:600, marginBottom:4, fontSize:14 }}>
+            Import a Dashboard
+          </p>
+          <p style={{ color:"var(--muted)", fontSize:12 }}>
+            Drop a previously exported <code>dashboard.json</code> file here · or click to browse
+          </p>
+          <input ref={importRef} type="file" accept=".json,application/json" hidden
+            onChange={e => handleImportFile(e.target.files[0])} />
+        </div>
+
+        {importErr && (
+          <div style={{ marginTop:12, padding:"10px 14px", background:"rgba(255,94,122,0.1)", border:"1px solid var(--red)", borderRadius:8, color:"var(--red)", fontSize:13 }}>
+            ⚠ {importErr}
+          </div>
+        )}
+      </div>
+
       <p style={{ marginTop:24, color:"var(--muted)", fontSize:12 }}>
         Powered by LangGraph · OpenRouter · Recharts · FastAPI
       </p>
+      <Footer />
     </div>
   );
 }

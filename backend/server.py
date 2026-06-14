@@ -708,11 +708,53 @@ async def natural_language_query(job_id: str, body: QueryRequest):
 
 @app.get("/api/export/{job_id}")
 async def export_dashboard(job_id: str):
-    """Return the full dashboard schema as a downloadable JSON."""
+    """Return the full dashboard schema plus AI insights and dataset
+    information as a downloadable, self-contained JSON file."""
     if job_id not in JOBS or JOBS[job_id]["status"] != "done":
         raise HTTPException(400, "Dashboard not ready.")
-    schema = JOBS[job_id]["result"].get("dashboard_schema", {})
-    return JSONResponse(content=_sanitize(schema), headers={"Content-Disposition": "attachment; filename=dashboard.json"})
+
+    result = JOBS[job_id]["result"]
+    schema = result.get("dashboard_schema", {})
+
+    export_payload = {
+        "dashboard_schema": schema,
+        "meta": {
+            "title":  schema.get("title", "Dashboard"),
+            "domain": schema.get("domain"),
+            "source": JOBS[job_id].get("source"),
+            "row_count": schema.get("row_count"),
+            "exported_from": "DynamicBI",
+        },
+        # AI-generated narrative insights about the dataset
+        "ai_summary":  schema.get("ai_summary", ""),
+        "key_insights": schema.get("key_insights", []),
+        "insights_report": result.get("insights", ""),
+        # Useful basic/meaningful info about the underlying dataset
+        "kpis": result.get("kpis", []),
+        "dataset_profile": result.get("profile", ""),
+        "cleaning_report": result.get("cleaning_report", ""),
+        # Forecast & anomaly summaries (lightweight, excludes large images)
+        "forecast_summary": [
+            {
+                "col": fc.get("col"),
+                "method": fc.get("method", ""),
+                "freq_label": fc.get("freq_label", ""),
+                "periods": fc.get("periods", 0),
+            }
+            for fc in result.get("forecasts", [])
+        ],
+        "anomaly_summary": (
+            {
+                "count": result["anomaly_data"].get("count"),
+                "numeric_columns": result["anomaly_data"].get("numeric_columns"),
+                "stats": result["anomaly_data"].get("stats"),
+            }
+            if result.get("anomaly_data") else None
+        ),
+        "anomaly_report": result.get("anomaly_report", ""),
+    }
+
+    return JSONResponse(content=_sanitize(export_payload), headers={"Content-Disposition": "attachment; filename=dashboard.json"})
 
 
 if __name__ == "__main__":

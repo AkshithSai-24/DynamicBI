@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import LandingPage from "./LandingPage.jsx";
 import Dashboard from "./components/Dashboard.jsx";
+import Footer from "./components/Footer.jsx";
 
 const API = import.meta.env.VITE_API_URL || "";
 
@@ -99,6 +100,7 @@ function LoadingScreen({ stage, progress, sourceName }) {
       </div>
 
       <p style={{ marginTop: 20, color: "var(--muted)", fontSize: 11 }}>This typically takes 30–90 seconds depending on dataset size</p>
+      <Footer />
     </div>
   );
 }
@@ -114,6 +116,7 @@ function ErrorScreen({ error, onReset }) {
       <button onClick={onReset} style={{ background: "var(--accent2)", border: "none", borderRadius: 10, color: "#fff", fontWeight: 700, fontSize: 14, padding: "12px 28px", cursor: "pointer" }}>
         ← Try Again
       </button>
+      <Footer />
     </div>
   );
 }
@@ -126,6 +129,7 @@ export default function App() {
   const [stage, setStage]       = useState("");
   const [result, setResult]     = useState(null);
   const [error, setError]       = useState("");
+  const [isImported, setIsImported] = useState(false);
   const pollRef = useRef(null);
 
   const startJob = (id, name) => {
@@ -135,7 +139,28 @@ export default function App() {
     setStage("Initialising pipeline…");
     setError("");
     setResult(null);
+    setIsImported(false);
     setView("loading");
+  };
+
+  // Load a dashboard imported from an exported JSON file (no backend job)
+  const importDashboard = (payload, name) => {
+    const schema = payload?.dashboard_schema || payload;
+    setJobId(null);
+    setSourceName(name || payload?.meta?.title || "Imported Dashboard");
+    setProgress(100);
+    setStage("");
+    setError("");
+    setResult({
+      dashboard_schema: schema,
+      insights: payload?.insights_report || "",
+      anomaly_report: payload?.anomaly_report || "",
+      kpis: payload?.kpis || [],
+      profile: payload?.dataset_profile || "",
+      cleaning_report: payload?.cleaning_report || "",
+    });
+    setIsImported(true);
+    setView("dashboard");
   };
 
   // Poll job status
@@ -179,12 +204,13 @@ export default function App() {
     setError("");
     setProgress(0);
     setStage("");
+    setIsImported(false);
   };
 
-  if (view === "landing")   return <LandingPage onJobStart={startJob} />;
+  if (view === "landing")   return <LandingPage onJobStart={startJob} onImport={importDashboard} />;
   if (view === "loading")   return <LoadingScreen stage={stage} progress={progress} sourceName={sourceName} />;
   if (view === "error")     return <ErrorScreen error={error} onReset={reset} />;
-  if (view === "dashboard") return <Dashboard result={result} jobId={jobId} sourceName={sourceName} onReset={reset} />;
+  if (view === "dashboard") return <Dashboard result={result} jobId={jobId} sourceName={sourceName} onReset={reset} isImported={isImported} />;
 
   return null;
 }
