@@ -1,7 +1,13 @@
 # ⚡ DynamicBI — AI-Powered PowerBI-Style Dashboard
 
-A fully dynamic, AI-driven business intelligence dashboard that works like Power BI.  
-Upload any data source, and the AI analyses it end-to-end to produce an interactive, filterable, multi-page dashboard.
+A fully dynamic, AI-driven business intelligence dashboard that works like Power BI.
+Upload any data source, and the AI analyses it end-to-end to produce an interactive,
+filterable, multi-page dashboard — accessible from desktop, tablet, or mobile.
+
+🔗 **Live Demo:** [dynamicbi.akshithsai.co.in](https://dynamicbi.akshithsai.co.in)
+
+👤 **Developed By:** Akshith Sai Kondamadugu
+🐙 **GitHub:** [github.com/AkshithSai-24/DynamicBI](https://github.com/AkshithSai-24/DynamicBI)
 
 ---
 
@@ -9,18 +15,21 @@ Upload any data source, and the AI analyses it end-to-end to produce an interact
 
 | Feature | Detail |
 |---------|--------|
-| **Universal Data Sources** | CSV, Excel, PostgreSQL, MySQL, SQLite, Oracle, MongoDB |
+| **Universal Data Sources** | CSV, Excel, PostgreSQL, MySQL, SQLite, MongoDB (Oracle via optional driver) |
 | **AI Dashboard Design** | LLM analyses your data and designs the optimal layout |
 | **Interactive Filters** | Multi-select, date-range, cross-filtering in real time |
 | **Drill-down** | Click any bar/slice to deep-dive into that segment |
 | **Smart Charts** | Bar, Line, Area, Pie, Scatter, Histogram, Heatmap, Table |
-| **KPI Cards** | Auto-computed key metrics with trend indicators |
+| **KPI Cards** | Auto-computed key metrics — expand a KPI card to view **every** KPI computed for the dataset |
 | **Multi-Page** | Up to 2 pages (Overview + Deep Dive) |
 | **AI Chat** | Ask natural-language questions, get answers + charts |
 | **Anomaly Detection** | Isolation Forest detects outliers automatically |
-| **Forecasting** | Prophet-based time-series forecasting |
+| **Forecasting** | Time-series forecasting with confidence bands |
 | **AI Insights** | LLM-generated business insights with derivations |
-| **Export** | Download dashboard schema as JSON |
+| **Export Dashboard** | Download the dashboard (schema + AI insights + KPIs + reports) as a single JSON file |
+| **Import Dashboard** | Re-load a previously exported JSON for an offline, read-only view — no backend job needed |
+| **Responsive UI** | Adapts cleanly to phones, tablets, and desktops |
+| **Session-Friendly** | Each new session automatically clears previous uploads & generated files on the server |
 
 ---
 
@@ -36,10 +45,9 @@ DynamicBI/
 │   │   ├── anomaly_detection_agent.py  # Isolation Forest
 │   │   ├── anomaly_visualization_agent.py
 │   │   ├── anomaly_explanation_agent.py
-│   │   ├── forecasting_agent.py        # Prophet forecasting
+│   │   ├── forecasting_agent.py        # Time-series forecasting
 │   │   ├── rag_profile_agent.py        # Dataset profiling
 │   │   ├── insight_agent.py            # AI business insights
-│   │   ├── visualization_agent.py      # Chart data generator
 │   │   └── dashboard_schema_agent.py   # ⭐ PowerBI layout AI
 │   ├── graph/
 │   │   └── build_graph.py              # LangGraph pipeline
@@ -49,7 +57,7 @@ DynamicBI/
 │   │   ├── source_detector.py
 │   │   ├── chart_title.py
 │   │   └── code_extractor.py
-│   ├── config.py                       # LLM configuration
+│   ├── config.py                       # LLM configuration (NVIDIA NIM)
 │   ├── state.py                        # LangGraph state
 │   ├── server.py                       # FastAPI backend
 │   ├── main.py                         # CLI entry point
@@ -64,10 +72,13 @@ DynamicBI/
 │   │   │   ├── FilterPanel.jsx         # Interactive filter sidebar
 │   │   │   ├── KpiRow.jsx              # KPI card grid
 │   │   │   ├── AiChat.jsx              # AI chat interface
-│   │   │   └── DrillDownModal.jsx      # Drill-down detail view
-│   │   ├── App.jsx                     # App shell + routing
-│   │   ├── LandingPage.jsx             # Upload / connect UI
-│   │   ├── index.css                   # Global dark theme
+│   │   │   ├── DrillDownModal.jsx      # Drill-down detail view
+│   │   │   ├── MarkdownRenderer.jsx    # Renders AI markdown reports
+│   │   │   ├── Footer.jsx              # Developer credit + GitHub link
+│   │   │   └── GithubBadge.jsx         # GitHub badge for dashboard header
+│   │   ├── App.jsx                     # App shell + routing + session reset
+│   │   ├── LandingPage.jsx             # Upload / connect / import UI
+│   │   ├── index.css                   # Global dark theme + responsive layout
 │   │   └── main.jsx
 │   ├── index.html
 │   ├── vite.config.js
@@ -94,7 +105,7 @@ pip install -r requirements.txt
 
 # Configure environment
 cp .env.example .env
-# Edit .env and add your OPENROUTER_API_KEY
+# Edit .env and add your NVIDIA_API_KEY
 ```
 
 ### 2. Start Backend
@@ -125,32 +136,20 @@ Open **http://localhost:5173** in your browser.
 ### Backend `.env`
 
 ```env
-# Required
-OPENROUTER_API_KEY=sk-or-...
+# Required — used for all AI agents
+NVIDIA_API_KEY=nvapi-...
 
-# Optional — change model in config.py
+# Optional — override the default model
+LLM_MODEL=mistralai/mistral-medium-3.5-128b
 ```
 
 ### Switching LLM Provider
 
-Edit `backend/config.py`:
-
-```python
-# OpenRouter (default)
-from langchain_openrouter import ChatOpenRouter
-def get_llm():
-    return ChatOpenRouter(model="openai/gpt-4o-mini", temperature=0.3)
-
-# Ollama (local)
-from langchain_ollama import OllamaLLM
-def get_llm():
-    return OllamaLLM(model="mistral")
-
-# Google Gemini
-from langchain_google_genai import GoogleGenerativeAI
-def get_llm():
-    return GoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.3)
-```
+By default `backend/config.py` uses **ChatNVIDIA** from
+`langchain-nvidia-ai-endpoints`. To use a different provider, install the
+relevant `langchain-*` integration package and swap the implementation of
+`get_llm()` in `backend/config.py` — every agent calls this single function,
+so no other code needs to change.
 
 ---
 
@@ -163,8 +162,8 @@ def get_llm():
 | PostgreSQL | `postgresql://user:pass@host:5432/db` |
 | MySQL | `mysql+pymysql://user:pass@host:3306/db` |
 | SQLite | `sqlite:///path/to/file.db` |
-| Oracle | `oracle+cx_oracle://user:pass@host:1521/sid` |
 | MongoDB | `mongodb+srv://user:pass@cluster.mongodb.net/` |
+| Oracle | `oracle+cx_oracle://user:pass@host:1521/sid` *(install `cx_oracle` / `oracledb` separately)* |
 
 ---
 
@@ -172,6 +171,7 @@ def get_llm():
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
+| `POST` | `/api/reset` | Clear uploads, generated dashboard files & in-memory jobs (called automatically at the start of every new session) |
 | `POST` | `/api/upload` | Upload CSV/Excel file |
 | `POST` | `/api/connect` | Connect to database |
 | `POST` | `/api/db/inspect` | Inspect DB schema |
@@ -180,7 +180,7 @@ def get_llm():
 | `POST` | `/api/filter/{job_id}` | Apply filters (real-time) |
 | `POST` | `/api/drilldown/{job_id}` | Drill into a dimension |
 | `POST` | `/api/query/{job_id}` | Natural language query |
-| `GET`  | `/api/export/{job_id}` | Export schema as JSON |
+| `GET`  | `/api/export/{job_id}` | Export dashboard schema + AI insights + KPIs + reports as JSON |
 
 ---
 
@@ -189,15 +189,15 @@ def get_llm():
 ```
 User Upload / DB Connect
         ↓
-   FastAPI Server
-        ↓
+   FastAPI Server  ──▶  /api/reset wipes previous session's
+        ↓                uploads & dashboard/ artefacts
    LangGraph Pipeline:
    ┌─────────────────────────────┐
    │ load_data_agent             │  Load & detect source
    │ data_cleaning_agent         │  Clean, deduplicate
    │ kpi_agent                   │  Compute KPIs
    │ anomaly_detection_agent     │  Isolation Forest
-   │ forecasting_agent           │  Prophet time-series
+   │ forecasting_agent           │  Time-series forecasting
    │ anomaly_visualization_agent │  Anomaly charts
    │ anomaly_explanation_agent   │  AI anomaly report
    │ rag_profile_agent           │  Dataset profiling
@@ -207,11 +207,13 @@ User Upload / DB Connect
         ↓
    JSON Schema + Chart Data
         ↓
-   React + Recharts Frontend
+   React + Recharts Frontend (responsive)
    - Filter Panel (real-time)
    - Multi-page layout
    - Drill-down modals
+   - Expandable KPI view (all KPIs)
    - AI Chat
+   - Export / Import dashboard JSON
 ```
 
 ---
@@ -243,6 +245,39 @@ The AI generates a JSON schema like:
 }
 ```
 
+### Export / Import
+
+Exporting (`/api/export/{job_id}`) produces a self-contained JSON file
+containing the dashboard schema, AI summary & key insights, the full AI
+insights report, every computed KPI, the dataset profile, and any
+anomaly/forecast summaries. This file can be re-loaded later from the
+landing page's **Import a Dashboard** panel for a fast, read-only,
+offline view of the same dashboard.
+
+---
+
+## 📱 Responsive Design
+
+The UI uses a shared set of layout classes (`index.css`) with breakpoints at
+**900px** (tablet — filter sidebar moves above the canvas) and **640px**
+(mobile — widgets stack to a 2-column then 1-column grid, headers wrap,
+modals go full-screen). All charts use Recharts' `ResponsiveContainer`, so
+every visual reflows automatically with the viewport.
+
+---
+
+## ♻️ Session Handling
+
+On every fresh page load (and whenever you click **← New**), the frontend
+calls `POST /api/reset`, which:
+
+- Deletes all files in `backend/uploads/`
+- Deletes all generated artefacts in `backend/dashboard/`
+- Clears all in-memory job records
+
+This keeps each session isolated and prevents stale files from previous
+runs from accumulating on the server.
+
 ---
 
 ## 📦 Production Build
@@ -270,3 +305,10 @@ npm run build
 ## 📄 License
 
 MIT License — see [LICENSE](LICENSE) for details.
+
+---
+
+## 🙌 Credits
+
+Developed by **Akshith Sai Kondamadugu**
+🐙 [github.com/AkshithSai-24/DynamicBI](https://github.com/AkshithSai-24/DynamicBI)

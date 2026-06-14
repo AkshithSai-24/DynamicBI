@@ -164,15 +164,15 @@ function Insight({ text }) {
 }
 
 /* ── Single widget card ────────────────────────────────────────────────── */
-function WidgetShell({ widget, onDrillDown, filterApplied }) {
+function WidgetShell({ widget, onDrillDown, filterApplied, allKpis }) {
   const [expanded, setExpanded] = useState(false);
   const data = widget.data;
   const chartH = CHART_H[widget.type];
 
-  const renderChart = (d) => {
+  const renderChart = (d, opts = {}) => {
     if (!d) return null;
     switch (widget.type) {
-      case "kpi_row":   return <KpiRow data={d} columns={widget.columns} />;
+      case "kpi_row":   return <KpiRow data={d} columns={opts.showAllKpis ? null : widget.columns} showAll={opts.showAllKpis} />;
       case "bar":       return <BarWidget data={d} onBarClick={e => {
         if (e?.activePayload?.[0] && widget.x_col)
           onDrillDown(widget.x_col, e.activePayload[0].payload.name);
@@ -230,11 +230,13 @@ function WidgetShell({ widget, onDrillDown, filterApplied }) {
       {/* ── Expanded modal ──────────────────────────────────────────────── */}
       {expanded && (
         <div
+          className="widget-modal-overlay"
           style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.82)", zIndex:1000,
             display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}
           onClick={() => setExpanded(false)}
         >
           <div
+            className="widget-modal"
             style={{ background:"#161b27", border:"1px solid #2a3550", borderRadius:14,
               width:"92%", maxWidth:1100, maxHeight:"88vh",
               display:"flex", flexDirection:"column", overflow:"hidden" }}
@@ -253,11 +255,18 @@ function WidgetShell({ widget, onDrillDown, filterApplied }) {
             </div>
 
             {/* Modal body: chart + optional stats sidebar */}
-            <div style={{ flex:1, display:"flex", overflow:"hidden", minHeight:0 }}>
+            <div className="widget-modal-body" style={{ flex:1, display:"flex", overflow:"hidden", minHeight:0 }}>
               {/* Chart pane */}
               <div style={{ flex:1, padding:"14px 16px", minWidth:0, overflow:"hidden" }}>
                 {widget.type === "kpi_row" ? (
-                  <div style={{ paddingTop:8 }}>{data && renderChart(data)}</div>
+                  <div style={{ paddingTop:8 }}>
+                    {allKpis?.length > 0 && (
+                      <div style={{ fontSize:11, color:"#6b7a99", marginBottom:10 }}>
+                        Showing all {allKpis.length} KPIs computed for this dataset
+                      </div>
+                    )}
+                    {renderChart(allKpis?.length ? allKpis : data, { showAllKpis: true })}
+                  </div>
                 ) : (
                   <div style={{ width:"100%", height:"100%" }}>
                     {data && renderChart(data)}
@@ -267,7 +276,7 @@ function WidgetShell({ widget, onDrillDown, filterApplied }) {
 
               {/* Stats sidebar — always visible when stats exist */}
               {computeStats(widget) && (
-                <div style={{ width:300, flexShrink:0, borderLeft:"1px solid #1e2a40",
+                <div className="widget-modal-stats" style={{ width:300, flexShrink:0, borderLeft:"1px solid #1e2a40",
                   overflowY:"auto", padding:"14px 16px", background:"#12171f" }}>
                   <div style={{ fontSize:11, fontWeight:700, color:"#6b7a99",
                     textTransform:"uppercase", letterSpacing:0.5, marginBottom:12 }}>
@@ -443,17 +452,15 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
     : ALL_TABS;
 
   return (
-    <div style={{ display:"flex", flexDirection:"column", height:"100vh", overflow:"hidden", background:"#0e1117" }}>
+    <div className="app-shell">
 
       {/* ── Top bar ─────────────────────────────────────────────────── */}
-      <header style={{ display:"flex", alignItems:"center", justifyContent:"space-between",
-        padding:"0 20px", height:50, background:"#161b27",
-        borderBottom:"1px solid #1e2a40", flexShrink:0 }}>
-        <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+      <header className="app-header">
+        <div className="app-header-left">
           <span style={{ fontSize:18 }}>⚡</span>
           <span style={{ fontWeight:800, fontSize:14, color:"#e8edf8" }}>{schema.title || "Dashboard"}</span>
           <span style={{ fontSize:11, color:"#6b7a99" }}>{sourceName}</span>
-          <span style={{ fontSize:13, color:"#9aa8c7", fontWeight:700 }}>· Developed By Akshith Sai Kondamadugu</span>
+          <span className="header-credit" style={{ fontSize:13, color:"#9aa8c7", fontWeight:700 }}>· Developed By Akshith Sai Kondamadugu</span>
           {schema.domain && (
             <span style={{ background:"#1a2030", border:"1px solid #2a3550",
               borderRadius:99, padding:"2px 9px", fontSize:10, color:"#7c5cfc", fontWeight:700, textTransform:"uppercase" }}>
@@ -467,7 +474,7 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
             </span>
           )}
         </div>
-        <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+        <div className="app-header-right">
           {filtering && <span style={{ fontSize:11, color:"#00d4ff", animation:"pulse 1s infinite" }}>● filtering…</span>}
           {jobId && (
             <button onClick={() => window.open(`${API}/api/export/${jobId}`, "_blank")}
@@ -482,8 +489,7 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
       </header>
 
       {/* ── Tab nav ─────────────────────────────────────────────────── */}
-      <div style={{ display:"flex", background:"#161b27", borderBottom:"1px solid #1e2a40",
-        flexShrink:0, padding:"0 20px" }}>
+      <div className="app-tabs">
         {TABS.map(t => (
           <button key={t.id} onClick={() => setActiveTab(t.id)}
             style={{ padding:"9px 17px", background:"none", border:"none",
@@ -497,14 +503,13 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
       </div>
 
       {/* ── Body ────────────────────────────────────────────────────── */}
-      <div style={{ flex:1, overflow:"hidden", display:"flex" }}>
+      <div className="app-body">
 
         {/* ════ DASHBOARD TAB ════════════════════════════════════════ */}
         {activeTab === "dashboard" && (
           <>
             {/* Filter sidebar */}
-            <div style={{ width:248, flexShrink:0, borderRight:"1px solid #1e2a40",
-              overflowY:"auto", padding:12, display:"flex", flexDirection:"column", gap:10 }}>
+            <div className="app-sidebar">
               <FilterPanel
                 schema={schema}
                 activeFilters={filters}
@@ -514,11 +519,11 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
             </div>
 
             {/* Canvas */}
-            <div style={{ flex:1, overflowY:"auto", padding:"14px 18px" }}>
+            <div className="app-canvas">
 
               {/* Page tabs */}
               {pages.length > 1 && (
-                <div style={{ display:"flex", gap:8, marginBottom:14 }}>
+                <div style={{ display:"flex", gap:8, marginBottom:14, flexWrap:"wrap" }}>
                   {pages.map((p,i) => (
                     <button key={p.id} onClick={() => setActivePage(i)}
                       style={{ padding:"5px 14px", borderRadius:7, fontSize:12, fontWeight:600, cursor:"pointer",
@@ -543,9 +548,9 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
                 </div>
               )}
 
-              {/* Widget grid — 12-col */}
+              {/* Widget grid — 12-col, collapses on mobile via .widget-grid */}
               {currentPage && (
-                <div style={{ display:"grid", gridTemplateColumns:"repeat(12,1fr)", gap:14, alignItems:"start" }}>
+                <div className="widget-grid">
                   {currentPage.widgets?.map(widget => (
                     <div key={widget.id} style={{ gridColumn:`span ${Math.min(widget.w || 6, 12)}` }}>
                       <WidgetShell
@@ -553,6 +558,7 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
                         jobId={jobId}
                         onDrillDown={(dim,val) => { if (jobId) setDrillDown({ dimension:dim, value:val }); }}
                         filterApplied={filteredData[widget.id] !== undefined}
+                        allKpis={result?.kpis}
                       />
                     </div>
                   ))}
@@ -564,7 +570,7 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
 
         {/* ════ INSIGHTS TAB ═════════════════════════════════════════ */}
         {activeTab === "insights" && (
-          <div style={{ flex:1, overflowY:"auto", padding:"22px 26px" }}>
+          <div className="tab-pane" style={{ flex:1, overflowY:"auto" }}>
             <h2 style={{ fontSize:18, fontWeight:800, marginBottom:18, color:"#e8edf8" }}>💡 AI Insights</h2>
 
             {schema.key_insights?.length > 0 && (
@@ -595,7 +601,7 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
 
         {/* ════ ANOMALIES TAB ════════════════════════════════════════ */}
         {activeTab === "anomalies" && (
-          <div style={{ flex:1, overflowY:"auto", padding:"22px 26px" }}>
+          <div className="tab-pane" style={{ flex:1, overflowY:"auto" }}>
             <h2 style={{ fontSize:18, fontWeight:800, marginBottom:18, color:"#e8edf8" }}>🔍 Anomaly Detection</h2>
 
             {/* KPI strip */}
@@ -612,7 +618,7 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
 
             {/* Anomaly scatter charts — interactive */}
             {result?.anomaly_scatter_panels?.length > 0 && (
-              <div style={{ display:"grid", gridTemplateColumns:`repeat(${Math.min(result.anomaly_scatter_panels.length,3)},1fr)`, gap:14, marginBottom:20 }}>
+              <div style={{ display:"grid", gridTemplateColumns:`repeat(auto-fit, minmax(260px, 1fr))`, gap:14, marginBottom:20 }}>
                 {result.anomaly_scatter_panels.map((panel,i) => (
                   <div key={i} style={{ background:"#161b27", border:"1px solid #1e2a40", borderRadius:10,
                     padding:"14px 16px" }}>
@@ -660,7 +666,7 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
 
         {/* ════ FORECASTING TAB ══════════════════════════════════════ */}
         {activeTab === "forecasting" && (
-          <div style={{ flex:1, overflowY:"auto", padding:"22px 26px" }}>
+          <div className="tab-pane" style={{ flex:1, overflowY:"auto" }}>
             <h2 style={{ fontSize:18, fontWeight:800, marginBottom:18, color:"#e8edf8" }}>📈 Forecasting</h2>
 
             {result?.forecasts?.length > 0 ? (
@@ -675,7 +681,7 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
 
         {/* ════ CHAT TAB ═════════════════════════════════════════════ */}
         {activeTab === "chat" && (
-          <div style={{ flex:1, overflow:"hidden", padding:"18px 22px", display:"flex", flexDirection:"column" }}>
+          <div className="tab-pane" style={{ flex:1, overflow:"hidden", display:"flex", flexDirection:"column" }}>
             <h2 style={{ fontSize:18, fontWeight:800, marginBottom:14, color:"#e8edf8" }}>🤖 AI Data Assistant</h2>
             <div style={{ flex:1, background:"#161b27", border:"1px solid #1e2a40",
               borderRadius:10, padding:14, display:"flex", flexDirection:"column", overflow:"hidden" }}>

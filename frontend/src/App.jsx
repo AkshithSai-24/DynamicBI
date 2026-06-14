@@ -132,6 +132,13 @@ export default function App() {
   const [isImported, setIsImported] = useState(false);
   const pollRef = useRef(null);
 
+  // Reset the backend workspace (uploads + dashboard artefacts + jobs) at
+  // the start of every new session so leftovers from a previous run never
+  // carry over.
+  useEffect(() => {
+    fetch(`${API}/api/reset`, { method: "POST" }).catch(() => {});
+  }, []);
+
   const startJob = (id, name) => {
     setJobId(id);
     setSourceName(name);
@@ -205,6 +212,7 @@ export default function App() {
     setProgress(0);
     setStage("");
     setIsImported(false);
+    fetch(`${API}/api/reset`, { method: "POST" }).catch(() => {});
   };
 
   if (view === "landing")   return <LandingPage onJobStart={startJob} onImport={importDashboard} />;

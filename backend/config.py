@@ -1,3 +1,7 @@
+"""
+config.py — Central configuration for DynamicBI backend.
+"""
+
 from langchain_openrouter import ChatOpenRouter
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from dotenv import load_dotenv
@@ -7,7 +11,11 @@ load_dotenv()
 
 # ── Dashboard folder ────────────────────────────────────────────────────────────
 DASHBOARD_FOLDER = "dashboard"
+UPLOAD_FOLDER    = "uploads"
 
+# ── LLM ─────────────────────────────────────────────────────────────────────
+NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY")
+LLM_MODEL      = os.getenv("LLM_MODEL", "mistralai/mistral-medium-3.5-128b")
 
 def get_llm():
     """Return the configured LLM instance. All agents must call this."""
@@ -17,9 +25,10 @@ def get_llm():
     )'''
 
 
-    base_llm = ChatNVIDIA(
-    model="mistralai/mistral-medium-3.5-128b",
-    temperature=0.2,
+    base_llm =  ChatNVIDIA(
+        model=LLM_MODEL,
+        api_key=NVIDIA_API_KEY,
+        temperature=0.2,
     )
     return base_llm
     

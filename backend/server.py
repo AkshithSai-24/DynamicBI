@@ -393,6 +393,25 @@ def _schedule(bg: BackgroundTasks, job_id, state):
     bg.add_task(loop.run_in_executor, executor, run_pipeline, job_id, state)
 
 
+def _clear_workspace():
+    """Wipe uploaded files, generated dashboard artefacts, and in-memory jobs.
+
+    Called when the frontend starts a fresh session so leftovers from a
+    previous run never leak into a new one and disk usage doesn't grow
+    unbounded.
+    """
+    for d in (UPLOAD_DIR, DASHBOARD_DIR):
+        for item in d.iterdir():
+            try:
+                if item.is_dir():
+                    shutil.rmtree(item, ignore_errors=True)
+                else:
+                    item.unlink()
+            except Exception:
+                pass
+    JOBS.clear()
+
+
 # ── Request models ─────────────────────────────────────────────────────────────
 class DbInspectRequest(BaseModel):
     connection_string: str
@@ -416,6 +435,18 @@ class DrillDownRequest(BaseModel):
 
 
 # ── Endpoints ──────────────────────────────────────────────────────────────────
+
+@app.post("/api/reset")
+async def reset_session():
+    """Clear uploads, generated dashboard files, and in-memory jobs.
+
+    The frontend calls this whenever a new session/dashboard run begins
+    (e.g. on initial page load or when the user clicks "New") so previous
+    uploads and pipeline artefacts don't pile up or get reused.
+    """
+    _clear_workspace()
+    return {"status": "reset"}
+
 
 @app.post("/api/db/inspect")
 async def inspect_database(body: DbInspectRequest):

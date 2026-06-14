@@ -119,7 +119,7 @@ export default function LandingPage({ onJobStart, onImport }) {
   };
 
   return (
-    <div style={{ minHeight:"100vh", background:"var(--bg)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"32px 16px" }}>
+    <div className="landing-root">
       {/* Header */}
       <div style={{ textAlign:"center", marginBottom:40 }}>
         <div style={{ fontSize:48, marginBottom:8 }}>⚡</div>
@@ -136,7 +136,7 @@ export default function LandingPage({ onJobStart, onImport }) {
       </div>
 
       {/* Source selector */}
-      <div style={{ display:"flex", gap:8, flexWrap:"wrap", justifyContent:"center", marginBottom:28, maxWidth:700 }}>
+      <div className="source-selector">
         {SOURCES.map(s => (
           <button
             key={s.id}
@@ -155,7 +155,7 @@ export default function LandingPage({ onJobStart, onImport }) {
       </div>
 
       {/* Main card */}
-      <div style={{ width:"100%", maxWidth:600, background:"var(--bg2)", border:"1px solid var(--border)", borderRadius:16, padding:32, boxShadow:"var(--shadow)" }}>
+      <div className="landing-card">
 
         {/* File upload */}
         {activeSource === "file" && (
@@ -233,7 +233,7 @@ export default function LandingPage({ onJobStart, onImport }) {
                   </div>
                 )}
                 {dbInfo.type === "mongodb" && (
-                  <div style={{ display:"flex", gap:10 }}>
+                  <div className="db-picker-row">
                     <div style={{ flex:1 }}>
                       <label style={{ display:"block", color:"var(--text2)", fontSize:13, fontWeight:600, marginBottom:6 }}>Database</label>
                       <select
@@ -317,7 +317,7 @@ export default function LandingPage({ onJobStart, onImport }) {
       </div>
 
       <p style={{ marginTop:24, color:"var(--muted)", fontSize:12 }}>
-        Powered by LangGraph · OpenRouter · Recharts · FastAPI
+        Powered by LangGraph · NVIDIA NIM · Recharts · FastAPI
       </p>
       <Footer />
     </div>

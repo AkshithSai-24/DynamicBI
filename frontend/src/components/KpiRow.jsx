@@ -22,13 +22,13 @@ function getIcon(label) {
 
 const ACCENT_CYCLE = ["var(--accent)","var(--accent2)","var(--accent3)","var(--accent5)","var(--accent6)","var(--accent4)"];
 
-export default function KpiRow({ data, columns }) {
+export default function KpiRow({ data, columns, showAll = false }) {
   if (!data?.length) return null;
 
-  // Filter to just the requested columns, or show all
+  // Filter to just the requested columns, or show all / first 6
   const items = columns?.length
     ? data.filter(k => columns.includes(k.column) || k.column === "_rows")
-    : data.slice(0, 6);
+    : (showAll ? data : data.slice(0, 6));
 
   return (
     <div style={{
