@@ -75,20 +75,27 @@ def _infer_freq(series: pd.Series) -> tuple[str, int, str]:
     """
     Infer pandas resample alias, forecast horizon, and human label
     from the median gap between timestamps.
+
+    Horizons are chosen so the forecast is always meaningful:
+      hourly   → 360 h  (15 days)
+      daily    → 30  days
+      weekly   → 26  weeks  (~6 months)
+      monthly  → 12  months
+      quarterly→ 8   quarters (~2 years)
     """
     diffs = series.sort_values().diff().dropna()
     if len(diffs) == 0:
         return "MS", 12, "months"
     gap = diffs.median()
     if gap <= pd.Timedelta("2h"):
-        return "h",  48,  "hours"
+        return "h",  360, "hours"   # 360 h = 15 days (was 48 = 2 days)
     if gap <= pd.Timedelta("2d"):
         return "D",  30,  "days"
     if gap <= pd.Timedelta("10d"):
-        return "W",  12,  "weeks"
+        return "W",  26,  "weeks"
     if gap <= pd.Timedelta("45d"):
         return "MS", 12,  "months"
-    return "QS", 6, "quarters"
+    return "QS", 8, "quarters"
 
 
 def _seasonal_period(freq_alias: str) -> int:
@@ -508,16 +515,28 @@ Return ONLY valid JSON — no explanation, no markdown:
 
         print(f"[forecast] ✓ {col}  method={method}")
 
-        # ── Build interactive chart_data: minimal trailing history + full future ─
-        n_hist_ctx = min(8, len(ts))
-        hist_tail_ds = ts["ds"].iloc[-n_hist_ctx:]
-        hist_tail_y  = ts["y"].iloc[-n_hist_ctx:]
+        # ── Build interactive chart_data ────────────────────────────────────────
+        # For fine-grained frequencies (hourly) we down-sample the chart so the
+        # browser does not choke on 360+ points, while full rows go to the table.
+        # Target: ~72 visible chart points for a clean render.
+        TARGET_CHART_PTS = 72
+
+        n_hist_ctx = min(24, len(ts))
+        hist_tail  = ts.iloc[-n_hist_ctx:].reset_index(drop=True)
+
+        half = max(TARGET_CHART_PTS // 2, 1)
+        hist_stride = max(1, len(hist_tail) // half)
+        fc_stride   = max(1, len(future_ds) // half)
+
+        h_idx = list(range(0, len(hist_tail), hist_stride))
+        if (len(hist_tail) - 1) not in h_idx:
+            h_idx.append(len(hist_tail) - 1)
 
         chart_data = []
-        for ds_val, y_val in zip(hist_tail_ds, hist_tail_y):
+        for i in h_idx:
             chart_data.append({
-                "date":     str(pd.Timestamp(ds_val).date()),
-                "actual":   round(float(y_val), 4),
+                "date":     str(pd.Timestamp(hist_tail["ds"].iloc[i]).date()),
+                "actual":   round(float(hist_tail["y"].iloc[i]), 4),
                 "forecast": None,
                 "lower":    None,
                 "upper":    None,
@@ -529,13 +548,17 @@ Return ONLY valid JSON — no explanation, no markdown:
             chart_data[-1]["lower"]    = chart_data[-1]["actual"]
             chart_data[-1]["upper"]    = chart_data[-1]["actual"]
 
-        for ds_val, yh, lo, up in zip(future_ds, fc_yhat, fc_lower, fc_upper):
+        fc_idx = list(range(0, len(future_ds), fc_stride))
+        if (len(future_ds) - 1) not in fc_idx:
+            fc_idx.append(len(future_ds) - 1)
+
+        for i in fc_idx:
             chart_data.append({
-                "date":     str(pd.Timestamp(ds_val).date()),
+                "date":     str(pd.Timestamp(future_ds[i]).date()),
                 "actual":   None,
-                "forecast": round(float(yh), 4),
-                "lower":    round(float(lo), 4),
-                "upper":    round(float(up), 4),
+                "forecast": round(float(fc_yhat[i]),  4),
+                "lower":    round(float(fc_lower[i]), 4),
+                "upper":    round(float(fc_upper[i]), 4),
             })
 
         forecasts_out.append({

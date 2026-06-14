@@ -293,6 +293,89 @@ function SkeletonH({ h }) {
   );
 }
 
+
+/* ── ForecastCard — collapsible table (5 rows default, expand to all) ──── */
+const PREVIEW_ROWS = 5;
+function ForecastCard({ fc }) {
+  const [expanded, setExpanded] = useState(false);
+  const totalRows  = fc.rows?.length ?? 0;
+  const visibleRows = expanded ? fc.rows : fc.rows?.slice(0, PREVIEW_ROWS);
+  const hasMore    = totalRows > PREVIEW_ROWS;
+
+  return (
+    <div style={{ background:"#161b27", border:"1px solid #1e2a40", borderRadius:10, padding:"16px 18px", marginBottom:16 }}>
+      {/* ─ header ─ */}
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+        <h4 style={{ fontSize:13, fontWeight:700, color:"#00d4ff" }}>
+          {fc.col?.replace(/_/g," ")} — {fc.periods} {fc.freq_label} forecast
+        </h4>
+        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+          {fc.method && (
+            <span style={{ fontSize:10, color:"#6b7a99", background:"#0e1117",
+              border:"1px solid #1e2a40", borderRadius:99, padding:"2px 10px" }}>
+              Model: {fc.method}
+            </span>
+          )}
+          <span style={{ fontSize:10, color:"#4d9fff", background:"#0e1117",
+            border:"1px solid #1e2a40", borderRadius:99, padding:"2px 10px" }}>
+            {totalRows} pts
+          </span>
+        </div>
+      </div>
+
+      {/* ─ chart ─ */}
+      <div style={{ height:300, marginBottom:14 }}>
+        <ForecastWidget data={fc.chart_data} />
+      </div>
+
+      {/* ─ table ─ */}
+      <div style={{ overflowX:"auto" }}>
+        <table style={{ fontSize:11, borderCollapse:"collapse", width:"100%" }}>
+          <thead>
+            <tr>
+              {["Period","Forecast","Lower","Upper"].map(h => (
+                <th key={h} style={{ padding:"4px 10px", color:"#6b7a99",
+                  borderBottom:"1px solid #1e2a40", textAlign:"left" }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {visibleRows?.map((row, i) => (
+              <tr key={i} style={{ borderBottom:"1px solid #1a2235",
+                background: i % 2 === 0 ? "transparent" : "#0d1120" }}>
+                <td style={{ padding:"4px 10px", color:"#b0bdd4" }}>{row.ds}</td>
+                <td style={{ padding:"4px 10px", color:"#00e5a0", fontWeight:600 }}>{row.yhat?.toFixed?.(2)}</td>
+                <td style={{ padding:"4px 10px", color:"#6b7a99" }}>{row.yhat_lower?.toFixed?.(2)}</td>
+                <td style={{ padding:"4px 10px", color:"#6b7a99" }}>{row.yhat_upper?.toFixed?.(2)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ─ expand / collapse toggle ─ */}
+      {hasMore && (
+        <button
+          onClick={() => setExpanded(prev => !prev)}
+          style={{
+            marginTop:10, width:"100%", padding:"6px 0",
+            background:"#0e1117", border:"1px solid #1e2a40",
+            borderRadius:6, color:"#4d9fff", fontSize:11,
+            cursor:"pointer", letterSpacing:"0.3px",
+            transition:"background 0.15s",
+          }}
+          onMouseEnter={e => e.currentTarget.style.background="#131b2e"}
+          onMouseLeave={e => e.currentTarget.style.background="#0e1117"}
+        >
+          {expanded
+            ? `▲  Show less  (displaying all ${totalRows})`
+            : `▼  Show all ${totalRows} forecast points  (${totalRows - PREVIEW_ROWS} more)`}
+        </button>
+      )}
+    </div>
+  );
+}
+
 /* ── Main Dashboard ────────────────────────────────────────────────────── */
 export default function Dashboard({ result, jobId, sourceName, onReset }) {
   const schema = result?.dashboard_schema || {};
@@ -565,39 +648,7 @@ export default function Dashboard({ result, jobId, sourceName, onReset }) {
 
             {result?.forecasts?.length > 0 ? (
               result.forecasts.map(fc => (
-                <div key={fc.col} style={{ background:"#161b27", border:"1px solid #1e2a40", borderRadius:10, padding:"16px 18px", marginBottom:16 }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
-                    <h4 style={{ fontSize:13, fontWeight:700, color:"#00d4ff" }}>
-                      {fc.col?.replace(/_/g," ")} — {fc.periods} {fc.freq_label} forecast
-                    </h4>
-                    {fc.method && (
-                      <span style={{ fontSize:10, color:"#6b7a99", background:"#0e1117",
-                        border:"1px solid #1e2a40", borderRadius:99, padding:"2px 10px" }}>
-                        Model: {fc.method}
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ height:300, marginBottom:14 }}>
-                    <ForecastWidget data={fc.chart_data} />
-                  </div>
-                  <div style={{ overflowX:"auto" }}>
-                    <table style={{ fontSize:11, borderCollapse:"collapse", width:"100%" }}>
-                      <thead><tr>{["Period","Forecast","Lower","Upper"].map(h =>
-                        <th key={h} style={{ padding:"4px 10px", color:"#6b7a99", borderBottom:"1px solid #1e2a40", textAlign:"left" }}>{h}</th>
-                      )}</tr></thead>
-                      <tbody>
-                        {fc.rows.map((row,i) => (
-                          <tr key={i} style={{ borderBottom:"1px solid #1a2235" }}>
-                            <td style={{ padding:"4px 10px", color:"#b0bdd4" }}>{row.ds}</td>
-                            <td style={{ padding:"4px 10px", color:"#00e5a0", fontWeight:600 }}>{row.yhat?.toFixed?.(2)}</td>
-                            <td style={{ padding:"4px 10px", color:"#6b7a99" }}>{row.yhat_lower?.toFixed?.(2)}</td>
-                            <td style={{ padding:"4px 10px", color:"#6b7a99" }}>{row.yhat_upper?.toFixed?.(2)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                <ForecastCard key={fc.col} fc={fc} />
               ))
             ) : (
               <div style={{ color:"#6b7a99", fontSize:13 }}>No forecast data available for this dataset.</div>
