@@ -6,6 +6,7 @@ import AiChat from "./AiChat.jsx";
 import MarkdownRenderer from "./MarkdownRenderer.jsx";
 import DrillDownModal from "./DrillDownModal.jsx";
 import GithubBadge from "./GithubBadge.jsx";
+import ThemeToggle from "./ThemeToggle.jsx";
 import {
   BarWidget, LineWidget, AreaWidget, PieWidget,
   ScatterWidget, HistogramWidget, HeatmapWidget, TableWidget, PALETTE,
@@ -89,9 +90,9 @@ function StatsPanel({ widget }) {
   if (!s) return null;
 
   const tile = (label, value, accent="#00d4ff") => (
-    <div style={{ background:"#0e1117", border:"1px solid #1e2a40", borderRadius:8,
+    <div style={{ background:"var(--bg)", border:"1px solid var(--border)", borderRadius:8,
       padding:"10px 14px", borderLeft:`3px solid ${accent}` }}>
-      <div style={{ fontSize:10, color:"#6b7a99", fontWeight:600, textTransform:"uppercase", marginBottom:3 }}>{label}</div>
+      <div style={{ fontSize:10, color:"var(--muted)", fontWeight:600, textTransform:"uppercase", marginBottom:3 }}>{label}</div>
       <div style={{ fontSize:17, fontWeight:800, color:accent }}>{fmt(value)}</div>
     </div>
   );
@@ -131,11 +132,11 @@ function StatsPanel({ widget }) {
       </div>
       {s.topN?.length > 0 && (
         <>
-          <div style={{ fontSize:11, fontWeight:700, color:"#8899bb", marginBottom:6, textTransform:"uppercase", letterSpacing:0.5 }}>Top {s.topN.length}</div>
+          <div style={{ fontSize:11, fontWeight:700, color:"var(--text2)", marginBottom:6, textTransform:"uppercase", letterSpacing:0.5 }}>Top {s.topN.length}</div>
           <div style={{ display:"flex", flexDirection:"column", gap:4 }}>
             {s.topN.map((row,i) => (
               <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
-                padding:"5px 10px", background:"#0e1117", borderRadius:6, border:"1px solid #1e2a40" }}>
+                padding:"5px 10px", background:"var(--bg)", borderRadius:6, border:"1px solid var(--border)" }}>
                 <div style={{ display:"flex", alignItems:"center", gap:8 }}>
                   <span style={{ width:8,height:8,borderRadius:2,background:PALETTE[i%PALETTE.length],display:"inline-block",flexShrink:0 }} />
                   <span style={{ fontSize:12, color:"#c8d4e8", maxWidth:160, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{row.name}</span>
@@ -155,9 +156,9 @@ function Insight({ text }) {
   if (!text) return null;
   return (
     <div style={{ padding:"6px 12px", background:"rgba(0,212,255,0.06)",
-      borderTop:"1px solid rgba(0,212,255,0.15)", fontSize:11, color:"#8899bb",
+      borderTop:"1px solid rgba(0,212,255,0.15)", fontSize:11, color:"var(--text2)",
       lineHeight:1.5, display:"flex", gap:7, flexShrink:0 }}>
-      <span style={{ color:"#00d4ff", flexShrink:0 }}>💡</span>
+      <span style={{ color:"var(--accent)", flexShrink:0 }}>💡</span>
       <span>{text}</span>
     </div>
   );
@@ -193,14 +194,14 @@ function WidgetShell({ widget, onDrillDown, filterApplied, allKpis }) {
   return (
     <>
       {/* Card */}
-      <div style={{ background:"#161b27", border:"1px solid #1e2a40", borderRadius:10,
+      <div style={{ background:"var(--bg2)", border:"1px solid var(--border)", borderRadius:10,
         display:"flex", flexDirection:"column", overflow:"hidden", height:"100%" }}>
 
         {/* Header */}
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
-          padding:"8px 12px", borderBottom:"1px solid #1e2a40", background:"#1a2030", flexShrink:0 }}>
+          padding:"8px 12px", borderBottom:"1px solid var(--border)", background:"var(--bg3)", flexShrink:0 }}>
           <div style={{ display:"flex", alignItems:"center", gap:7, minWidth:0 }}>
-            <span style={{ fontSize:12, fontWeight:700, color:"#e8edf8", overflow:"hidden",
+            <span style={{ fontSize:12, fontWeight:700, color:"var(--text)", overflow:"hidden",
               textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{widget.title}</span>
             {filterApplied && (
               <span style={{ fontSize:9, background:"#7c5cfc", color:"#fff",
@@ -208,8 +209,8 @@ function WidgetShell({ widget, onDrillDown, filterApplied, allKpis }) {
             )}
           </div>
           <button onClick={() => setExpanded(true)} title="Expand"
-            style={{ background:"none", border:"1px solid #2a3550", borderRadius:5,
-              color:"#6b7a99", padding:"2px 7px", fontSize:11, flexShrink:0, cursor:"pointer" }}>⤢</button>
+            style={{ background:"none", border:"1px solid var(--border)", borderRadius:5,
+              color:"var(--muted)", padding:"2px 7px", fontSize:11, flexShrink:0, cursor:"pointer" }}>⤢</button>
         </div>
 
         {/* Chart body — explicit px height so Recharts can measure it */}
@@ -237,20 +238,20 @@ function WidgetShell({ widget, onDrillDown, filterApplied, allKpis }) {
         >
           <div
             className="widget-modal"
-            style={{ background:"#161b27", border:"1px solid #2a3550", borderRadius:14,
+            style={{ background:"var(--bg2)", border:"1px solid var(--border)", borderRadius:14,
               width:"92%", maxWidth:1100, maxHeight:"88vh",
               display:"flex", flexDirection:"column", overflow:"hidden" }}
             onClick={e => e.stopPropagation()}
           >
             {/* Modal header */}
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
-              padding:"12px 18px", borderBottom:"1px solid #1e2a40", background:"#1a2030", flexShrink:0 }}>
-              <h3 style={{ fontWeight:800, fontSize:15, color:"#e8edf8" }}>{widget.title}</h3>
+              padding:"12px 18px", borderBottom:"1px solid var(--border)", background:"var(--bg3)", flexShrink:0 }}>
+              <h3 style={{ fontWeight:800, fontSize:15, color:"var(--text)" }}>{widget.title}</h3>
               <div style={{ display:"flex", gap:8 }}>
 
                 <button onClick={() => setExpanded(false)}
-                  style={{ background:"none", border:"1px solid #2a3550", borderRadius:7,
-                    color:"#8899bb", padding:"5px 12px", fontSize:12, cursor:"pointer" }}>✕ Close</button>
+                  style={{ background:"none", border:"1px solid var(--border)", borderRadius:7,
+                    color:"var(--text2)", padding:"5px 12px", fontSize:12, cursor:"pointer" }}>✕ Close</button>
               </div>
             </div>
 
@@ -263,7 +264,7 @@ function WidgetShell({ widget, onDrillDown, filterApplied, allKpis }) {
                     {allKpis?.length > 0
                       ? (
                         <>
-                          <div style={{ fontSize:11, color:"#6b7a99", marginBottom:12, fontWeight:600 }}>
+                          <div style={{ fontSize:11, color:"var(--muted)", marginBottom:12, fontWeight:600 }}>
                             Showing all {allKpis.length} KPI{allKpis.length !== 1 ? "s" : ""} computed for this dataset
                           </div>
                           <KpiRow data={allKpis} showAll />
@@ -271,7 +272,7 @@ function WidgetShell({ widget, onDrillDown, filterApplied, allKpis }) {
                       )
                       : data
                         ? <KpiRow data={data} showAll />
-                        : <p style={{ color:"#6b7a99", fontSize:13 }}>No KPI data available.</p>
+                        : <p style={{ color:"var(--muted)", fontSize:13 }}>No KPI data available.</p>
                     }
                   </div>
                 ) : (
@@ -283,9 +284,9 @@ function WidgetShell({ widget, onDrillDown, filterApplied, allKpis }) {
 
               {/* Stats sidebar — always visible when stats exist */}
               {computeStats(widget) && (
-                <div className="widget-modal-stats" style={{ width:300, flexShrink:0, borderLeft:"1px solid #1e2a40",
-                  overflowY:"auto", padding:"14px 16px", background:"#12171f" }}>
-                  <div style={{ fontSize:11, fontWeight:700, color:"#6b7a99",
+                <div className="widget-modal-stats" style={{ width:300, flexShrink:0, borderLeft:"1px solid var(--border)",
+                  overflowY:"auto", padding:"14px 16px", background:"var(--bg3)" }}>
+                  <div style={{ fontSize:11, fontWeight:700, color:"var(--muted)",
                     textTransform:"uppercase", letterSpacing:0.5, marginBottom:12 }}>
                     Chart Statistics
                   </div>
@@ -320,21 +321,21 @@ function ForecastCard({ fc }) {
   const hasMore    = totalRows > PREVIEW_ROWS;
 
   return (
-    <div style={{ background:"#161b27", border:"1px solid #1e2a40", borderRadius:10, padding:"16px 18px", marginBottom:16 }}>
+    <div style={{ background:"var(--bg2)", border:"1px solid var(--border)", borderRadius:10, padding:"16px 18px", marginBottom:16 }}>
       {/* ─ header ─ */}
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
-        <h4 style={{ fontSize:13, fontWeight:700, color:"#00d4ff" }}>
+        <h4 style={{ fontSize:13, fontWeight:700, color:"var(--accent)" }}>
           {fc.col?.replace(/_/g," ")} — {fc.periods} {fc.freq_label} forecast
         </h4>
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
           {fc.method && (
-            <span style={{ fontSize:10, color:"#6b7a99", background:"#0e1117",
-              border:"1px solid #1e2a40", borderRadius:99, padding:"2px 10px" }}>
+            <span style={{ fontSize:10, color:"var(--muted)", background:"var(--bg)",
+              border:"1px solid var(--border)", borderRadius:99, padding:"2px 10px" }}>
               Model: {fc.method}
             </span>
           )}
-          <span style={{ fontSize:10, color:"#4d9fff", background:"#0e1117",
-            border:"1px solid #1e2a40", borderRadius:99, padding:"2px 10px" }}>
+          <span style={{ fontSize:10, color:"#4d9fff", background:"var(--bg)",
+            border:"1px solid var(--border)", borderRadius:99, padding:"2px 10px" }}>
             {totalRows} pts
           </span>
         </div>
@@ -351,8 +352,8 @@ function ForecastCard({ fc }) {
           <thead>
             <tr>
               {["Period","Forecast","Lower","Upper"].map(h => (
-                <th key={h} style={{ padding:"4px 10px", color:"#6b7a99",
-                  borderBottom:"1px solid #1e2a40", textAlign:"left" }}>{h}</th>
+                <th key={h} style={{ padding:"4px 10px", color:"var(--muted)",
+                  borderBottom:"1px solid var(--border)", textAlign:"left" }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -360,10 +361,10 @@ function ForecastCard({ fc }) {
             {visibleRows?.map((row, i) => (
               <tr key={i} style={{ borderBottom:"1px solid #1a2235",
                 background: i % 2 === 0 ? "transparent" : "#0d1120" }}>
-                <td style={{ padding:"4px 10px", color:"#b0bdd4" }}>{row.ds}</td>
-                <td style={{ padding:"4px 10px", color:"#00e5a0", fontWeight:600 }}>{row.yhat?.toFixed?.(2)}</td>
-                <td style={{ padding:"4px 10px", color:"#6b7a99" }}>{row.yhat_lower?.toFixed?.(2)}</td>
-                <td style={{ padding:"4px 10px", color:"#6b7a99" }}>{row.yhat_upper?.toFixed?.(2)}</td>
+                <td style={{ padding:"4px 10px", color:"var(--text2)" }}>{row.ds}</td>
+                <td style={{ padding:"4px 10px", color:"var(--accent3)", fontWeight:600 }}>{row.yhat?.toFixed?.(2)}</td>
+                <td style={{ padding:"4px 10px", color:"var(--muted)" }}>{row.yhat_lower?.toFixed?.(2)}</td>
+                <td style={{ padding:"4px 10px", color:"var(--muted)" }}>{row.yhat_upper?.toFixed?.(2)}</td>
               </tr>
             ))}
           </tbody>
@@ -376,13 +377,13 @@ function ForecastCard({ fc }) {
           onClick={() => setExpanded(prev => !prev)}
           style={{
             marginTop:10, width:"100%", padding:"6px 0",
-            background:"#0e1117", border:"1px solid #1e2a40",
+            background:"var(--bg)", border:"1px solid var(--border)",
             borderRadius:6, color:"#4d9fff", fontSize:11,
             cursor:"pointer", letterSpacing:"0.3px",
             transition:"background 0.15s",
           }}
           onMouseEnter={e => e.currentTarget.style.background="#131b2e"}
-          onMouseLeave={e => e.currentTarget.style.background="#0e1117"}
+          onMouseLeave={e => e.currentTarget.style.background="var(--bg)"}
         >
           {expanded
             ? `▲  Show less  (displaying all ${totalRows})`
@@ -477,8 +478,8 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
       <header className="app-header">
         <div className="app-header-left">
           <span style={{ fontSize:18 }}>⚡</span>
-          <span style={{ fontWeight:800, fontSize:14, color:"#e8edf8" }}>{schema.title || "Dashboard"}</span>
-          <span style={{ fontSize:11, color:"#6b7a99" }}>{sourceName}</span>
+          <span style={{ fontWeight:800, fontSize:14, color:"var(--text)" }}>{schema.title || "Dashboard"}</span>
+          <span style={{ fontSize:11, color:"var(--muted)" }}>{sourceName}</span>
           <a href="https://akshithsai.co.in" target="_blank" rel="noopener noreferrer"
             className="header-credit"
             style={{ fontSize:13, color:"#9aa8c7", fontWeight:700, textDecoration:"none", display:"inline-flex", alignItems:"center", gap:4 }}
@@ -494,20 +495,20 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
             · Developed By Akshith Sai Kondamadugu
           </a>
           {schema.domain && (
-            <span style={{ background:"#1a2030", border:"1px solid #2a3550",
-              borderRadius:99, padding:"2px 9px", fontSize:10, color:"#7c5cfc", fontWeight:700, textTransform:"uppercase" }}>
+            <span style={{ background:"var(--bg3)", border:"1px solid var(--border)",
+              borderRadius:99, padding:"2px 9px", fontSize:10, color:"var(--accent2)", fontWeight:700, textTransform:"uppercase" }}>
               {schema.domain}
             </span>
           )}
           {isImported && (
-            <span style={{ background:"#1a2030", border:"1px solid #2a3550",
-              borderRadius:99, padding:"2px 9px", fontSize:10, color:"#00e5a0", fontWeight:700, textTransform:"uppercase" }}>
+            <span style={{ background:"var(--bg3)", border:"1px solid var(--border)",
+              borderRadius:99, padding:"2px 9px", fontSize:10, color:"var(--accent3)", fontWeight:700, textTransform:"uppercase" }}>
               Imported · Read-only
             </span>
           )}
         </div>
         <div className="app-header-right">
-          {filtering && <span style={{ fontSize:11, color:"#00d4ff", animation:"pulse 1s infinite" }}>● filtering…</span>}
+          {filtering && <span style={{ fontSize:11, color:"var(--accent)", animation:"pulse 1s infinite" }}>● filtering…</span>}
           {jobId && (
             <button onClick={() => {
               const url = `${API}/api/export/${jobId}`;
@@ -522,12 +523,13 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
                   URL.revokeObjectURL(a.href);
                 });
             }}
-              style={{ background:"#1a2030", border:"1px solid #2a3550", borderRadius:7,
-                color:"#b0bdd4", padding:"5px 13px", fontSize:12, fontWeight:600, cursor:"pointer" }}>↓ Export</button>
+              style={{ background:"var(--bg3)", border:"1px solid var(--border)", borderRadius:7,
+                color:"var(--text2)", padding:"5px 13px", fontSize:12, fontWeight:600, cursor:"pointer" }}>↓ Export</button>
           )}
           <button onClick={onReset}
-            style={{ background:"none", border:"1px solid #1e2a40", borderRadius:7,
-              color:"#6b7a99", padding:"5px 13px", fontSize:12, cursor:"pointer" }}>← New</button>
+            style={{ background:"none", border:"1px solid var(--border)", borderRadius:7,
+              color:"var(--muted)", padding:"5px 13px", fontSize:12, cursor:"pointer" }}>← New</button>
+          <ThemeToggle variant="icon" />
           <GithubBadge />
         </div>
       </header>
@@ -538,7 +540,7 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
           <button key={t.id} onClick={() => setActiveTab(t.id)}
             style={{ padding:"9px 17px", background:"none", border:"none",
               borderBottom: activeTab===t.id ? "2px solid #00d4ff" : "2px solid transparent",
-              color: activeTab===t.id ? "#00d4ff" : "#6b7a99",
+              color: activeTab===t.id ? "#00d4ff" : "var(--muted)",
               fontWeight: activeTab===t.id ? 700 : 500,
               fontSize:12, cursor:"pointer", transition:"all 0.15s" }}>
             {t.label}
@@ -571,9 +573,9 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
                   {pages.map((p,i) => (
                     <button key={p.id} onClick={() => setActivePage(i)}
                       style={{ padding:"5px 14px", borderRadius:7, fontSize:12, fontWeight:600, cursor:"pointer",
-                        background: activePage===i ? "#7c5cfc" : "#1a2030",
+                        background: activePage===i ? "#7c5cfc" : "var(--bg3)",
                         border:`1px solid ${activePage===i ? "#7c5cfc" : "#2a3550"}`,
-                        color:"#e8edf8" }}>
+                        color:"var(--text)" }}>
                       {p.title}
                     </button>
                   ))}
@@ -587,7 +589,7 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
                   padding:"11px 16px", marginBottom:14 }}>
                   <div style={{ display:"flex", gap:8 }}>
                     <span style={{ fontSize:16, flexShrink:0 }}>🧠</span>
-                    <p style={{ fontSize:12, color:"#b0bdd4", lineHeight:1.6 }}>{schema.ai_summary}</p>
+                    <p style={{ fontSize:12, color:"var(--text2)", lineHeight:1.6 }}>{schema.ai_summary}</p>
                   </div>
                 </div>
               )}
@@ -615,17 +617,17 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
         {/* ════ INSIGHTS TAB ═════════════════════════════════════════ */}
         {activeTab === "insights" && (
           <div className="tab-pane" style={{ flex:1, overflowY:"auto" }}>
-            <h2 style={{ fontSize:18, fontWeight:800, marginBottom:18, color:"#e8edf8" }}>💡 AI Insights</h2>
+            <h2 style={{ fontSize:18, fontWeight:800, marginBottom:18, color:"var(--text)" }}>💡 AI Insights</h2>
 
             {schema.key_insights?.length > 0 && (
               <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(260px,1fr))", gap:12, marginBottom:24 }}>
                 {schema.key_insights.map((ins,i) => (
-                  <div key={i} style={{ background:"#161b27", border:"1px solid #1e2a40",
+                  <div key={i} style={{ background:"var(--bg2)", border:"1px solid var(--border)",
                     borderRadius:10, padding:"14px 16px",
                     borderLeft:`3px solid ${PALETTE[i%PALETTE.length]}` }}>
                     <div style={{ display:"flex", gap:9, alignItems:"flex-start" }}>
                       <span style={{ color:PALETTE[i%PALETTE.length], fontWeight:800, fontSize:14, flexShrink:0 }}>{i+1}</span>
-                      <span style={{ fontSize:12, color:"#b0bdd4", lineHeight:1.65 }}>{ins}</span>
+                      <span style={{ fontSize:12, color:"var(--text2)", lineHeight:1.65 }}>{ins}</span>
                     </div>
                   </div>
                 ))}
@@ -633,8 +635,8 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
             )}
 
             {result?.insights && (
-              <div style={{ background:"#161b27", border:"1px solid #1e2a40", borderRadius:10, padding:"20px 24px" }}>
-                <div style={{ fontSize:13, fontWeight:700, marginBottom:14, color:"#00e5a0", display:"flex", alignItems:"center", gap:8 }}>
+              <div style={{ background:"var(--bg2)", border:"1px solid var(--border)", borderRadius:10, padding:"20px 24px" }}>
+                <div style={{ fontSize:13, fontWeight:700, marginBottom:14, color:"var(--accent3)", display:"flex", alignItems:"center", gap:8 }}>
                   <span>📋</span> Detailed Analysis
                 </div>
                 <MarkdownRenderer content={result.insights} />
@@ -646,7 +648,7 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
         {/* ════ ANOMALIES TAB ════════════════════════════════════════ */}
         {activeTab === "anomalies" && (
           <div className="tab-pane" style={{ flex:1, overflowY:"auto" }}>
-            <h2 style={{ fontSize:18, fontWeight:800, marginBottom:18, color:"#e8edf8" }}>🔍 Anomaly Detection</h2>
+            <h2 style={{ fontSize:18, fontWeight:800, marginBottom:18, color:"var(--text)" }}>🔍 Anomaly Detection</h2>
 
             {/* KPI strip */}
             {result?.anomaly_data && (
@@ -664,9 +666,9 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
             {result?.anomaly_scatter_panels?.length > 0 && (
               <div style={{ display:"grid", gridTemplateColumns:`repeat(auto-fit, minmax(260px, 1fr))`, gap:14, marginBottom:20 }}>
                 {result.anomaly_scatter_panels.map((panel,i) => (
-                  <div key={i} style={{ background:"#161b27", border:"1px solid #1e2a40", borderRadius:10,
+                  <div key={i} style={{ background:"var(--bg2)", border:"1px solid var(--border)", borderRadius:10,
                     padding:"14px 16px" }}>
-                    <div style={{ fontSize:12, fontWeight:700, marginBottom:10, color:"#00d4ff",
+                    <div style={{ fontSize:12, fontWeight:700, marginBottom:10, color:"var(--accent)",
                       display:"flex", alignItems:"center", gap:8 }}>
                       <span>📈</span> {panel.x_label} vs {panel.y_label}
                     </div>
@@ -680,9 +682,9 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
 
             {/* Fallback: static anomaly image if no interactive panels */}
             {!result?.anomaly_scatter_panels?.length && result?.anomaly_image && (
-              <div style={{ background:"#161b27", border:"1px solid #1e2a40", borderRadius:10,
+              <div style={{ background:"var(--bg2)", border:"1px solid var(--border)", borderRadius:10,
                 padding:"16px 18px", marginBottom:20 }}>
-                <div style={{ fontSize:13, fontWeight:700, marginBottom:12, color:"#00d4ff",
+                <div style={{ fontSize:13, fontWeight:700, marginBottom:12, color:"var(--accent)",
                   display:"flex", alignItems:"center", gap:8 }}>
                   <span>📈</span> Anomaly Scatter Plot
                 </div>
@@ -696,10 +698,10 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
 
             {/* AI markdown report */}
             {result?.anomaly_report && (
-              <div style={{ background:"#161b27", border:"1px solid #1e2a40", borderRadius:10,
+              <div style={{ background:"var(--bg2)", border:"1px solid var(--border)", borderRadius:10,
                 padding:"20px 24px", marginBottom:20 }}>
-                <div style={{ fontSize:13, fontWeight:700, marginBottom:14, color:"#ff6b6b",
-                  display:"flex", alignItems:"center", gap:8, borderBottom:"1px solid #1e2a40", paddingBottom:10 }}>
+                <div style={{ fontSize:13, fontWeight:700, marginBottom:14, color:"var(--accent4)",
+                  display:"flex", alignItems:"center", gap:8, borderBottom:"1px solid var(--border)", paddingBottom:10 }}>
                   <span>🔬</span> AI Analysis Report
                 </div>
                 <MarkdownRenderer content={result.anomaly_report} />
@@ -711,14 +713,14 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
         {/* ════ FORECASTING TAB ══════════════════════════════════════ */}
         {activeTab === "forecasting" && (
           <div className="tab-pane" style={{ flex:1, overflowY:"auto" }}>
-            <h2 style={{ fontSize:18, fontWeight:800, marginBottom:18, color:"#e8edf8" }}>📈 Forecasting</h2>
+            <h2 style={{ fontSize:18, fontWeight:800, marginBottom:18, color:"var(--text)" }}>📈 Forecasting</h2>
 
             {result?.forecasts?.length > 0 ? (
               result.forecasts.map(fc => (
                 <ForecastCard key={fc.col} fc={fc} />
               ))
             ) : (
-              <div style={{ color:"#6b7a99", fontSize:13 }}>No forecast data available for this dataset.</div>
+              <div style={{ color:"var(--muted)", fontSize:13 }}>No forecast data available for this dataset.</div>
             )}
           </div>
         )}
@@ -726,8 +728,8 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
         {/* ════ CHAT TAB ═════════════════════════════════════════════ */}
         {activeTab === "chat" && (
           <div className="tab-pane" style={{ flex:1, overflow:"hidden", display:"flex", flexDirection:"column" }}>
-            <h2 style={{ fontSize:18, fontWeight:800, marginBottom:14, color:"#e8edf8" }}>🤖 AI Data Assistant</h2>
-            <div style={{ flex:1, background:"#161b27", border:"1px solid #1e2a40",
+            <h2 style={{ fontSize:18, fontWeight:800, marginBottom:14, color:"var(--text)" }}>🤖 AI Data Assistant</h2>
+            <div style={{ flex:1, background:"var(--bg2)", border:"1px solid var(--border)",
               borderRadius:10, padding:14, display:"flex", flexDirection:"column", overflow:"hidden" }}>
               <AiChat jobId={jobId} sessionId={sessionId} />
             </div>
@@ -746,11 +748,11 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
 
 function SB({ label, value, sub, accent }) {
   return (
-    <div style={{ background:"#161b27", border:"1px solid #1e2a40", borderRadius:8,
+    <div style={{ background:"var(--bg2)", border:"1px solid var(--border)", borderRadius:8,
       padding:"10px 13px", borderLeft:`3px solid ${accent||"#00d4ff"}` }}>
-      <div style={{ fontSize:10, color:"#6b7a99", fontWeight:600, textTransform:"uppercase", marginBottom:3 }}>{label}</div>
+      <div style={{ fontSize:10, color:"var(--muted)", fontWeight:600, textTransform:"uppercase", marginBottom:3 }}>{label}</div>
       <div style={{ fontSize:18, fontWeight:800, color:accent||"#00d4ff" }}>{value??"-"}</div>
-      {sub && <div style={{ fontSize:10, color:"#6b7a99", marginTop:2 }}>{sub}</div>}
+      {sub && <div style={{ fontSize:10, color:"var(--muted)", marginTop:2 }}>{sub}</div>}
     </div>
   );
 }

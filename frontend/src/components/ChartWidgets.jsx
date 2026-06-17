@@ -1,5 +1,7 @@
 /**
- * ChartWidgets.jsx — Recharts components, no hover white-cast, fixed heights
+ * ChartWidgets.jsx — Recharts components with full theme support.
+ * Uses usePalette() from ThemeContext so chart colours update live when
+ * the user switches themes.  Grid lines and ticks read CSS variables.
  */
 import {
   BarChart, Bar, LineChart, Line, AreaChart, Area,
@@ -7,15 +9,18 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, Brush,
 } from "recharts";
+import { usePalette } from "../ThemeContext.jsx";
 
+/* Static fallback palette used before context mounts */
 export const PALETTE = [
   "#00d4ff","#7c5cfc","#00e5a0","#ff6b6b","#f4a535",
   "#c084fc","#60d394","#fb923c","#38bdf8","#ffd93d",
-  "#e879f9","#34d399","#f87171","#a78bfa","#facc15",
 ];
 
-const TICK  = { fill:"#6b7a99", fontSize:10 };
-const GRID  = { stroke:"#1e2a40", strokeDasharray:"3 3" };
+/* Read live CSS variable values (Recharts can't use CSS vars directly) */
+function cssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
 
 const fmt = (v) => {
   if (v == null || (typeof v === "number" && isNaN(v))) return "";
@@ -26,37 +31,51 @@ const fmt = (v) => {
   return Number.isInteger(v) ? v : parseFloat(v.toFixed(2));
 };
 
-/* Custom tooltip — dark, no white flash */
-const Tip = ({ active, payload, label }) => {
+/* Theme-aware helpers — called inside render so they always reflect current theme */
+function tick()   { return { fill: cssVar("--chart-tick") || "#6b7a99", fontSize: 10 }; }
+function grid()   { return { stroke: cssVar("--chart-grid") || "#1e2a40", strokeDasharray: "3 3" }; }
+function tipBg()  { return cssVar("--tooltip-bg")     || "#0e1117"; }
+function tipBdr() { return cssVar("--tooltip-border") || "#2a3550"; }
+function bgColor(){ return cssVar("--bg")             || "#0e1117"; }
+function textColor(){ return cssVar("--text")         || "#e8edf8"; }
+function mutedColor(){ return cssVar("--muted")       || "#6b7a99"; }
+
+/* Custom tooltip — always uses current theme CSS vars */
+function Tip({ active, payload, label, palette }) {
   if (!active || !payload?.length) return null;
   return (
-    <div style={{ background:"#0e1117", border:"1px solid #2a3550", borderRadius:8,
-      padding:"9px 13px", fontSize:12, pointerEvents:"none", zIndex:9999 }}>
-      {label != null && <p style={{ color:"#8899bb", marginBottom:5, fontWeight:600, fontSize:11 }}>{String(label).slice(0,30)}</p>}
-      {payload.map((p,i) => (
-        <p key={i} style={{ color: p.color || PALETTE[i], margin:"2px 0" }}>
-          <span style={{ color:"#6b7a99" }}>{p.name ?? p.dataKey}: </span>
-          <strong style={{ color:"#e8edf8" }}>{fmt(p.value)}</strong>
+    <div style={{ background: tipBg(), border: `1px solid ${tipBdr()}`, borderRadius: 8,
+      padding: "9px 13px", fontSize: 12, pointerEvents: "none", zIndex: 9999 }}>
+      {label != null && (
+        <p style={{ color: mutedColor(), marginBottom: 5, fontWeight: 600, fontSize: 11 }}>
+          {String(label).slice(0, 30)}
+        </p>
+      )}
+      {payload.map((p, i) => (
+        <p key={i} style={{ color: p.color || (palette||PALETTE)[i % (palette||PALETTE).length], margin: "2px 0" }}>
+          <span style={{ color: mutedColor() }}>{p.name ?? p.dataKey}: </span>
+          <strong style={{ color: textColor() }}>{fmt(p.value)}</strong>
         </p>
       ))}
     </div>
   );
-};
+}
 
 /* ── Bar ──────────────────────────────────────────────────────────────────── */
 export function BarWidget({ data, xKey="name", yKey="value", onBarClick }) {
+  const palette = usePalette();
   if (!data?.length) return <Empty />;
+  const T = tick(), G = grid();
   return (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data} margin={{ top:6, right:10, bottom:36, left:4 }}
         onClick={e => onBarClick?.(e)} style={{ cursor: onBarClick ? "pointer" : "default" }}>
-        <CartesianGrid {...GRID} />
-        <XAxis dataKey={xKey} tick={TICK} angle={-35} textAnchor="end" interval="preserveStartEnd" />
-        <YAxis tick={TICK} tickFormatter={fmt} width={48} />
-        <Tooltip content={<Tip />} cursor={false} />
-        <Bar dataKey={yKey} radius={[4,4,0,0]} maxBarSize={44}
-          activeBar={false}>
-          {data.map((_,i) => <Cell key={i} fill={PALETTE[i % PALETTE.length]} />)}
+        <CartesianGrid {...G} />
+        <XAxis dataKey={xKey} tick={T} angle={-35} textAnchor="end" interval="preserveStartEnd" />
+        <YAxis tick={T} tickFormatter={fmt} width={48} />
+        <Tooltip content={<Tip palette={palette} />} cursor={false} />
+        <Bar dataKey={yKey} radius={[4,4,0,0]} maxBarSize={44} activeBar={false}>
+          {data.map((_, i) => <Cell key={i} fill={palette[i % palette.length]} />)}
         </Bar>
       </BarChart>
     </ResponsiveContainer>
@@ -65,17 +84,19 @@ export function BarWidget({ data, xKey="name", yKey="value", onBarClick }) {
 
 /* ── Line ─────────────────────────────────────────────────────────────────── */
 export function LineWidget({ data, xKey="name", yKey="value" }) {
+  const palette = usePalette();
   if (!data?.length) return <Empty />;
+  const T = tick(), G = grid();
   return (
     <ResponsiveContainer width="100%" height="100%">
       <LineChart data={data} margin={{ top:6, right:10, bottom:36, left:4 }}>
-        <CartesianGrid {...GRID} />
-        <XAxis dataKey={xKey} tick={TICK} angle={-35} textAnchor="end" interval="preserveStartEnd" />
-        <YAxis tick={TICK} tickFormatter={fmt} width={48} />
-        <Tooltip content={<Tip />} cursor={{ stroke:"#2a3550", strokeWidth:1 }} />
-        <Line type="monotone" dataKey={yKey} stroke={PALETTE[0]} strokeWidth={2.5}
-          dot={false} activeDot={{ r:4, fill:PALETTE[0], stroke:"none" }} />
-        {data.length > 40 && <Brush dataKey={xKey} height={18} stroke="#2a3550" fill="#0e1117" />}
+        <CartesianGrid {...G} />
+        <XAxis dataKey={xKey} tick={T} angle={-35} textAnchor="end" interval="preserveStartEnd" />
+        <YAxis tick={T} tickFormatter={fmt} width={48} />
+        <Tooltip content={<Tip palette={palette} />} cursor={{ stroke: G.stroke, strokeWidth:1 }} />
+        <Line type="monotone" dataKey={yKey} stroke={palette[0]} strokeWidth={2.5}
+          dot={false} activeDot={{ r:4, fill:palette[0], stroke:"none" }} />
+        {data.length > 40 && <Brush dataKey={xKey} height={18} stroke={G.stroke} fill={bgColor()} />}
       </LineChart>
     </ResponsiveContainer>
   );
@@ -83,23 +104,25 @@ export function LineWidget({ data, xKey="name", yKey="value" }) {
 
 /* ── Area ─────────────────────────────────────────────────────────────────── */
 export function AreaWidget({ data, xKey="name", yKey="value" }) {
+  const palette = usePalette();
   if (!data?.length) return <Empty />;
+  const T = tick(), G = grid();
   return (
     <ResponsiveContainer width="100%" height="100%">
       <AreaChart data={data} margin={{ top:6, right:10, bottom:36, left:4 }}>
         <defs>
           <linearGradient id="ag0" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%"  stopColor={PALETTE[0]} stopOpacity={0.35} />
-            <stop offset="95%" stopColor={PALETTE[0]} stopOpacity={0} />
+            <stop offset="5%"  stopColor={palette[0]} stopOpacity={0.35} />
+            <stop offset="95%" stopColor={palette[0]} stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid {...GRID} />
-        <XAxis dataKey={xKey} tick={TICK} angle={-35} textAnchor="end" interval="preserveStartEnd" />
-        <YAxis tick={TICK} tickFormatter={fmt} width={48} />
-        <Tooltip content={<Tip />} cursor={{ stroke:"#2a3550", strokeWidth:1 }} />
-        <Area type="monotone" dataKey={yKey} stroke={PALETTE[0]} fill="url(#ag0)"
+        <CartesianGrid {...G} />
+        <XAxis dataKey={xKey} tick={T} angle={-35} textAnchor="end" interval="preserveStartEnd" />
+        <YAxis tick={T} tickFormatter={fmt} width={48} />
+        <Tooltip content={<Tip palette={palette} />} cursor={{ stroke: G.stroke, strokeWidth:1 }} />
+        <Area type="monotone" dataKey={yKey} stroke={palette[0]} fill="url(#ag0)"
           strokeWidth={2.5} dot={false} activeDot={{ r:4, stroke:"none" }} />
-        {data.length > 40 && <Brush dataKey={xKey} height={18} stroke="#2a3550" fill="#0e1117" />}
+        {data.length > 40 && <Brush dataKey={xKey} height={18} stroke={G.stroke} fill={bgColor()} />}
       </AreaChart>
     </ResponsiveContainer>
   );
@@ -107,31 +130,26 @@ export function AreaWidget({ data, xKey="name", yKey="value" }) {
 
 /* ── Pie ──────────────────────────────────────────────────────────────────── */
 export function PieWidget({ data, nameKey="name", valueKey="value", onSliceClick }) {
+  const palette = usePalette();
   if (!data?.length) return <Empty />;
   const total = data.reduce((s,d) => s + (Number(d[valueKey]) || 0), 0);
   return (
     <ResponsiveContainer width="100%" height="100%">
       <PieChart>
-        <Pie
-          data={data} cx="50%" cy="48%"
+        <Pie data={data} cx="50%" cy="48%"
           innerRadius="30%" outerRadius="62%"
-          dataKey={valueKey} nameKey={nameKey}
-          paddingAngle={2}
-          onClick={(d) => onSliceClick?.(d)}
-          /* kill the default activeShape white bleed */
-          activeShape={null}
-          activeIndex={undefined}
+          dataKey={valueKey} nameKey={nameKey} paddingAngle={2}
+          onClick={d => onSliceClick?.(d)}
+          activeShape={null} activeIndex={undefined}
           label={({ name, percent }) =>
             percent > 0.04 ? `${String(name).slice(0,10)} ${(percent*100).toFixed(0)}%` : ""}
-          labelLine={{ stroke:"#2a3550", strokeWidth:1 }}
+          labelLine={{ stroke: grid().stroke, strokeWidth:1 }}
         >
-          {data.map((_,i) => <Cell key={i} fill={PALETTE[i % PALETTE.length]} />)}
+          {data.map((_, i) => <Cell key={i} fill={palette[i % palette.length]} />)}
         </Pie>
-        <Tooltip
-          content={<Tip />}
-          formatter={(v) => [fmt(v) + (total ? ` (${((v/total)*100).toFixed(1)}%)` : ""), ""]}
-        />
-        <Legend wrapperStyle={{ fontSize:10, color:"#6b7a99" }} />
+        <Tooltip content={<Tip palette={palette} />}
+          formatter={v => [fmt(v)+(total ? ` (${((v/total)*100).toFixed(1)}%)` : ""), ""]} />
+        <Legend wrapperStyle={{ fontSize:10, color: mutedColor() }} />
       </PieChart>
     </ResponsiveContainer>
   );
@@ -139,24 +157,26 @@ export function PieWidget({ data, nameKey="name", valueKey="value", onSliceClick
 
 /* ── Scatter ──────────────────────────────────────────────────────────────── */
 export function ScatterWidget({ data, xKey="x", yKey="y", colorKey="category" }) {
+  const palette = usePalette();
   if (!data?.length) return <Empty />;
   const cats = colorKey ? [...new Set(data.map(d => d[colorKey]).filter(Boolean))] : [];
+  const T = tick(), G = grid();
   return (
     <ResponsiveContainer width="100%" height="100%">
       <ScatterChart margin={{ top:6, right:10, bottom:16, left:4 }}>
-        <CartesianGrid {...GRID} />
-        <XAxis dataKey={xKey} type="number" tick={TICK} tickFormatter={fmt} name={xKey} />
-        <YAxis dataKey={yKey} type="number" tick={TICK} tickFormatter={fmt} name={yKey} width={48} />
-        <Tooltip content={<Tip />} cursor={{ strokeDasharray:"3 3", stroke:"#2a3550" }} />
+        <CartesianGrid {...G} />
+        <XAxis dataKey={xKey} type="number" tick={T} tickFormatter={fmt} name={xKey} />
+        <YAxis dataKey={yKey} type="number" tick={T} tickFormatter={fmt} name={yKey} width={48} />
+        <Tooltip content={<Tip palette={palette} />} cursor={{ strokeDasharray:"3 3", stroke: G.stroke }} />
         {cats.length > 1
           ? cats.slice(0,8).map((cat,i) => (
               <Scatter key={cat} name={String(cat)}
-                data={data.filter(d => d[colorKey] === cat)}
-                fill={PALETTE[i % PALETTE.length]} opacity={0.72} />
+                data={data.filter(d => d[colorKey]===cat)}
+                fill={palette[i % palette.length]} opacity={0.72} />
             ))
-          : <Scatter data={data.slice(0,600)} fill={PALETTE[0]} opacity={0.65} />
+          : <Scatter data={data.slice(0,600)} fill={palette[0]} opacity={0.65} />
         }
-        {cats.length > 1 && <Legend wrapperStyle={{ fontSize:10, color:"#6b7a99" }} />}
+        {cats.length > 1 && <Legend wrapperStyle={{ fontSize:10, color: mutedColor() }} />}
       </ScatterChart>
     </ResponsiveContainer>
   );
@@ -164,16 +184,17 @@ export function ScatterWidget({ data, xKey="x", yKey="y", colorKey="category" })
 
 /* ── Histogram ────────────────────────────────────────────────────────────── */
 export function HistogramWidget({ data }) {
+  const palette = usePalette();
   if (!data?.length) return <Empty />;
+  const T = tick(), G = grid();
   return (
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={data} margin={{ top:6, right:10, bottom:36, left:4 }}>
-        <CartesianGrid {...GRID} />
-        <XAxis dataKey="name" tick={TICK} angle={-35} textAnchor="end" interval="preserveStartEnd" />
-        <YAxis tick={TICK} tickFormatter={fmt} width={48} />
-        <Tooltip content={<Tip />} cursor={false} />
-        <Bar dataKey="value" fill={PALETTE[2]} radius={[2,2,0,0]}
-          activeBar={false} />
+        <CartesianGrid {...G} />
+        <XAxis dataKey="name" tick={T} angle={-35} textAnchor="end" interval="preserveStartEnd" />
+        <YAxis tick={T} tickFormatter={fmt} width={48} />
+        <Tooltip content={<Tip palette={palette} />} cursor={false} />
+        <Bar dataKey="value" fill={palette[2]} radius={[2,2,0,0]} activeBar={false} />
       </BarChart>
     </ResponsiveContainer>
   );
@@ -181,48 +202,67 @@ export function HistogramWidget({ data }) {
 
 /* ── Heatmap ──────────────────────────────────────────────────────────────── */
 export function HeatmapWidget({ data }) {
+  const palette = usePalette();
   if (!data?.columns?.length) return <Empty />;
   const { columns, matrix } = data;
   const n = columns.length;
   const cellSz = Math.max(22, Math.min(44, Math.floor(320 / n)));
 
   const color = (v) => {
-    if (v == null) return "#1c2436";
-    if (v >=  0.7) return "#00e5a0";
-    if (v >=  0.3) return "#00d4ff";
-    if (v >=  0)   return "#354060";
-    if (v >= -0.3) return "#7c5cfc";
-    return "#ff6b6b";
+    if (v == null) return cssVar("--bg3") || "#1c2436";
+    if (v >=  0.7) return palette[2];
+    if (v >=  0.3) return palette[0];
+    if (v >=  0)   return cssVar("--border2") || "#354060";
+    if (v >= -0.3) return palette[1];
+    return palette[3];
   };
 
   const byCell = {};
   (matrix||[]).forEach(({ row, col, value }) => { byCell[`${row}__${col}`] = value; });
 
   return (
-    <div style={{ width:"100%", height:"100%", overflowX:"auto", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"flex-start", paddingTop:4 }}>
-      <div style={{ display:"grid", gridTemplateColumns:`52px repeat(${n}, ${cellSz}px)`, gap:2, fontSize:9, color:"#6b7a99" }}>
+    <div style={{ width:"100%", height:"100%", overflowX:"auto", display:"flex",
+      flexDirection:"column", alignItems:"center", justifyContent:"flex-start", paddingTop:4 }}>
+      <div style={{ display:"grid", gridTemplateColumns:`52px repeat(${n}, ${cellSz}px)`,
+        gap:2, fontSize:9, color: mutedColor() }}>
         <div />
-        {columns.map(c => <div key={c} style={{ textAlign:"center", lineHeight:1.2, paddingBottom:3, wordBreak:"break-all" }}>{c.slice(0,7)}</div>)}
+        {columns.map(c => (
+          <div key={c} style={{ textAlign:"center", lineHeight:1.2, paddingBottom:3, wordBreak:"break-all" }}>
+            {c.slice(0,7)}
+          </div>
+        ))}
         {columns.map(row => (
           <>
-            <div key={row+"_l"} style={{ display:"flex", alignItems:"center", justifyContent:"flex-end", paddingRight:5, wordBreak:"break-all" }}>{row.slice(0,7)}</div>
+            <div key={row+"_l"} style={{ display:"flex", alignItems:"center",
+              justifyContent:"flex-end", paddingRight:5, wordBreak:"break-all" }}>
+              {row.slice(0,7)}
+            </div>
             {columns.map(col => {
               const v = byCell[`${row}__${col}`];
               return (
                 <div key={col} title={`${row} × ${col}: ${v?.toFixed?.(3) ?? "—"}`}
                   style={{ width:cellSz, height:cellSz, background:color(v), borderRadius:2,
                     display:"flex", alignItems:"center", justifyContent:"center" }}>
-                  {cellSz > 30 && <span style={{ fontSize:7, color:"rgba(255,255,255,0.7)" }}>{v?.toFixed?.(1)}</span>}
+                  {cellSz > 30 && (
+                    <span style={{ fontSize:7, color:"rgba(255,255,255,0.7)" }}>
+                      {v?.toFixed?.(1)}
+                    </span>
+                  )}
                 </div>
               );
             })}
           </>
         ))}
       </div>
-      <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginTop:8, fontSize:9, color:"#6b7a99" }}>
-        {[["#00e5a0","Strong+"],["#00d4ff","Mod+"],["#354060","Weak"],["#7c5cfc","Mod−"],["#ff6b6b","Strong−"]].map(([c,l])=>(
+      <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginTop:8, fontSize:9, color: mutedColor() }}>
+        {[
+          [palette[2],"Strong+"], [palette[0],"Mod+"],
+          [cssVar("--border2")||"#354060","Weak"],
+          [palette[1],"Mod−"],   [palette[3],"Strong−"],
+        ].map(([c,l]) => (
           <span key={l} style={{ display:"flex", alignItems:"center", gap:3 }}>
-            <span style={{ width:8,height:8,borderRadius:1,background:c,display:"inline-block" }} />{l}
+            <span style={{ width:8, height:8, borderRadius:1, background:c, display:"inline-block" }} />
+            {l}
           </span>
         ))}
       </div>
@@ -240,18 +280,21 @@ export function TableWidget({ data }) {
         <thead>
           <tr>
             {columns.map(c => (
-              <th key={c} style={{ padding:"6px 10px", textAlign:"left", background:"#161b27",
-                color:"#8899bb", fontWeight:600, position:"sticky", top:0,
-                whiteSpace:"nowrap", borderBottom:"1px solid #2a3550" }}>{c}</th>
+              <th key={c} style={{ padding:"6px 10px", textAlign:"left",
+                background: cssVar("--bg2")||"#161b27",
+                color: mutedColor(), fontWeight:600, position:"sticky", top:0,
+                whiteSpace:"nowrap", borderBottom:`1px solid ${cssVar("--border")||"#2a3550"}` }}>
+                {c}
+              </th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {rows.map((row,i) => (
-            <tr key={i} style={{ borderBottom:"1px solid #1a2235",
-              background: i%2===0 ? "transparent" : "rgba(255,255,255,0.015)" }}>
+          {rows.map((row, i) => (
+            <tr key={i} style={{ borderBottom:`1px solid ${cssVar("--bg3")||"#1c2436"}`,
+              background: i%2===0 ? "transparent" : "rgba(128,128,128,0.04)" }}>
               {columns.map(c => (
-                <td key={c} style={{ padding:"5px 10px", color:"#c8d4e8",
+                <td key={c} style={{ padding:"5px 10px", color: cssVar("--text2")||"#b0bdd4",
                   maxWidth:140, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
                   {row[c] ?? "-"}
                 </td>
@@ -261,7 +304,7 @@ export function TableWidget({ data }) {
         </tbody>
       </table>
       {total > rows.length && (
-        <div style={{ textAlign:"center", padding:6, color:"#6b7a99", fontSize:10 }}>
+        <div style={{ textAlign:"center", padding:6, color: mutedColor(), fontSize:10 }}>
           Showing {rows.length} of {total.toLocaleString()} rows
         </div>
       )}
@@ -271,34 +314,35 @@ export function TableWidget({ data }) {
 
 /* ── Forecast (interactive) ───────────────────────────────────────────────── */
 export function ForecastWidget({ data }) {
+  const palette = usePalette();
   if (!data?.length) return <Empty />;
+  const T = tick(), G = grid();
+  const fcColor = palette[0];
+  const actColor = palette[2];
   return (
     <ResponsiveContainer width="100%" height="100%">
       <AreaChart data={data} margin={{ top:6, right:14, bottom:36, left:4 }}>
         <defs>
           <linearGradient id="fcBand" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%"  stopColor="#4d9fff" stopOpacity={0.25} />
-            <stop offset="95%" stopColor="#4d9fff" stopOpacity={0.02} />
+            <stop offset="5%"  stopColor={fcColor} stopOpacity={0.25} />
+            <stop offset="95%" stopColor={fcColor} stopOpacity={0.02} />
           </linearGradient>
         </defs>
-        <CartesianGrid {...GRID} />
-        <XAxis dataKey="date" tick={TICK} angle={-35} textAnchor="end" interval="preserveStartEnd" />
-        <YAxis tick={TICK} tickFormatter={fmt} width={50} domain={["auto","auto"]} />
-        <Tooltip content={<Tip />} cursor={{ stroke:"#2a3550", strokeWidth:1 }} />
-        <Legend wrapperStyle={{ fontSize:10, color:"#6b7a99" }} />
-        {/* confidence band */}
+        <CartesianGrid {...G} />
+        <XAxis dataKey="date" tick={T} angle={-35} textAnchor="end" interval="preserveStartEnd" />
+        <YAxis tick={T} tickFormatter={fmt} width={50} domain={["auto","auto"]} />
+        <Tooltip content={<Tip palette={palette} />} cursor={{ stroke: G.stroke, strokeWidth:1 }} />
+        <Legend wrapperStyle={{ fontSize:10, color: mutedColor() }} />
         <Area type="monotone" dataKey="upper" name="Upper bound" stroke="none"
           fill="url(#fcBand)" connectNulls activeDot={false} legendType="none" />
         <Area type="monotone" dataKey="lower" name="Lower bound" stroke="none"
-          fill="#0e1117" fillOpacity={1} connectNulls activeDot={false} legendType="none" />
-        {/* actual history */}
-        <Line type="monotone" dataKey="actual" name="Actual" stroke="#00e5a0" strokeWidth={2.5}
-          dot={{ r:3, fill:"#00e5a0", stroke:"none" }} connectNulls
-          activeDot={{ r:5, fill:"#00e5a0", stroke:"none" }} />
-        {/* forecast */}
-        <Line type="monotone" dataKey="forecast" name="Forecast" stroke="#4d9fff" strokeWidth={2.5}
-          strokeDasharray="6 4" dot={{ r:3, fill:"#4d9fff", stroke:"none" }} connectNulls
-          activeDot={{ r:5, fill:"#4d9fff", stroke:"none" }} />
+          fill={bgColor()} fillOpacity={1} connectNulls activeDot={false} legendType="none" />
+        <Line type="monotone" dataKey="actual" name="Actual" stroke={actColor} strokeWidth={2.5}
+          dot={{ r:3, fill:actColor, stroke:"none" }} connectNulls
+          activeDot={{ r:5, fill:actColor, stroke:"none" }} />
+        <Line type="monotone" dataKey="forecast" name="Forecast" stroke={fcColor} strokeWidth={2.5}
+          strokeDasharray="6 4" dot={{ r:3, fill:fcColor, stroke:"none" }} connectNulls
+          activeDot={{ r:5, fill:fcColor, stroke:"none" }} />
       </AreaChart>
     </ResponsiveContainer>
   );
@@ -306,20 +350,22 @@ export function ForecastWidget({ data }) {
 
 /* ── Anomaly scatter (interactive) ────────────────────────────────────────── */
 export function AnomalyScatterWidget({ panel }) {
+  const palette = usePalette();
   if (!panel) return <Empty />;
   const { normal=[], anomaly=[], x_label, y_label, x_range, y_range } = panel;
+  const T = tick(), G = grid();
   return (
     <ResponsiveContainer width="100%" height="100%">
       <ScatterChart margin={{ top:6, right:14, bottom:16, left:4 }}>
-        <CartesianGrid {...GRID} />
-        <XAxis dataKey="x" type="number" tick={TICK} tickFormatter={fmt}
-          name={x_label} domain={x_range || ["auto","auto"]} />
-        <YAxis dataKey="y" type="number" tick={TICK} tickFormatter={fmt}
-          name={y_label} width={50} domain={y_range || ["auto","auto"]} />
-        <Tooltip content={<Tip />} cursor={{ strokeDasharray:"3 3", stroke:"#2a3550" }} />
-        <Legend wrapperStyle={{ fontSize:10, color:"#6b7a99" }} />
-        <Scatter name="Normal" data={normal} fill="#00d4ff" opacity={0.35} />
-        <Scatter name="Anomaly" data={anomaly} fill="#ff6b6b" opacity={0.9} />
+        <CartesianGrid {...G} />
+        <XAxis dataKey="x" type="number" tick={T} tickFormatter={fmt}
+          name={x_label} domain={x_range||["auto","auto"]} />
+        <YAxis dataKey="y" type="number" tick={T} tickFormatter={fmt}
+          name={y_label} width={50} domain={y_range||["auto","auto"]} />
+        <Tooltip content={<Tip palette={palette} />} cursor={{ strokeDasharray:"3 3", stroke: G.stroke }} />
+        <Legend wrapperStyle={{ fontSize:10, color: mutedColor() }} />
+        <Scatter name="Normal"  data={normal}  fill={palette[0]} opacity={0.35} />
+        <Scatter name="Anomaly" data={anomaly} fill={palette[3]} opacity={0.9} />
       </ScatterChart>
     </ResponsiveContainer>
   );
@@ -329,7 +375,7 @@ export function AnomalyScatterWidget({ panel }) {
 function Empty() {
   return (
     <div style={{ width:"100%", height:"100%", display:"flex", flexDirection:"column",
-      alignItems:"center", justifyContent:"center", color:"#6b7a99", gap:6 }}>
+      alignItems:"center", justifyContent:"center", color: mutedColor(), gap:6 }}>
       <span style={{ fontSize:24 }}>📊</span>
       <span style={{ fontSize:12 }}>No data</span>
     </div>

@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import Footer from "./components/Footer.jsx";
+import ThemeToggle from "./components/ThemeToggle.jsx";
 
 const SOURCES = [
   { id: "file",    label: "File Upload",  icon: "📁", desc: "CSV or Excel file" },
@@ -121,17 +122,35 @@ export default function LandingPage({ onJobStart, onImport, sessionId }) {
 
   return (
     <div className="landing-root">
-      {/* Header */}
-      <div style={{ textAlign:"center", marginBottom:40 }}>
-        <div style={{ fontSize:48, marginBottom:8 }}>⚡</div>
-        <h1 style={{ fontSize:32, fontWeight:800, background:"linear-gradient(135deg,var(--accent),var(--accent2))", WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", marginBottom:8 }}>
-          DynamicBI
-        </h1>
-        <p style={{ color:"var(--text2)", fontSize:15, maxWidth:480, margin:"0 auto" }}>
-          AI-powered PowerBI-style dashboards — connect any data source, get instant interactive analytics.
-        </p>
+
+      {/* Theme toggle — fixed top right */}
+      <div style={{ position:"fixed", top:14, right:16, zIndex:100 }}>
+        <ThemeToggle variant="pill" />
       </div>
 
+      {/* ── Hero ──────────────────────────────────────────────────── */}
+      <div style={{ textAlign:"center", marginBottom:32 }}>
+        <div style={{ fontSize:56, marginBottom:10, filter:"drop-shadow(0 0 18px var(--accent))" }}>⚡</div>
+        <h1 style={{ fontSize:38, fontWeight:900, letterSpacing:-1,
+          background:"linear-gradient(135deg,var(--accent),var(--accent2))",
+          WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", marginBottom:10 }}>
+          DynamicBI
+        </h1>
+        <p style={{ color:"var(--text2)", fontSize:16, maxWidth:520, margin:"0 auto 14px", lineHeight:1.65 }}>
+          Upload any dataset and get a <strong style={{ color:"var(--text)" }}>production-grade interactive dashboard</strong> in under 90 seconds — powered by AI agents, not manual configuration.
+        </p>
+        {/* Live stats strip */}
+        <div style={{ display:"flex", gap:24, justifyContent:"center", flexWrap:"wrap", marginTop:16 }}>
+          {[["7+","Data Sources"],["10","AI Pipeline Agents"],["8+","Chart Types"],["∞","Rows Supported"]].map(([n,l])=>(
+            <div key={l} style={{ textAlign:"center" }}>
+              <div style={{ fontSize:22, fontWeight:900, color:"var(--accent)" }}>{n}</div>
+              <div style={{ fontSize:11, color:"var(--muted)", fontWeight:600 }}>{l}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Developer credit ───────────────────────────────────────── */}
       <div style={{ textAlign:"center", marginBottom:28, color:"var(--text2)", fontSize:15, fontWeight:700 }}>
         Developed By{" "}
         <a href="https://akshithsai.co.in" target="_blank" rel="noopener noreferrer"
@@ -149,7 +168,64 @@ export default function LandingPage({ onJobStart, onImport, sessionId }) {
         </a>
       </div>
 
-      {/* Source selector */}
+      {/* ── Feature cards ──────────────────────────────────────────── */}
+      <div style={{ width:"100%", maxWidth:780, marginBottom:36 }}>
+        <h2 style={{ textAlign:"center", fontSize:14, fontWeight:700, color:"var(--muted)",
+          textTransform:"uppercase", letterSpacing:1, marginBottom:18 }}>
+          Everything you need, generated automatically
+        </h2>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))", gap:12 }}>
+          {[
+            { icon:"📊", title:"PowerBI-style Layout",    desc:"Multi-page dashboard with 12-column grid, drill-down, filters, and KPI cards — designed by AI for your data." },
+            { icon:"🤖", title:"AI Chat Assistant",        desc:"Ask questions in plain English. The agent writes and executes queries live against your dataset." },
+            { icon:"🔍", title:"Anomaly Detection",        desc:"Isolation Forest automatically flags outliers and generates an AI explanation report with interactive scatter charts." },
+            { icon:"📈", title:"Time-series Forecasting",  desc:"Automatic trend detection and forecasting with confidence bands, rendered as interactive charts." },
+            { icon:"💡", title:"AI Business Insights",     desc:"LLM analyses patterns, correlations, and trends to surface non-obvious takeaways written in plain language." },
+            { icon:"🔄", title:"Real-time Filters",        desc:"Multi-select, date-range, and numeric filters re-compute every widget instantly without reloading." },
+            { icon:"↓","title":"Export & Import",         desc:"Save the full dashboard — charts, insights, forecasts, anomalies — as a self-contained JSON. Re-import anytime." },
+            { icon:"📱", title:"Fully Responsive",         desc:"Adapts cleanly to phone, tablet, and desktop. Four built-in themes: Dark, Light, Ocean, Midnight." },
+          ].map(f => (
+            <div key={f.title} style={{ background:"var(--bg2)", border:"1px solid var(--border)",
+              borderRadius:12, padding:"16px 18px",
+              transition:"transform 0.15s, box-shadow 0.15s" }}
+              onMouseOver={e => { e.currentTarget.style.transform="translateY(-2px)"; e.currentTarget.style.boxShadow="var(--shadow)"; }}
+              onMouseOut={e  => { e.currentTarget.style.transform="none"; e.currentTarget.style.boxShadow="none"; }}
+            >
+              <div style={{ fontSize:22, marginBottom:8 }}>{f.icon}</div>
+              <div style={{ fontWeight:700, fontSize:13, color:"var(--text)", marginBottom:5 }}>{f.title}</div>
+              <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.6 }}>{f.desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── AI Pipeline ────────────────────────────────────────────── */}
+      <div style={{ width:"100%", maxWidth:780, marginBottom:36 }}>
+        <h2 style={{ textAlign:"center", fontSize:14, fontWeight:700, color:"var(--muted)",
+          textTransform:"uppercase", letterSpacing:1, marginBottom:18 }}>
+          10-Agent AI Pipeline
+        </h2>
+        <div style={{ display:"flex", flexWrap:"wrap", gap:8, justifyContent:"center" }}>
+          {[
+            ["📂","Load Data"],["🧹","Clean Data"],["📊","Compute KPIs"],
+            ["🔍","Anomaly Detect"],["📈","Forecast"],["🎨","Visualise Anomalies"],
+            ["🧠","Explain Anomalies"],["📋","Profile Dataset"],["✨","AI Insights"],["⚡","Build Dashboard"],
+          ].map(([icon, name], i) => (
+            <div key={name} style={{ display:"flex", alignItems:"center", gap:6 }}>
+              <div style={{ background:"var(--bg3)", border:"1px solid var(--border)",
+                borderRadius:8, padding:"7px 12px", fontSize:12, fontWeight:600,
+                color:"var(--text2)", display:"flex", alignItems:"center", gap:6 }}>
+                <span style={{ fontSize:14 }}>{icon}</span>
+                <span style={{ fontSize:11, color:"var(--accent)", fontWeight:700, marginRight:2 }}>{i+1}</span>
+                {name}
+              </div>
+              {i < 9 && <span style={{ color:"var(--muted)", fontSize:14, fontWeight:300 }}>→</span>}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Source selector + connect card ─────────────────────────── */}
       <div className="source-selector">
         {SOURCES.map(s => (
           <button
@@ -330,10 +406,27 @@ export default function LandingPage({ onJobStart, onImport, sessionId }) {
         )}
       </div>
 
-      <p style={{ marginTop:24, color:"var(--muted)", fontSize:12 }}>
-        Powered by LangGraph · NVIDIA NIM · Recharts · FastAPI
-      </p>
-      <Footer />
+      {/* ── Tech stack ─────────────────────────────────────────────── */}
+      <div style={{ marginTop:28, textAlign:"center" }}>
+        <div style={{ fontSize:11, color:"var(--muted)", fontWeight:600,
+          textTransform:"uppercase", letterSpacing:1, marginBottom:10 }}>
+          Built With
+        </div>
+        <div style={{ display:"flex", flexWrap:"wrap", gap:8, justifyContent:"center" }}>
+          {[
+            ["⚡","FastAPI"],["🦜","LangGraph"],["🧠","NVIDIA NIM"],
+            ["🐼","Pandas"],["📊","Recharts"],["⚛️","React + Vite"],
+          ].map(([ic, name]) => (
+            <span key={name} style={{ background:"var(--bg3)", border:"1px solid var(--border)",
+              borderRadius:99, padding:"4px 12px", fontSize:12, fontWeight:600,
+              color:"var(--text2)", display:"inline-flex", alignItems:"center", gap:5 }}>
+              {ic} {name}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <Footer style={{ marginTop:20 }} />
     </div>
   );
 }

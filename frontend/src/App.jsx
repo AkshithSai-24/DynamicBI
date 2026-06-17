@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import LandingPage from "./LandingPage.jsx";
 import Dashboard from "./components/Dashboard.jsx";
 import Footer from "./components/Footer.jsx";
+import ThemeToggle from "./components/ThemeToggle.jsx";
 
 const API = import.meta.env.VITE_API_URL || "";
 
@@ -53,6 +54,11 @@ function LoadingScreen({ stage, progress, sourceName }) {
 
   return (
     <div style={{ minHeight:"100vh", background:"var(--bg)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:32 }}>
+      {/* Theme toggle — top right */}
+      <div style={{ position:"fixed", top:14, right:16, zIndex:10 }}>
+        <ThemeToggle variant="icon" />
+      </div>
+
       <div style={{ position:"relative", width:80, height:80, marginBottom:28 }}>
         <div style={{ position:"absolute", inset:0, borderRadius:"50%", border:"3px solid var(--accent)", borderTopColor:"transparent", animation:"spin 1s linear infinite" }} />
         <div style={{ position:"absolute", inset:8, borderRadius:"50%", border:"2px solid var(--accent2)", borderBottomColor:"transparent", animation:"spin 1.5s linear infinite reverse" }} />
@@ -103,6 +109,9 @@ function LoadingScreen({ stage, progress, sourceName }) {
 function ErrorScreen({ error, onReset }) {
   return (
     <div style={{ minHeight:"100vh", background:"var(--bg)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:32 }}>
+      <div style={{ position:"fixed", top:14, right:16, zIndex:10 }}>
+        <ThemeToggle variant="icon" />
+      </div>
       <div style={{ fontSize:48, marginBottom:16 }}>💥</div>
       <h2 style={{ fontSize:22, fontWeight:800, color:"var(--red)", marginBottom:10 }}>Pipeline Failed</h2>
       <div style={{ background:"rgba(255,94,122,0.08)", border:"1px solid var(--red)", borderRadius:12, padding:"16px 20px", maxWidth:520, width:"100%", marginBottom:24 }}>
