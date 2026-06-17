@@ -479,7 +479,20 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
           <span style={{ fontSize:18 }}>⚡</span>
           <span style={{ fontWeight:800, fontSize:14, color:"#e8edf8" }}>{schema.title || "Dashboard"}</span>
           <span style={{ fontSize:11, color:"#6b7a99" }}>{sourceName}</span>
-          <span className="header-credit" style={{ fontSize:13, color:"#9aa8c7", fontWeight:700 }}>· Developed By Akshith Sai Kondamadugu</span>
+          <a href="https://akshithsai.co.in" target="_blank" rel="noopener noreferrer"
+            className="header-credit"
+            style={{ fontSize:13, color:"#9aa8c7", fontWeight:700, textDecoration:"none", display:"inline-flex", alignItems:"center", gap:4 }}
+            onMouseOver={e => e.currentTarget.style.color="#00e5a0"}
+            onMouseOut={e  => e.currentTarget.style.color="#9aa8c7"}
+            title="Akshith Sai Kondamadugu — Portfolio"
+          >
+            <svg height="12" width="12" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+            · Developed By Akshith Sai Kondamadugu
+          </a>
           {schema.domain && (
             <span style={{ background:"#1a2030", border:"1px solid #2a3550",
               borderRadius:99, padding:"2px 9px", fontSize:10, color:"#7c5cfc", fontWeight:700, textTransform:"uppercase" }}>

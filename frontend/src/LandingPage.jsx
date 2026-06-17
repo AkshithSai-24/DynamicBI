@@ -133,7 +133,20 @@ export default function LandingPage({ onJobStart, onImport, sessionId }) {
       </div>
 
       <div style={{ textAlign:"center", marginBottom:28, color:"var(--text2)", fontSize:15, fontWeight:700 }}>
-        Developed By <span style={{ color:"var(--accent)" }}>Akshith Sai Kondamadugu</span>
+        Developed By{" "}
+        <a href="https://akshithsai.co.in" target="_blank" rel="noopener noreferrer"
+          style={{ color:"var(--accent)", textDecoration:"none", fontWeight:800 }}
+          onMouseOver={e => e.currentTarget.style.textDecoration="underline"}
+          onMouseOut={e  => e.currentTarget.style.textDecoration="none"}
+        >
+          <svg style={{ display:"inline", verticalAlign:"middle", marginRight:4 }}
+               height="13" width="13" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+          Akshith Sai Kondamadugu
+        </a>
       </div>
 
       {/* Source selector */}
