@@ -223,7 +223,7 @@ const SUGGESTIONS = [
 ];
 
 /* ── main component ─────────────────────────────────────────────────────── */
-export default function AiChat({ jobId }) {
+export default function AiChat({ jobId, sessionId }) {
   const [messages, setMessages] = useState([{
     role: "assistant",
     text: "👋 Hi! Ask me anything about your data — I can calculate margins, ranks, trends, or build computed columns on the fly to answer your question.",
@@ -246,7 +246,7 @@ export default function AiChat({ jobId }) {
     try {
       const r = await fetch(`${API}/api/query/${jobId}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(sessionId ? { "X-Session-Id": sessionId } : {}) },
         body: JSON.stringify({ question: q }),
       });
       const data = await r.json();

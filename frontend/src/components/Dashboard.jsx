@@ -257,15 +257,22 @@ function WidgetShell({ widget, onDrillDown, filterApplied, allKpis }) {
             {/* Modal body: chart + optional stats sidebar */}
             <div className="widget-modal-body" style={{ flex:1, display:"flex", overflow:"hidden", minHeight:0 }}>
               {/* Chart pane */}
-              <div style={{ flex:1, padding:"14px 16px", minWidth:0, overflow:"hidden" }}>
+              <div style={{ flex:1, padding:"14px 16px", minWidth:0, overflowY:"auto" }}>
                 {widget.type === "kpi_row" ? (
-                  <div style={{ paddingTop:8 }}>
-                    {allKpis?.length > 0 && (
-                      <div style={{ fontSize:11, color:"#6b7a99", marginBottom:10 }}>
-                        Showing all {allKpis.length} KPIs computed for this dataset
-                      </div>
-                    )}
-                    {renderChart(allKpis?.length ? allKpis : data, { showAllKpis: true })}
+                  <div style={{ paddingTop:4 }}>
+                    {allKpis?.length > 0
+                      ? (
+                        <>
+                          <div style={{ fontSize:11, color:"#6b7a99", marginBottom:12, fontWeight:600 }}>
+                            Showing all {allKpis.length} KPI{allKpis.length !== 1 ? "s" : ""} computed for this dataset
+                          </div>
+                          <KpiRow data={allKpis} showAll />
+                        </>
+                      )
+                      : data
+                        ? <KpiRow data={data} showAll />
+                        : <p style={{ color:"#6b7a99", fontSize:13 }}>No KPI data available.</p>
+                    }
                   </div>
                 ) : (
                   <div style={{ width:"100%", height:"100%" }}>
@@ -387,7 +394,7 @@ function ForecastCard({ fc }) {
 }
 
 /* ── Main Dashboard ────────────────────────────────────────────────────── */
-export default function Dashboard({ result, jobId, sourceName, onReset, isImported }) {
+export default function Dashboard({ result, jobId, sourceName, onReset, isImported, sessionId }) {
   const schema = result?.dashboard_schema || {};
   const pages  = schema.pages || [];
 
@@ -399,6 +406,8 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
   const [filtering, setFiltering]       = useState(false);
   const [drillDown, setDrillDown]       = useState(null);
   const debounceRef = useRef(null);
+
+  const sessionHeaders = sessionId ? { "X-Session-Id": sessionId } : {};
 
   /* Apply filters with debounce */
   useEffect(() => {
@@ -415,7 +424,7 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
       try {
         const r = await fetch(`${API}/api/filter/${jobId}`, {
           method:"POST",
-          headers:{"Content-Type":"application/json"},
+          headers:{ "Content-Type":"application/json", ...sessionHeaders },
           body: JSON.stringify({ filters, page_id: pages[activePage]?.id }),
         });
         const d = await r.json();
@@ -439,16 +448,26 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
 
   /* ── Tabs ─────────────────────────────────────────────────────────── */
   const ALL_TABS = [
-    { id:"dashboard", label:"📊 Dashboard" },
-    { id:"insights",  label:"💡 Insights"  },
+    { id:"dashboard",   label:"📊 Dashboard"   },
+    { id:"insights",    label:"💡 Insights"    },
     { id:"forecasting", label:"📈 Forecasting" },
-    { id:"anomalies", label:"🔍 Anomalies" },
-    { id:"chat",      label:"🤖 AI Chat"   },
+    { id:"anomalies",   label:"🔍 Anomalies"   },
+    { id:"chat",        label:"🤖 AI Chat"     },
   ];
-  // Imported (offline) dashboards only contain the static schema —
-  // forecasting/anomalies/chat rely on live backend data tied to a job.
+
+  // For imported dashboards: show a tab only when the exported JSON contained
+  // that data.  Chat always requires a live backend job so it is always hidden.
+  const hasForecasts  = (result?.forecasts?.length  ?? 0) > 0;
+  const hasAnomalies  = !!(result?.anomaly_data || result?.anomaly_report ||
+                           result?.anomaly_scatter_panels?.length);
+
   const TABS = isImported
-    ? ALL_TABS.filter(t => ["dashboard","insights"].includes(t.id))
+    ? ALL_TABS.filter(t => {
+        if (t.id === "chat")        return false;
+        if (t.id === "forecasting") return hasForecasts;
+        if (t.id === "anomalies")   return hasAnomalies;
+        return true;                              // dashboard + insights always shown
+      })
     : ALL_TABS;
 
   return (
@@ -477,7 +496,19 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
         <div className="app-header-right">
           {filtering && <span style={{ fontSize:11, color:"#00d4ff", animation:"pulse 1s infinite" }}>● filtering…</span>}
           {jobId && (
-            <button onClick={() => window.open(`${API}/api/export/${jobId}`, "_blank")}
+            <button onClick={() => {
+              const url = `${API}/api/export/${jobId}`;
+              // Use fetch + blob to attach session header
+              fetch(url, { headers: sessionHeaders })
+                .then(r => r.blob())
+                .then(blob => {
+                  const a = document.createElement("a");
+                  a.href = URL.createObjectURL(blob);
+                  a.download = "dashboard.json";
+                  a.click();
+                  URL.revokeObjectURL(a.href);
+                });
+            }}
               style={{ background:"#1a2030", border:"1px solid #2a3550", borderRadius:7,
                 color:"#b0bdd4", padding:"5px 13px", fontSize:12, fontWeight:600, cursor:"pointer" }}>↓ Export</button>
           )}
@@ -685,7 +716,7 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
             <h2 style={{ fontSize:18, fontWeight:800, marginBottom:14, color:"#e8edf8" }}>🤖 AI Data Assistant</h2>
             <div style={{ flex:1, background:"#161b27", border:"1px solid #1e2a40",
               borderRadius:10, padding:14, display:"flex", flexDirection:"column", overflow:"hidden" }}>
-              <AiChat jobId={jobId} />
+              <AiChat jobId={jobId} sessionId={sessionId} />
             </div>
           </div>
         )}
@@ -693,7 +724,8 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
 
       {drillDown && (
         <DrillDownModal jobId={jobId} dimension={drillDown.dimension}
-          value={drillDown.value} onClose={() => setDrillDown(null)} />
+          value={drillDown.value} onClose={() => setDrillDown(null)}
+          sessionId={sessionId} />
       )}
     </div>
   );

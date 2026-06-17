@@ -1,9 +1,10 @@
 """
 server.py — FastAPI Backend for PowerBI-style DynamicBI
 ========================================================
-Supports CSV/Excel uploads and database connections (PostgreSQL, MySQL,
-SQLite, Oracle, MongoDB).  Returns a structured PowerBI-style dashboard
-schema with pre-computed chart data and interactive filter options.
+Session-scoped: every browser tab gets its own session_id.
+All uploads and dashboard artefacts live in sessions/<session_id>/.
+Sessions are cleaned up when the tab closes (via /api/session/close)
+or after a configurable TTL.
 """
 import matplotlib
 matplotlib.use("Agg")
@@ -16,23 +17,26 @@ import asyncio
 import base64
 import json
 import math
+import time
+import threading
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 
 import pandas as pd
 import numpy as np
 
-from fastapi import FastAPI, UploadFile, File, BackgroundTasks, HTTPException
+from fastapi import FastAPI, UploadFile, File, BackgroundTasks, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from typing import Optional
 
 from config import get_llm
 
 BASE_DIR = Path(__file__).parent
 sys.path.insert(0, str(BASE_DIR))
 
-app = FastAPI(title="DynamicBI PowerBI Backend", version="2.0")
+app = FastAPI(title="DynamicBI PowerBI Backend", version="3.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -41,13 +45,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-UPLOAD_DIR   = BASE_DIR / "uploads"
-DASHBOARD_DIR = BASE_DIR / "dashboard"
-UPLOAD_DIR.mkdir(exist_ok=True)
-DASHBOARD_DIR.mkdir(exist_ok=True)
+# ── Session store ──────────────────────────────────────────────────────────────
+SESSIONS_ROOT = BASE_DIR / "sessions"
+SESSIONS_ROOT.mkdir(exist_ok=True)
+
+SESSION_TTL_SECONDS = 90   # evict sessions that miss ~3 heartbeats (tab closed)
+SESSION_REAPER_INTERVAL = 20  # reaper wakes every 20 s
+
+# SESSIONS[session_id] = {
+#   "jobs": { job_id: {...} },
+#   "dir": Path,            # sessions/<session_id>/
+#   "upload_dir": Path,     # sessions/<session_id>/uploads/
+#   "dashboard_dir": Path,  # sessions/<session_id>/dashboard/
+#   "last_seen": float,     # timestamp
+# }
+SESSIONS: dict = {}
+_sessions_lock = threading.Lock()
 
 executor = ThreadPoolExecutor(max_workers=4)
-JOBS: dict = {}
 
 # ── Stage weights ──────────────────────────────────────────────────────────────
 STAGE_WEIGHTS = {
@@ -64,19 +79,92 @@ STAGE_WEIGHTS = {
 }
 
 
+# ── Session helpers ────────────────────────────────────────────────────────────
+
+def _make_session(session_id: str) -> dict:
+    sess_dir     = SESSIONS_ROOT / session_id
+    upload_dir   = sess_dir / "uploads"
+    dashboard_dir = sess_dir / "dashboard"
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    dashboard_dir.mkdir(parents=True, exist_ok=True)
+    session = {
+        "jobs":          {},
+        "dir":           sess_dir,
+        "upload_dir":    upload_dir,
+        "dashboard_dir": dashboard_dir,
+        "last_seen":     time.time(),
+    }
+    SESSIONS[session_id] = session
+    return session
+
+
+def _get_session(session_id: str | None) -> dict:
+    """Return existing session or create a new one."""
+    with _sessions_lock:
+        if session_id and session_id in SESSIONS:
+            SESSIONS[session_id]["last_seen"] = time.time()
+            return SESSIONS[session_id]
+        # Unknown / missing → create new (caller should use the returned session_id)
+        sid = session_id or str(uuid.uuid4())
+        return _make_session(sid)
+
+
+def _destroy_session(session_id: str):
+    """Delete all files and in-memory data for a session."""
+    with _sessions_lock:
+        sess = SESSIONS.pop(session_id, None)
+    if sess:
+        try:
+            shutil.rmtree(sess["dir"], ignore_errors=True)
+        except Exception:
+            pass
+
+
+def _touch_session(session_id: str):
+    with _sessions_lock:
+        if session_id in SESSIONS:
+            SESSIONS[session_id]["last_seen"] = time.time()
+
+
+def _ttl_reaper():
+    """Background thread: evict sessions idle longer than SESSION_TTL_SECONDS.
+
+    The frontend sends a heartbeat every 30 s.  If three consecutive heartbeats
+    are missed (90 s TTL) we assume the tab is closed and destroy the session.
+    """
+    while True:
+        time.sleep(SESSION_REAPER_INTERVAL)
+        now = time.time()
+        with _sessions_lock:
+            stale = [sid for sid, s in SESSIONS.items()
+                     if now - s["last_seen"] > SESSION_TTL_SECONDS]
+        for sid in stale:
+            print(f"[session] TTL evicting {sid} (idle >{SESSION_TTL_SECONDS}s)")
+            _destroy_session(sid)
+
+
+threading.Thread(target=_ttl_reaper, daemon=True).start()
+
+# Clean up any leftover sessions from a previous server run on startup
+for _old in SESSIONS_ROOT.iterdir():
+    try:
+        shutil.rmtree(_old, ignore_errors=True)
+    except Exception:
+        pass
+
+
 # ── JSON sanitizer ─────────────────────────────────────────────────────────────
 def _sanitize(obj, _d=0):
     if _d > 50:
         return None
     try:
-        import numpy as np
         if isinstance(obj, np.integer): return int(obj)
         if isinstance(obj, np.floating):
             f = float(obj)
             return None if (math.isnan(f) or math.isinf(f)) else f
         if isinstance(obj, np.bool_): return bool(obj)
         if isinstance(obj, np.ndarray): return _sanitize(obj.tolist(), _d+1)
-    except ImportError:
+    except Exception:
         pass
     try:
         import pandas as _pd
@@ -160,7 +248,7 @@ _patch_load_agent()
 
 
 # ── Instrumented graph ─────────────────────────────────────────────────────────
-def _build_instrumented_graph(job_id: str):
+def _build_instrumented_graph(session_id: str, job_id: str):
     from langgraph.graph import StateGraph, END
     from state import AgentState
     import agents.load_data_agent as lda_mod
@@ -174,6 +262,8 @@ def _build_instrumented_graph(job_id: str):
     from agents.rag_profile_agent import rag_profile_agent
     from agents.insight_agent import insight_agent
     from agents.dashboard_schema_agent import dashboard_schema_agent
+
+    jobs = SESSIONS[session_id]["jobs"]
 
     agent_map = {
         "load_data":        lda_mod.load_data_agent,
@@ -191,8 +281,8 @@ def _build_instrumented_graph(job_id: str):
     def wrap(name, fn):
         def instrumented(state):
             pct, label = STAGE_WEIGHTS.get(name, (50, name))
-            JOBS[job_id]["progress"] = pct
-            JOBS[job_id]["stage"]    = label
+            jobs[job_id]["progress"] = pct
+            jobs[job_id]["stage"]    = label
             return fn(state)
         instrumented.__name__ = name
         return instrumented
@@ -217,17 +307,27 @@ def _build_instrumented_graph(job_id: str):
 
 
 # ── Pipeline runner ────────────────────────────────────────────────────────────
-def run_pipeline(job_id: str, initial_state: dict):
+def run_pipeline(session_id: str, job_id: str, initial_state: dict):
     try:
-        JOBS[job_id]["status"]   = "running"
-        JOBS[job_id]["progress"] = 2
-        JOBS[job_id]["stage"]    = "Initialising pipeline…"
-        os.chdir(BASE_DIR)
+        sess = SESSIONS.get(session_id)
+        if not sess:
+            return  # session was already destroyed
 
-        compiled    = _build_instrumented_graph(job_id)
+        jobs = sess["jobs"]
+        jobs[job_id]["status"]   = "running"
+        jobs[job_id]["progress"] = 2
+        jobs[job_id]["stage"]    = "Initialising pipeline…"
+
+        # ── KEY: chdir to session dir so all agent relative-path writes
+        #         (dashboard/kpis.csv, dashboard/insights.txt, etc.) go to
+        #         sessions/<session_id>/ instead of the shared backend dir.
+        sess_dir = sess["dir"]
+        os.chdir(sess_dir)
+
+        compiled    = _build_instrumented_graph(session_id, job_id)
         final_state = compiled.invoke(initial_state)
 
-        JOBS[job_id]["_query_state"] = {
+        jobs[job_id]["_query_state"] = {
             "source_type":     final_state.get("source_type", ""),
             "_df":             final_state.get("_df"),
             "engine":          final_state.get("engine"),
@@ -237,23 +337,98 @@ def run_pipeline(job_id: str, initial_state: dict):
             "collection_name": final_state.get("collection_name"),
         }
 
-        JOBS[job_id]["progress"] = 99
-        JOBS[job_id]["stage"]    = "Packaging results…"
-        JOBS[job_id]["result"]   = _collect_result(final_state)
-        JOBS[job_id]["status"]   = "done"
-        JOBS[job_id]["progress"] = 100
-        JOBS[job_id]["stage"]    = "Dashboard ready!"
+        jobs[job_id]["progress"] = 99
+        jobs[job_id]["stage"]    = "Packaging results…"
+        jobs[job_id]["result"]   = _collect_result(final_state, sess["dashboard_dir"])
+        jobs[job_id]["status"]   = "done"
+        jobs[job_id]["progress"] = 100
+        jobs[job_id]["stage"]    = "Dashboard ready!"
 
     except Exception as exc:
         import traceback
         tb = traceback.format_exc()
         print(tb)
-        JOBS[job_id]["status"]    = "error"
-        JOBS[job_id]["error"]     = str(exc)
-        JOBS[job_id]["traceback"] = tb
+        if session_id in SESSIONS and job_id in SESSIONS[session_id]["jobs"]:
+            SESSIONS[session_id]["jobs"][job_id]["status"]    = "error"
+            SESSIONS[session_id]["jobs"][job_id]["error"]     = str(exc)
+            SESSIONS[session_id]["jobs"][job_id]["traceback"] = tb
+    finally:
+        # Always chdir back to backend root so other things still work
+        os.chdir(BASE_DIR)
 
 
-def _collect_result(final_state: dict) -> dict:
+def _build_proper_kpis(raw_kpis: list, kpi_data_from_state) -> list:
+    """
+    Convert raw kpis.csv rows [{Metric, Value}] into the KpiRow-compatible
+    [{column, label, sum, avg, max, min, count}] format.
+
+    If the dashboard_schema_agent already stored kpi_data in state, use that
+    directly (it's already in the right shape).  Fall back to transforming
+    the CSV rows.
+    """
+    # Preferred: state already has properly shaped kpi_data
+    if kpi_data_from_state and isinstance(kpi_data_from_state, list) and \
+       kpi_data_from_state and "column" in kpi_data_from_state[0]:
+        return kpi_data_from_state
+
+    if not raw_kpis:
+        return []
+
+    # Fallback: transform {Metric, Value} CSV rows
+    # Group SUM_X / AVG_X / ROW_COUNT etc. into per-column entries
+    sums   = {}
+    avgs   = {}
+    extras = {}
+
+    for row in raw_kpis:
+        metric = str(row.get("Metric", ""))
+        value  = row.get("Value")
+        try:
+            value = float(value) if value is not None else None
+        except (TypeError, ValueError):
+            value = None
+
+        if metric.startswith("SUM_"):
+            sums[metric[4:]] = value
+        elif metric.startswith("AVG_"):
+            avgs[metric[4:]] = value
+        else:
+            extras[metric] = value
+
+    out = []
+    all_cols = sorted(set(list(sums.keys()) + list(avgs.keys())))
+    for col in all_cols:
+        s = sums.get(col)
+        a = avgs.get(col)
+        if s is None and a is None:
+            continue
+        out.append({
+            "column": col,
+            "label":  col.replace("_", " ").title(),
+            "sum":    s,
+            "avg":    a,
+            "max":    None,
+            "min":    None,
+            "count":  None,
+        })
+
+    # Append special metrics (ROW_COUNT etc.)
+    row_count = extras.get("ROW_COUNT")
+    if row_count is not None:
+        out.append({
+            "column": "_rows",
+            "label":  "Total Records",
+            "sum":    int(row_count),
+            "avg":    int(row_count),
+            "max":    int(row_count),
+            "min":    int(row_count),
+            "count":  int(row_count),
+        })
+
+    return out
+
+
+def _collect_result(final_state: dict, dashboard_dir: Path) -> dict:
     """Collect all dashboard artefacts into a single response payload."""
     result = {
         "dashboard_schema": final_state.get("dashboard_schema", {}),
@@ -268,14 +443,17 @@ def _collect_result(final_state: dict) -> dict:
         "anomaly_scatter_panels": [],
     }
 
-    # KPIs
-    kpi_path = DASHBOARD_DIR / "kpis.csv"
+    # KPIs — prefer the properly-shaped kpi_data stored in agent state
+    kpi_data_from_state = final_state.get("kpi_data")  # set by dashboard_schema_agent
+    raw_kpis = []
+    kpi_path = dashboard_dir / "kpis.csv"
     if kpi_path.exists():
         try:
             df_k = pd.read_csv(str(kpi_path))
-            result["kpis"] = df_k.to_dict(orient="records")
+            raw_kpis = df_k.to_dict(orient="records")
         except Exception:
             pass
+    result["kpis"] = _build_proper_kpis(raw_kpis, kpi_data_from_state)
 
     # Text artefacts
     for key, fname in [
@@ -284,15 +462,14 @@ def _collect_result(final_state: dict) -> dict:
         ("cleaning_report", "data_cleaning_report.txt"),
         ("profile",         "dataset_profile.txt"),
     ]:
-        p = DASHBOARD_DIR / fname
+        p = dashboard_dir / fname
         if p.exists():
             result[key] = p.read_text(encoding="utf-8", errors="replace")
 
-    # Forecasts — use interactive chart_data from forecasting agent
+    # Forecasts
     state_forecasts = final_state.get("forecasts", [])
     if state_forecasts:
         for fc in state_forecasts:
-            # Sanitise any NaN/Inf in rows
             clean_rows = []
             for row in fc.get("rows", []):
                 clean_rows.append({
@@ -315,8 +492,7 @@ def _collect_result(final_state: dict) -> dict:
                 "rows":       clean_rows,
             })
     else:
-        # Fallback: read from CSV files on disk (legacy / if agent didn't write state)
-        for f in sorted(DASHBOARD_DIR.iterdir()):
+        for f in sorted(dashboard_dir.iterdir()):
             if f.name.startswith("forecast_") and f.suffix == ".csv":
                 col = f.stem[len("forecast_"):]
                 try:
@@ -337,7 +513,7 @@ def _collect_result(final_state: dict) -> dict:
                     pass
 
     # Anomaly data
-    anm_path = DASHBOARD_DIR / "anomalies.csv"
+    anm_path = dashboard_dir / "anomalies.csv"
     if anm_path.exists():
         try:
             df_an = pd.read_csv(str(anm_path))
@@ -347,7 +523,7 @@ def _collect_result(final_state: dict) -> dict:
             def _ss(s, fn):
                 try:
                     v = float(fn(s))
-                    return None if (math.isnan(v) or math.isinf(v)) else round(v,4)
+                    return None if (math.isnan(v) or math.isinf(v)) else round(v, 4)
                 except: return None
 
             result["anomaly_data"] = {
@@ -366,8 +542,8 @@ def _collect_result(final_state: dict) -> dict:
         except Exception:
             pass
 
-    # Anomaly image (base64 PNG)
-    img_path = DASHBOARD_DIR / "anomaly_visual.png"
+    # Anomaly image
+    img_path = dashboard_dir / "anomaly_visual.png"
     if img_path.exists():
         try:
             with open(img_path, "rb") as img_f:
@@ -375,41 +551,20 @@ def _collect_result(final_state: dict) -> dict:
         except Exception:
             pass
 
-    # Anomaly scatter panels (interactive)
     result["anomaly_scatter_panels"] = final_state.get("anomaly_scatter_panels", [])
-
     return result
 
 
 # ── Job helpers ────────────────────────────────────────────────────────────────
-def _init_job(job_id, source_label):
-    JOBS[job_id] = {
+def _init_job(session_id: str, job_id: str, source_label: str):
+    SESSIONS[session_id]["jobs"][job_id] = {
         "status": "queued", "progress": 0, "stage": "Queued",
         "source": source_label, "result": None, "error": None,
     }
 
-def _schedule(bg: BackgroundTasks, job_id, state):
+def _schedule(bg: BackgroundTasks, session_id: str, job_id: str, state: dict):
     loop = asyncio.get_event_loop()
-    bg.add_task(loop.run_in_executor, executor, run_pipeline, job_id, state)
-
-
-def _clear_workspace():
-    """Wipe uploaded files, generated dashboard artefacts, and in-memory jobs.
-
-    Called when the frontend starts a fresh session so leftovers from a
-    previous run never leak into a new one and disk usage doesn't grow
-    unbounded.
-    """
-    for d in (UPLOAD_DIR, DASHBOARD_DIR):
-        for item in d.iterdir():
-            try:
-                if item.is_dir():
-                    shutil.rmtree(item, ignore_errors=True)
-                else:
-                    item.unlink()
-            except Exception:
-                pass
-    JOBS.clear()
+    bg.add_task(loop.run_in_executor, executor, run_pipeline, session_id, job_id, state)
 
 
 # ── Request models ─────────────────────────────────────────────────────────────
@@ -418,15 +573,15 @@ class DbInspectRequest(BaseModel):
 
 class DbConnectRequest(BaseModel):
     connection_string: str
-    database: str | None = None
-    table:    str | None = None
+    database: Optional[str] = None
+    table:    Optional[str] = None
 
 class QueryRequest(BaseModel):
     question: str
 
 class FilterRequest(BaseModel):
-    filters: dict   # { column: [values...] | {"from": ..., "to": ...} }
-    page_id: str | None = None
+    filters: dict
+    page_id: Optional[str] = None
 
 class DrillDownRequest(BaseModel):
     widget_id: str
@@ -434,22 +589,60 @@ class DrillDownRequest(BaseModel):
     value: str
 
 
+# ── Helper: extract session_id from header ─────────────────────────────────────
+def _sid(x_session_id: Optional[str]) -> tuple[str, dict]:
+    """Return (session_id, session_dict), creating the session if needed."""
+    sess = _get_session(x_session_id)
+    # Find the actual session_id key (needed when a new one was auto-created)
+    if x_session_id and x_session_id in SESSIONS:
+        sid = x_session_id
+    else:
+        # Newly created — find it
+        sid = next((k for k, v in SESSIONS.items() if v is sess), None)
+        if sid is None:
+            sid = str(uuid.uuid4())
+            SESSIONS[sid] = sess
+    _touch_session(sid)
+    return sid, sess
+
+
 # ── Endpoints ──────────────────────────────────────────────────────────────────
 
-@app.post("/api/reset")
-async def reset_session():
-    """Clear uploads, generated dashboard files, and in-memory jobs.
-
-    The frontend calls this whenever a new session/dashboard run begins
-    (e.g. on initial page load or when the user clicks "New") so previous
-    uploads and pipeline artefacts don't pile up or get reused.
+@app.post("/api/session/init")
+async def init_session():
     """
-    _clear_workspace()
-    return {"status": "reset"}
+    Called by the frontend when a new tab opens.
+    Returns a fresh session_id that the tab must include in all subsequent
+    requests as the X-Session-Id header.
+    """
+    sid = str(uuid.uuid4())
+    _make_session(sid)
+    return {"session_id": sid}
+
+
+@app.post("/api/session/close")
+async def close_session(x_session_id: Optional[str] = Header(default=None)):
+    """
+    Called via navigator.sendBeacon when the tab is closing.
+    Deletes all files and in-memory state for this session immediately.
+    """
+    if x_session_id and x_session_id in SESSIONS:
+        _destroy_session(x_session_id)
+    return {"status": "closed"}
+
+
+@app.post("/api/session/heartbeat")
+async def heartbeat(x_session_id: Optional[str] = Header(default=None)):
+    """Keep the session alive (called every ~30 s from the frontend)."""
+    if x_session_id:
+        _touch_session(x_session_id)
+    return {"status": "ok"}
 
 
 @app.post("/api/db/inspect")
-async def inspect_database(body: DbInspectRequest):
+async def inspect_database(body: DbInspectRequest,
+                           x_session_id: Optional[str] = Header(default=None)):
+    sid, _ = _sid(x_session_id)
     conn = body.connection_string.strip()
     conn_lower = conn.lower()
 
@@ -463,7 +656,7 @@ async def inspect_database(body: DbInspectRequest):
             databases = [d for d in raw_dbs if d not in ("admin","local","config")]
             collections = {db: client[db].list_collection_names() for db in databases}
             client.close()
-            return {"type": "mongodb", "databases": databases, "collections": collections}
+            return {"session_id": sid, "type": "mongodb", "databases": databases, "collections": collections}
         except Exception as exc:
             raise HTTPException(400, f"Could not connect to MongoDB: {exc}")
 
@@ -480,7 +673,7 @@ async def inspect_database(body: DbInspectRequest):
             _conn.execute(text("SELECT 1"))
         tables = sa_inspect(engine).get_table_names()
         engine.dispose()
-        return {"type": "sql", "tables": tables}
+        return {"session_id": sid, "type": "sql", "tables": tables}
     except Exception as exc:
         raise HTTPException(400, f"Could not connect: {exc}")
 
@@ -489,24 +682,31 @@ async def inspect_database(body: DbInspectRequest):
 async def upload_file(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
-    sheet: str | None = None,
+    sheet: Optional[str] = None,
+    x_session_id: Optional[str] = Header(default=None),
 ):
+    sid, sess = _sid(x_session_id)
+
     ext = Path(file.filename).suffix.lower().lstrip(".")
     if ext not in ("csv","xlsx","xls"):
         raise HTTPException(400, "Only CSV (.csv) and Excel (.xlsx/.xls) are supported.")
 
     job_id    = str(uuid.uuid4())
-    save_path = UPLOAD_DIR / f"{job_id}_{file.filename}"
+    save_path = sess["upload_dir"] / f"{job_id}_{file.filename}"
     with open(save_path, "wb") as f:
         shutil.copyfileobj(file.file, f)
 
-    _init_job(job_id, file.filename)
-    _schedule(background_tasks, job_id, {"source_path": str(save_path), "_excel_sheet": sheet})
-    return {"job_id": job_id, "filename": file.filename}
+    _init_job(sid, job_id, file.filename)
+    _schedule(background_tasks, sid, job_id, {"source_path": str(save_path), "_excel_sheet": sheet})
+    return {"session_id": sid, "job_id": job_id, "filename": file.filename}
 
 
 @app.post("/api/connect")
-async def connect_database(background_tasks: BackgroundTasks, body: DbConnectRequest):
+async def connect_database(background_tasks: BackgroundTasks,
+                           body: DbConnectRequest,
+                           x_session_id: Optional[str] = Header(default=None)):
+    sid, sess = _sid(x_session_id)
+
     conn = body.connection_string.strip()
     conn_lower = conn.lower()
 
@@ -523,7 +723,7 @@ async def connect_database(background_tasks: BackgroundTasks, body: DbConnectReq
         raise HTTPException(400, "Unsupported connection string.")
 
     job_id = str(uuid.uuid4())
-    _init_job(job_id, conn)
+    _init_job(sid, job_id, conn)
     initial_state: dict = {"source_path": conn}
     if is_mongo:
         initial_state["_mongo_database"]   = body.database
@@ -531,93 +731,81 @@ async def connect_database(background_tasks: BackgroundTasks, body: DbConnectReq
     else:
         initial_state["_db_table"] = body.table
 
-    _schedule(background_tasks, job_id, initial_state)
-    return {"job_id": job_id, "connection": conn}
+    _schedule(background_tasks, sid, job_id, initial_state)
+    return {"session_id": sid, "job_id": job_id, "connection": conn}
 
 
 @app.get("/api/status/{job_id}")
-async def get_status(job_id: str):
-    if job_id not in JOBS:
+async def get_status(job_id: str,
+                     x_session_id: Optional[str] = Header(default=None)):
+    sid, sess = _sid(x_session_id)
+    jobs = sess["jobs"]
+    if job_id not in jobs:
         raise HTTPException(404, "Job not found.")
-    j = JOBS[job_id]
+    j = jobs[job_id]
     return {"status": j["status"], "progress": j["progress"], "stage": j["stage"], "error": j.get("error")}
 
 
 @app.get("/api/result/{job_id}")
-async def get_result(job_id: str):
-    if job_id not in JOBS:
+async def get_result(job_id: str,
+                     x_session_id: Optional[str] = Header(default=None)):
+    sid, sess = _sid(x_session_id)
+    jobs = sess["jobs"]
+    if job_id not in jobs:
         raise HTTPException(404, "Job not found.")
-    j = JOBS[job_id]
+    j = jobs[job_id]
     if j["status"] != "done":
         raise HTTPException(400, f"Pipeline not finished (status={j['status']}).")
     return JSONResponse(content=_sanitize(j["result"]))
 
 
 @app.post("/api/filter/{job_id}")
-async def apply_filters(job_id: str, body: FilterRequest):
-    """
-    Apply filters and recompute ALL pages' widget data.
-    Supports: multi_select, date_range, numeric_range filters.
-    """
-    if job_id not in JOBS or JOBS[job_id]["status"] != "done":
+async def apply_filters(job_id: str, body: FilterRequest,
+                        x_session_id: Optional[str] = Header(default=None)):
+    sid, sess = _sid(x_session_id)
+    jobs = sess["jobs"]
+    if job_id not in jobs or jobs[job_id]["status"] != "done":
         raise HTTPException(400, "Dashboard not ready yet.")
 
-    qs  = JOBS[job_id].get("_query_state", {})
+    qs  = jobs[job_id].get("_query_state", {})
     df0 = qs.get("_df")
     if df0 is None:
         raise HTTPException(400, "No dataframe available.")
 
-    schema = JOBS[job_id]["result"].get("dashboard_schema", {})
+    schema = jobs[job_id]["result"].get("dashboard_schema", {})
     df = df0.copy()
 
-    # ── Apply every filter ────────────────────────────────────────────
     for col, val in body.filters.items():
         if col not in df.columns:
             continue
         try:
             if isinstance(val, list) and val:
-                # Multi-select: match any selected value (string cast for safety)
                 mask = df[col].astype(str).isin([str(v) for v in val])
                 df = df[mask]
-
             elif isinstance(val, dict):
-                frm = val.get("from")
-                to  = val.get("to")
-                mn  = val.get("min")
-                mx  = val.get("max")
-
+                frm = val.get("from"); to  = val.get("to")
+                mn  = val.get("min");  mx  = val.get("max")
                 if frm is not None or to is not None:
-                    # Date range filter
-                    if pd.api.types.is_datetime64_any_dtype(df[col]):
-                        ts = df[col]
-                    else:
-                        ts = pd.to_datetime(df[col], errors="coerce")
+                    ts = df[col] if pd.api.types.is_datetime64_any_dtype(df[col]) \
+                         else pd.to_datetime(df[col], errors="coerce")
                     ts = ts.reset_index(drop=True)
                     df = df.reset_index(drop=True)
                     mask = pd.Series([True] * len(df))
-                    if frm:
-                        mask &= ts >= pd.to_datetime(frm)
-                    if to:
-                        mask &= ts <= pd.to_datetime(to)
+                    if frm: mask &= ts >= pd.to_datetime(frm)
+                    if to:  mask &= ts <= pd.to_datetime(to)
                     df = df[mask.values]
-
                 elif mn is not None or mx is not None:
-                    # Numeric range filter
                     num_series = pd.to_numeric(df[col], errors="coerce")
                     mask = pd.Series([True] * len(df), index=df.index)
-                    if mn is not None:
-                        mask &= num_series >= float(mn)
-                    if mx is not None:
-                        mask &= num_series <= float(mx)
+                    if mn is not None: mask &= num_series >= float(mn)
+                    if mx is not None: mask &= num_series <= float(mx)
                     df = df[mask]
         except Exception as e:
-            print(f"[filter] error applying filter on '{col}': {e}")
+            print(f"[filter] error on '{col}': {e}")
             continue
 
-    # ── Recompute all widgets across ALL pages ────────────────────────
     from agents.dashboard_schema_agent import _compute_widget_data, _build_kpi_data, _profile_and_engineer
 
-    # Re-run profile on filtered df so column types are correct
     try:
         filtered_df, fprofile = _profile_and_engineer(df)
     except Exception:
@@ -650,21 +838,20 @@ async def apply_filters(job_id: str, body: FilterRequest):
 
 
 @app.post("/api/drilldown/{job_id}")
-async def drilldown(job_id: str, body: DrillDownRequest):
-    """
-    Return detailed breakdown data for a specific dimension/value combination.
-    Used when a user clicks on a bar/slice in a chart.
-    """
-    if job_id not in JOBS or JOBS[job_id]["status"] != "done":
+async def drilldown(job_id: str, body: DrillDownRequest,
+                    x_session_id: Optional[str] = Header(default=None)):
+    sid, sess = _sid(x_session_id)
+    jobs = sess["jobs"]
+    if job_id not in jobs or jobs[job_id]["status"] != "done":
         raise HTTPException(400, "Dashboard not ready yet.")
 
-    qs  = JOBS[job_id].get("_query_state", {})
+    qs  = jobs[job_id].get("_query_state", {})
     df0 = qs.get("_df")
     if df0 is None:
         raise HTTPException(400, "No dataframe available.")
 
-    df = df0[df0[body.dimension].astype(str) == body.value].copy() if body.dimension in df0.columns else df0.copy()
-
+    df = df0[df0[body.dimension].astype(str) == body.value].copy() \
+         if body.dimension in df0.columns else df0.copy()
     numeric_cols = df.select_dtypes(include=np.number).columns.tolist()
 
     stats = {}
@@ -682,22 +869,22 @@ async def drilldown(job_id: str, body: DrillDownRequest):
                for k,v in row.items()} for row in sample]
 
     return JSONResponse(content=_sanitize({
-        "dimension":  body.dimension,
-        "value":      body.value,
-        "row_count":  len(df),
-        "statistics": stats,
-        "sample":     sample,
+        "dimension": body.dimension, "value": body.value,
+        "row_count": len(df), "statistics": stats, "sample": sample,
     }))
 
 
 @app.post("/api/query/{job_id}")
-async def natural_language_query(job_id: str, body: QueryRequest):
-    if job_id not in JOBS or JOBS[job_id]["status"] != "done":
+async def natural_language_query(job_id: str, body: QueryRequest,
+                                 x_session_id: Optional[str] = Header(default=None)):
+    sid, sess = _sid(x_session_id)
+    jobs = sess["jobs"]
+    if job_id not in jobs or jobs[job_id]["status"] != "done":
         raise HTTPException(400, "Dashboard not ready yet.")
 
     from query.query_loop import run_query
 
-    job    = JOBS[job_id]
+    job    = jobs[job_id]
     result = job.get("result", {})
     qs     = job.get("_query_state", {})
 
@@ -738,54 +925,64 @@ async def natural_language_query(job_id: str, body: QueryRequest):
 
 
 @app.get("/api/export/{job_id}")
-async def export_dashboard(job_id: str):
-    """Return the full dashboard schema plus AI insights and dataset
-    information as a downloadable, self-contained JSON file."""
-    if job_id not in JOBS or JOBS[job_id]["status"] != "done":
+async def export_dashboard(job_id: str,
+                           x_session_id: Optional[str] = Header(default=None)):
+    """Return a fully self-contained dashboard JSON that includes:
+    - dashboard_schema (pages, widgets, chart data, filters, KPIs)
+    - AI insights report + key insights
+    - Full forecast rows + chart data (so Forecasting tab works offline)
+    - Full anomaly data + scatter panels + anomaly image (so Anomalies tab works offline)
+    - Dataset profile, cleaning report, KPIs
+    """
+    sid, sess = _sid(x_session_id)
+    jobs = sess["jobs"]
+    if job_id not in jobs or jobs[job_id]["status"] != "done":
         raise HTTPException(400, "Dashboard not ready.")
 
-    result = JOBS[job_id]["result"]
+    result = jobs[job_id]["result"]
     schema = result.get("dashboard_schema", {})
 
     export_payload = {
+        # ── Schema + layout ──────────────────────────────────────────
         "dashboard_schema": schema,
         "meta": {
-            "title":  schema.get("title", "Dashboard"),
-            "domain": schema.get("domain"),
-            "source": JOBS[job_id].get("source"),
-            "row_count": schema.get("row_count"),
-            "exported_from": "DynamicBI",
+            "title":          schema.get("title", "Dashboard"),
+            "domain":         schema.get("domain"),
+            "source":         jobs[job_id].get("source"),
+            "row_count":      schema.get("row_count"),
+            "exported_from":  "DynamicBI",
+            "export_version": "2",
         },
-        # AI-generated narrative insights about the dataset
-        "ai_summary":  schema.get("ai_summary", ""),
-        "key_insights": schema.get("key_insights", []),
+
+        # ── AI text content ──────────────────────────────────────────
+        "ai_summary":      schema.get("ai_summary", ""),
+        "key_insights":    schema.get("key_insights", []),
         "insights_report": result.get("insights", ""),
-        # Useful basic/meaningful info about the underlying dataset
-        "kpis": result.get("kpis", []),
         "dataset_profile": result.get("profile", ""),
         "cleaning_report": result.get("cleaning_report", ""),
-        # Forecast & anomaly summaries (lightweight, excludes large images)
-        "forecast_summary": [
-            {
-                "col": fc.get("col"),
-                "method": fc.get("method", ""),
-                "freq_label": fc.get("freq_label", ""),
-                "periods": fc.get("periods", 0),
-            }
-            for fc in result.get("forecasts", [])
-        ],
-        "anomaly_summary": (
-            {
-                "count": result["anomaly_data"].get("count"),
-                "numeric_columns": result["anomaly_data"].get("numeric_columns"),
-                "stats": result["anomaly_data"].get("stats"),
-            }
-            if result.get("anomaly_data") else None
+
+        # ── KPIs (full, properly-shaped for KpiRow) ──────────────────
+        "kpis": result.get("kpis", []),
+
+        # ── Forecasts — full rows + chart_data so charts render ──────
+        "forecasts": result.get("forecasts", []),
+
+        # ── Anomalies — full data + interactive scatter panels ────────
+        "anomaly_data":          result.get("anomaly_data"),
+        "anomaly_scatter_panels": result.get("anomaly_scatter_panels", []),
+        "anomaly_report":         result.get("anomaly_report", ""),
+        # Embed the PNG as base64 only when interactive panels are absent
+        "anomaly_image": (
+            result.get("anomaly_image")
+            if not result.get("anomaly_scatter_panels")
+            else None
         ),
-        "anomaly_report": result.get("anomaly_report", ""),
     }
 
-    return JSONResponse(content=_sanitize(export_payload), headers={"Content-Disposition": "attachment; filename=dashboard.json"})
+    return JSONResponse(
+        content=_sanitize(export_payload),
+        headers={"Content-Disposition": "attachment; filename=dashboard.json"}
+    )
 
 
 if __name__ == "__main__":

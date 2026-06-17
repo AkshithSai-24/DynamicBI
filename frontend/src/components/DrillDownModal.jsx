@@ -12,7 +12,7 @@ const fmt = v => {
   return String(v);
 };
 
-export default function DrillDownModal({ jobId, dimension, value, onClose }) {
+export default function DrillDownModal({ jobId, dimension, value, onClose, sessionId }) {
   const [data, setData]     = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -21,7 +21,7 @@ export default function DrillDownModal({ jobId, dimension, value, onClose }) {
     setLoading(true);
     fetch(`${API}/api/drilldown/${jobId}`, {
       method:"POST",
-      headers:{"Content-Type":"application/json"},
+      headers:{ "Content-Type":"application/json", ...(sessionId ? { "X-Session-Id": sessionId } : {}) },
       body: JSON.stringify({ widget_id:"", dimension, value }),
     })
     .then(r=>r.json())

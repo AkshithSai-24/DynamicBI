@@ -18,7 +18,7 @@ const SAMPLE_STRINGS = {
   oracle:   "oracle+cx_oracle://user:password@localhost:1521/orcl",
 };
 
-export default function LandingPage({ onJobStart, onImport }) {
+export default function LandingPage({ onJobStart, onImport, sessionId }) {
   const [activeSource, setActiveSource] = useState("file");
   const [dragging, setDragging]         = useState(false);
   const [connStr, setConnStr]           = useState("");
@@ -44,7 +44,8 @@ export default function LandingPage({ onJobStart, onImport }) {
     const fd = new FormData();
     fd.append("file", file);
     try {
-      const r = await fetch(`${API}/api/upload`, { method: "POST", body: fd });
+      const headers = {}; if (sessionId) headers["X-Session-Id"] = sessionId;
+      const r = await fetch(`${API}/api/upload`, { method: "POST", body: fd, headers });
       if (!r.ok) { const e = await r.json(); throw new Error(e.detail || "Upload failed"); }
       const { job_id, filename } = await r.json();
       onJobStart(job_id, filename);
@@ -88,7 +89,7 @@ export default function LandingPage({ onJobStart, onImport }) {
     try {
       const r = await fetch(`${API}/api/db/inspect`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(sessionId ? { "X-Session-Id": sessionId } : {}) },
         body: JSON.stringify({ connection_string: connStr }),
       });
       if (!r.ok) { const e = await r.json(); throw new Error(e.detail); }
@@ -109,7 +110,7 @@ export default function LandingPage({ onJobStart, onImport }) {
 
       const r = await fetch(`${API}/api/connect`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(sessionId ? { "X-Session-Id": sessionId } : {}) },
         body: JSON.stringify(body),
       });
       if (!r.ok) { const e = await r.json(); throw new Error(e.detail); }

@@ -28,3 +28,5 @@ class AgentState(TypedDict, total=False):
     ai_analysis: Dict        # Full AI data analysis
 
     forecasts: List[Dict]
+    kpi_data: List[Dict]              # properly-shaped KPI list for KpiRow
+    anomaly_scatter_panels: List[Dict]

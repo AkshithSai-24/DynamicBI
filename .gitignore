@@ -106,6 +106,8 @@ Thumbs.db
 .
 dashboard
 dashboard/
+sessions
+sessions/
 
 forecast_results
 test.*

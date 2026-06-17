@@ -944,4 +944,4 @@ JSON:
     with open("dashboard/dashboard_schema.json","w",encoding="utf-8") as f:
         json.dump(schema, f, indent=2, default=str)
 
-    return {**state, "_df": df, "dashboard_schema": schema}
+    return {**state, "_df": df, "dashboard_schema": schema, "kpi_data": _build_kpi_data(df, mc)}
