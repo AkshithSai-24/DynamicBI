@@ -2,7 +2,6 @@
 config.py — Central configuration for DynamicBI backend.
 """
 
-from langchain_openrouter import ChatOpenRouter
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from dotenv import load_dotenv
 import os
