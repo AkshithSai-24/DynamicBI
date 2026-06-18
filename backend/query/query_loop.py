@@ -139,13 +139,13 @@ def _compute_chart_data(df: pd.DataFrame, chart_type: str,
     cd: dict = {"chart_type": chart_type, "x_name": x_col, "y_name": y_col or "value"}
     if y_col and y_col in df.columns:
         pts = [{"x": str(r[x_col]), "y": _safe_json(r[y_col])}
-               for _, r in df.head(50).iterrows()]
+               for _, r in df.head(100).iterrows()]
     else:
-        pts = [{"x": str(v)} for v in df[x_col].head(50).tolist()]
+        pts = [{"x": str(v)} for v in df[x_col].head(100).tolist()]
     cd["series"] = {
         "representation": "points",
         "total_points": len(df),
-        "preview_points": pts[:20],
+        "preview_points": pts[:100],
     }
     stats = {}
     for col in [x_col, y_col]:

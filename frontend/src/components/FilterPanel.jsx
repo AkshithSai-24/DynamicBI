@@ -33,12 +33,12 @@ export default function FilterPanel({ schema, activeFilters, onFilterChange, row
     <div style={{ display:"flex", flexDirection:"column", gap:0 }}>
       {/* Header */}
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between",
-        padding:"10px 12px", background:"#1a2030", borderRadius:"8px 8px 0 0",
-        border:"1px solid #1e2a40", cursor:"pointer", userSelect:"none" }}
+        padding:"10px 12px", background:"var(--bg3)", borderRadius:"8px 8px 0 0",
+        border:"1px solid var(--border)", cursor:"pointer", userSelect:"none" }}
         onClick={() => setCollapsed(c => !c)}>
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
           <span style={{ fontSize:13 }}>🎛️</span>
-          <span style={{ fontWeight:700, fontSize:12, color:"#e8edf8" }}>Filters</span>
+          <span style={{ fontWeight:700, fontSize:12, color:"var(--text)" }}>Filters</span>
           {activeCount > 0 && (
             <span style={{ background:"#7c5cfc", color:"#fff", borderRadius:99,
               fontSize:9, fontWeight:700, padding:"1px 6px", lineHeight:1.6 }}>{activeCount}</span>
@@ -47,23 +47,23 @@ export default function FilterPanel({ schema, activeFilters, onFilterChange, row
         <div style={{ display:"flex", gap:6, alignItems:"center" }}>
           {activeCount > 0 && (
             <button onClick={e => { e.stopPropagation(); clearAll(); }}
-              style={{ background:"none", border:"1px solid #2a3550", borderRadius:5,
-                color:"#6b7a99", fontSize:10, padding:"1px 7px", cursor:"pointer" }}>
+              style={{ background:"none", border:"1px solid var(--border)", borderRadius:5,
+                color:"var(--muted)", fontSize:10, padding:"1px 7px", cursor:"pointer" }}>
               Clear all
             </button>
           )}
-          <span style={{ color:"#6b7a99", fontSize:12 }}>{collapsed ? "▸" : "▾"}</span>
+          <span style={{ color:"var(--muted)", fontSize:12 }}>{collapsed ? "▸" : "▾"}</span>
         </div>
       </div>
 
       {/* Row count badge */}
       {rowCount != null && (
-        <div style={{ padding:"5px 12px", background:"#12171f",
-          border:"1px solid #1e2a40", borderTop:"none",
+        <div style={{ padding:"5px 12px", background:"var(--bg3)",
+          border:"1px solid var(--border)", borderTop:"none",
           display:"flex", alignItems:"center", gap:6 }}>
           <span style={{ width:6, height:6, borderRadius:"50%", background:"#00e5a0",
             display:"inline-block", animation:"pulse 2s infinite" }} />
-          <span style={{ fontSize:11, color:"#6b7a99" }}>
+          <span style={{ fontSize:11, color:"var(--muted)" }}>
             <strong style={{ color:"#00e5a0" }}>{rowCount.toLocaleString()}</strong> rows visible
           </span>
         </div>
@@ -71,7 +71,7 @@ export default function FilterPanel({ schema, activeFilters, onFilterChange, row
 
       {/* Filter items */}
       {!collapsed && (
-        <div style={{ border:"1px solid #1e2a40", borderTop:"none",
+        <div style={{ border:"1px solid var(--border)", borderTop:"none",
           borderRadius:"0 0 8px 8px", overflow:"hidden" }}>
           {filters.map((f, idx) => (
             <FilterItem
@@ -98,21 +98,21 @@ function FilterItem({ filter, value, options, rangeOptions, isLast, onChange }) 
   const label = filter.label || filter.column.replace(/_/g," ").replace(/\b\w/g, c=>c.toUpperCase());
   const type  = filter.type;
 
-  const borderStyle = isLast ? {} : { borderBottom:"1px solid #1a2235" };
+  const borderStyle = isLast ? {} : { borderBottom:"1px solid var(--border)" };
 
   const header = (
     <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
       padding:"8px 12px 6px", cursor:"pointer", ...borderStyle }}
       onClick={() => setExpanded(e => !e)}>
-      <span style={{ fontSize:11, fontWeight:700, color:"#b0bdd4",
+      <span style={{ fontSize:11, fontWeight:700, color:"var(--text2)",
         textTransform:"uppercase", letterSpacing:0.4 }}>{label}</span>
       <div style={{ display:"flex", gap:6, alignItems:"center" }}>
         {_hasValue(value) && (
           <button onClick={e => { e.stopPropagation(); onChange(null); }}
-            style={{ background:"none", border:"none", color:"#6b7a99",
+            style={{ background:"none", border:"none", color:"var(--muted)",
               fontSize:10, cursor:"pointer", padding:0, lineHeight:1 }}>✕</button>
         )}
-        <span style={{ color:"#6b7a99", fontSize:10 }}>{expanded ? "▾" : "▸"}</span>
+        <span style={{ color:"var(--muted)", fontSize:10 }}>{expanded ? "▾" : "▸"}</span>
       </div>
     </div>
   );
@@ -130,14 +130,14 @@ function FilterItem({ filter, value, options, rangeOptions, isLast, onChange }) 
               <input type="date" value={from}
                 onChange={e => onChange({ from: e.target.value, to })}
                 style={inputStyle} />
-              <span style={{ color:"#6b7a99", fontSize:10 }}>–</span>
+              <span style={{ color:"var(--muted)", fontSize:10 }}>–</span>
               <input type="date" value={to}
                 onChange={e => onChange({ from, to: e.target.value })}
                 style={inputStyle} />
             </div>
             {(from || to) && (
               <button onClick={() => onChange(null)}
-                style={{ background:"none", border:"none", color:"#6b7a99",
+                style={{ background:"none", border:"none", color:"var(--muted)",
                   fontSize:10, cursor:"pointer", textAlign:"left", padding:0 }}>
                 ✕ Clear dates
               </button>
@@ -163,12 +163,12 @@ function FilterItem({ filter, value, options, rangeOptions, isLast, onChange }) 
               <input type="number" placeholder={String(globalMin)} value={curMin}
                 onChange={e => onChange({ min: e.target.value||null, max: curMax||null })}
                 style={{ ...inputStyle, width:"50%" }} />
-              <span style={{ color:"#6b7a99", fontSize:10 }}>–</span>
+              <span style={{ color:"var(--muted)", fontSize:10 }}>–</span>
               <input type="number" placeholder={String(globalMax)} value={curMax}
                 onChange={e => onChange({ min: curMin||null, max: e.target.value||null })}
                 style={{ ...inputStyle, width:"50%" }} />
             </div>
-            <div style={{ fontSize:10, color:"#6b7a99" }}>
+            <div style={{ fontSize:10, color:"var(--muted)" }}>
               Range: {_fmt(globalMin)} – {_fmt(globalMax)}
             </div>
           </div>
@@ -206,7 +206,7 @@ function FilterItem({ filter, value, options, rangeOptions, isLast, onChange }) 
           {/* Select all */}
           {options.length > 1 && (
             <button onClick={toggleAll}
-              style={{ background:"none", border:"none", color:"#6b7a99",
+              style={{ background:"none", border:"none", color:"var(--muted)",
                 fontSize:10, cursor:"pointer", padding:"0 0 5px 2px", display:"block" }}>
               {selected.length === options.length ? "☑ Deselect all" : "☐ Select all"}
             </button>
@@ -229,7 +229,7 @@ function FilterItem({ filter, value, options, rangeOptions, isLast, onChange }) 
                       onChange(next.length ? next : null);
                     }}
                     style={{ accentColor:"#7c5cfc", width:12, height:12, flexShrink:0 }} />
-                  <span style={{ fontSize:11, color: isChecked ? "#e8edf8" : "#8899bb",
+                  <span style={{ fontSize:11, color: isChecked ? "var(--text)" : "#8899bb",
                     overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
                     maxWidth:150 }}>
                     {String(opt)}
@@ -238,12 +238,12 @@ function FilterItem({ filter, value, options, rangeOptions, isLast, onChange }) 
               );
             })}
             {filtered.length > 40 && (
-              <span style={{ fontSize:10, color:"#6b7a99", padding:"3px 5px" }}>
+              <span style={{ fontSize:10, color:"var(--muted)", padding:"3px 5px" }}>
                 +{filtered.length - 40} more — use search to narrow
               </span>
             )}
             {filtered.length === 0 && search && (
-              <span style={{ fontSize:10, color:"#6b7a99", padding:"4px 5px" }}>No matches</span>
+              <span style={{ fontSize:10, color:"var(--muted)", padding:"4px 5px" }}>No matches</span>
             )}
           </div>
         </div>
@@ -254,8 +254,8 @@ function FilterItem({ filter, value, options, rangeOptions, isLast, onChange }) 
 
 /* ─── Helpers ──────────────────────────────────────────────────────────────── */
 const inputStyle = {
-  background:"#0e1117", border:"1px solid #2a3550", borderRadius:5,
-  color:"#e8edf8", padding:"5px 8px", fontSize:11, outline:"none", width:"100%",
+  background:"var(--bg)", border:"1px solid var(--border)", borderRadius:5,
+  color:"var(--text)", padding:"5px 8px", fontSize:11, outline:"none", width:"100%",
 };
 
 function _hasValue(v) {

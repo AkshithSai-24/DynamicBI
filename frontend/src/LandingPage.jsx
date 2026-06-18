@@ -123,25 +123,60 @@ export default function LandingPage({ onJobStart, onImport, sessionId }) {
   return (
     <div className="landing-root">
 
-      {/* Theme toggle — fixed top right */}
-      <div style={{ position:"fixed", top:14, right:16, zIndex:100 }}>
-        <ThemeToggle variant="pill" />
+      {/* ── Top-right controls: Theme + Portfolio + GitHub ──────── */}
+      <div style={{ position:"fixed", top:12, right:14, zIndex:100,
+        display:"flex", alignItems:"center", gap:8 }}>
+        <a href="https://akshithsai.co.in" target="_blank" rel="noopener noreferrer"
+          title="Portfolio — akshithsai.co.in"
+          style={{ display:"inline-flex", alignItems:"center", gap:5,
+            background:"var(--bg3)", border:"1px solid var(--border)",
+            borderRadius:8, padding:"6px 11px", fontSize:12, fontWeight:700,
+            color:"var(--text2)", textDecoration:"none", transition:"color 0.15s" }}
+          onMouseOver={e=>e.currentTarget.style.color="var(--accent3)"}
+          onMouseOut={e=>e.currentTarget.style.color="var(--text2)"}>
+          <svg height="13" width="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+          Portfolio
+        </a>
+        <a href="https://github.com/AkshithSai-24/DynamicBI" target="_blank" rel="noopener noreferrer"
+          title="GitHub — DynamicBI"
+          style={{ display:"inline-flex", alignItems:"center", gap:5,
+            background:"var(--bg3)", border:"1px solid var(--border)",
+            borderRadius:8, padding:"6px 11px", fontSize:12, fontWeight:700,
+            color:"var(--text2)", textDecoration:"none", transition:"color 0.15s" }}
+          onMouseOver={e=>e.currentTarget.style.color="var(--accent)"}
+          onMouseOut={e=>e.currentTarget.style.color="var(--text2)"}>
+          <svg height="13" width="13" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
+          </svg>
+          GitHub
+        </a>
+        <ThemeToggle variant="compact" />
       </div>
 
       {/* ── Hero ──────────────────────────────────────────────────── */}
-      <div style={{ textAlign:"center", marginBottom:32 }}>
-        <div style={{ fontSize:56, marginBottom:10, filter:"drop-shadow(0 0 18px var(--accent))" }}>⚡</div>
+      <div style={{ textAlign:"center", marginBottom:28 }}>
+        {/* Real logo from public/vite.svg */}
+        <img src="/vite.svg" alt="DynamicBI Logo"
+          style={{ width:80, height:80, marginBottom:12,
+            filter:"drop-shadow(0 0 14px var(--accent))", objectFit:"contain" }} />
         <h1 style={{ fontSize:38, fontWeight:900, letterSpacing:-1,
           background:"linear-gradient(135deg,var(--accent),var(--accent2))",
           WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", marginBottom:10 }}>
           DynamicBI
         </h1>
-        <p style={{ color:"var(--text2)", fontSize:16, maxWidth:520, margin:"0 auto 14px", lineHeight:1.65 }}>
-          Upload any dataset and get a <strong style={{ color:"var(--text)" }}>production-grade interactive dashboard</strong> in under 90 seconds — powered by AI agents, not manual configuration.
+        <p style={{ color:"var(--text2)", fontSize:16, maxWidth:540, margin:"0 auto 10px", lineHeight:1.65 }}>
+          Upload any dataset and get a <strong style={{ color:"var(--text)" }}>production-grade interactive dashboard</strong> in under 90 seconds — powered by a 10-agent AI pipeline, not manual configuration.
+        </p>
+        <p style={{ color:"var(--muted)", fontSize:13, maxWidth:480, margin:"0 auto 18px", lineHeight:1.6 }}>
+          DynamicBI is an open-source AI-powered business intelligence platform. It combines LangGraph agent orchestration, NVIDIA NIM LLMs, and a React-based PowerBI-style frontend to transform raw data into fully interactive dashboards with zero configuration.
         </p>
         {/* Live stats strip */}
         <div style={{ display:"flex", gap:24, justifyContent:"center", flexWrap:"wrap", marginTop:16 }}>
-          {[["7+","Data Sources"],["10","AI Pipeline Agents"],["8+","Chart Types"],["∞","Rows Supported"]].map(([n,l])=>(
+          {[["7+","Data Sources"],["10","AI Pipeline Agents"],["8+","Chart Types"],["4","Themes"]].map(([n,l])=>(
             <div key={l} style={{ textAlign:"center" }}>
               <div style={{ fontSize:22, fontWeight:900, color:"var(--accent)" }}>{n}</div>
               <div style={{ fontSize:11, color:"var(--muted)", fontWeight:600 }}>{l}</div>
@@ -169,21 +204,21 @@ export default function LandingPage({ onJobStart, onImport, sessionId }) {
       </div>
 
       {/* ── Feature cards ──────────────────────────────────────────── */}
-      <div style={{ width:"100%", maxWidth:780, marginBottom:36 }}>
+      <div style={{ width:"100%", maxWidth:820, marginBottom:36 }}>
         <h2 style={{ textAlign:"center", fontSize:14, fontWeight:700, color:"var(--muted)",
           textTransform:"uppercase", letterSpacing:1, marginBottom:18 }}>
-          Everything you need, generated automatically
+          Everything generated automatically
         </h2>
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))", gap:12 }}>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(230px,1fr))", gap:12 }}>
           {[
-            { icon:"📊", title:"PowerBI-style Layout",    desc:"Multi-page dashboard with 12-column grid, drill-down, filters, and KPI cards — designed by AI for your data." },
-            { icon:"🤖", title:"AI Chat Assistant",        desc:"Ask questions in plain English. The agent writes and executes queries live against your dataset." },
-            { icon:"🔍", title:"Anomaly Detection",        desc:"Isolation Forest automatically flags outliers and generates an AI explanation report with interactive scatter charts." },
-            { icon:"📈", title:"Time-series Forecasting",  desc:"Automatic trend detection and forecasting with confidence bands, rendered as interactive charts." },
-            { icon:"💡", title:"AI Business Insights",     desc:"LLM analyses patterns, correlations, and trends to surface non-obvious takeaways written in plain language." },
-            { icon:"🔄", title:"Real-time Filters",        desc:"Multi-select, date-range, and numeric filters re-compute every widget instantly without reloading." },
-            { icon:"↓","title":"Export & Import",         desc:"Save the full dashboard — charts, insights, forecasts, anomalies — as a self-contained JSON. Re-import anytime." },
-            { icon:"📱", title:"Fully Responsive",         desc:"Adapts cleanly to phone, tablet, and desktop. Four built-in themes: Dark, Light, Ocean, Midnight." },
+            { icon:"📊", title:"PowerBI-style Layout",    desc:"Multi-page dashboard with 12-col grid, KPI cards, drill-down, and live filters — the AI chooses the best chart type and layout for your specific data." },
+            { icon:"🤖", title:"AI Chat Assistant",        desc:"Ask questions in plain English. The agent writes, executes, and formats live queries against your exact dataset." },
+            { icon:"🔍", title:"Anomaly Detection",        desc:"Isolation Forest flags statistical outliers with interactive scatter plots and an AI-written explanation report." },
+            { icon:"📈", title:"Time-series Forecasting",  desc:"Automatic trend detection and multi-period forecasting with confidence bands. Supports daily, weekly, and monthly frequencies." },
+            { icon:"💡", title:"AI Business Insights",     desc:"The LLM surfaces patterns, correlations, and non-obvious business takeaways written in plain business language, not data-science jargon." },
+            { icon:"🔄", title:"Real-time Filters",        desc:"Multi-select, date-range, and numeric filters recompute every single widget instantly on the server — no page reload needed." },
+            { icon:"↓",  title:"Export & Offline Import",  desc:"Export the full dashboard — every chart, insight, forecast, and anomaly report — as one self-contained JSON. Re-import anytime for an offline read-only view." },
+            { icon:"🎨", title:"4 Themes",                 desc:"Switch between Dark, Light, Ocean, and Midnight themes from any page. Charts, tooltips, filters, and all text update instantly." },
           ].map(f => (
             <div key={f.title} style={{ background:"var(--bg2)", border:"1px solid var(--border)",
               borderRadius:12, padding:"16px 18px",
@@ -199,27 +234,112 @@ export default function LandingPage({ onJobStart, onImport, sessionId }) {
         </div>
       </div>
 
-      {/* ── AI Pipeline ────────────────────────────────────────────── */}
-      <div style={{ width:"100%", maxWidth:780, marginBottom:36 }}>
+      {/* ── AI Pipeline Flowchart ───────────────────────────────────── */}
+      <div style={{ width:"100%", maxWidth:820, marginBottom:36 }}>
         <h2 style={{ textAlign:"center", fontSize:14, fontWeight:700, color:"var(--muted)",
-          textTransform:"uppercase", letterSpacing:1, marginBottom:18 }}>
+          textTransform:"uppercase", letterSpacing:1, marginBottom:20 }}>
           10-Agent AI Pipeline
         </h2>
-        <div style={{ display:"flex", flexWrap:"wrap", gap:8, justifyContent:"center" }}>
+
+        {/* Swimlane flowchart */}
+        <div style={{ background:"var(--bg2)", border:"1px solid var(--border)",
+          borderRadius:14, padding:"24px 20px", overflowX:"auto" }}>
+          {/* Two rows of 5 */}
           {[
-            ["📂","Load Data"],["🧹","Clean Data"],["📊","Compute KPIs"],
-            ["🔍","Anomaly Detect"],["📈","Forecast"],["🎨","Visualise Anomalies"],
-            ["🧠","Explain Anomalies"],["📋","Profile Dataset"],["✨","AI Insights"],["⚡","Build Dashboard"],
-          ].map(([icon, name], i) => (
-            <div key={name} style={{ display:"flex", alignItems:"center", gap:6 }}>
-              <div style={{ background:"var(--bg3)", border:"1px solid var(--border)",
-                borderRadius:8, padding:"7px 12px", fontSize:12, fontWeight:600,
-                color:"var(--text2)", display:"flex", alignItems:"center", gap:6 }}>
-                <span style={{ fontSize:14 }}>{icon}</span>
-                <span style={{ fontSize:11, color:"var(--accent)", fontWeight:700, marginRight:2 }}>{i+1}</span>
-                {name}
+            [
+              { n:1, icon:"📂", label:"Load Data",         sub:"CSV · Excel · SQL · MongoDB", color:"var(--accent)" },
+              { n:2, icon:"🧹", label:"Clean Data",         sub:"Deduplicate · type-cast · impute", color:"var(--accent2)" },
+              { n:3, icon:"📊", label:"Compute KPIs",       sub:"SUM · AVG · COUNT per column", color:"var(--accent3)" },
+              { n:4, icon:"🔍", label:"Anomaly Detect",     sub:"Isolation Forest outliers", color:"var(--accent5)" },
+              { n:5, icon:"📈", label:"Forecast",           sub:"Time-series + confidence bands", color:"var(--accent4)" },
+            ],
+            [
+              { n:6, icon:"🎨", label:"Visualise Anomalies",sub:"Interactive scatter panels", color:"var(--accent4)" },
+              { n:7, icon:"🧠", label:"Explain Anomalies",  sub:"AI anomaly report (LLM)", color:"var(--accent6)" },
+              { n:8, icon:"📋", label:"Profile Dataset",    sub:"Stats · distributions · types", color:"var(--accent3)" },
+              { n:9, icon:"✨", label:"AI Insights",        sub:"Business takeaways (LLM)", color:"var(--accent2)" },
+              { n:10,icon:"⚡", label:"Build Dashboard",    sub:"PowerBI layout + chart data", color:"var(--accent)" },
+            ],
+          ].map((row, rowIdx) => (
+            <div key={rowIdx} style={{ display:"flex", alignItems:"center",
+              justifyContent:"center", flexWrap:"nowrap", gap:0,
+              marginBottom: rowIdx === 0 ? 16 : 0 }}>
+              {row.map((step, si) => (
+                <div key={step.n} style={{ display:"flex", alignItems:"center", gap:0 }}>
+                  {/* Node */}
+                  <div style={{ background:"var(--bg3)", border:`2px solid ${step.color}`,
+                    borderRadius:10, padding:"10px 12px", textAlign:"center",
+                    minWidth:120, maxWidth:140, flexShrink:0,
+                    boxShadow:`0 0 12px ${step.color}22` }}>
+                    <div style={{ fontSize:20, marginBottom:4 }}>{step.icon}</div>
+                    <div style={{ fontSize:10, fontWeight:800, color:step.color,
+                      marginBottom:2, letterSpacing:0.2 }}>
+                      {step.n}. {step.label}
+                    </div>
+                    <div style={{ fontSize:9, color:"var(--muted)", lineHeight:1.4 }}>{step.sub}</div>
+                  </div>
+                  {/* Arrow (not after last in row) */}
+                  {si < row.length - 1 && (
+                    <div style={{ display:"flex", alignItems:"center", padding:"0 4px", flexShrink:0 }}>
+                      <div style={{ height:2, width:18, background:"var(--border)" }} />
+                      <svg width="8" height="10" viewBox="0 0 8 10" fill="var(--muted)">
+                        <path d="M0 0 L8 5 L0 10 Z"/>
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ))}
+          {/* Wrap arrow between row 1 and row 2 */}
+          <div style={{ display:"flex", justifyContent:"flex-end", margin:"0 0 4px",
+            paddingRight: 0 }}>
+            <div style={{ display:"flex", alignItems:"center", gap:4, color:"var(--muted)",
+              fontSize:10, fontStyle:"italic" }}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--muted)" strokeWidth="1.5">
+                <path d="M14 2 L14 8 Q14 14 8 14 L2 14" strokeLinecap="round"/>
+                <path d="M5 11 L2 14 L5 17" strokeLinecap="round"/>
+              </svg>
+              continues…
+            </div>
+          </div>
+          {/* Legend */}
+          <div style={{ marginTop:16, borderTop:"1px solid var(--border)", paddingTop:12,
+            display:"flex", gap:20, flexWrap:"wrap", justifyContent:"center" }}>
+            {[["Data Flow","var(--border)","→"],["Input","var(--accent)","📂"],
+              ["AI Agent","var(--accent2)","🧠"],["Output","var(--accent3)","📊"]].map(([l,c,i])=>(
+              <div key={l} style={{ display:"flex", alignItems:"center", gap:5,
+                fontSize:10, color:"var(--muted)" }}>
+                <span style={{ color:c }}>{i}</span> {l}
               </div>
-              {i < 9 && <span style={{ color:"var(--muted)", fontSize:14, fontWeight:300 }}>→</span>}
+            ))}
+            <div style={{ fontSize:10, color:"var(--muted)" }}>
+              Total pipeline time: <strong style={{ color:"var(--accent)" }}>30–90 s</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── How It Works ────────────────────────────────────────────── */}
+      <div style={{ width:"100%", maxWidth:820, marginBottom:36 }}>
+        <h2 style={{ textAlign:"center", fontSize:14, fontWeight:700, color:"var(--muted)",
+          textTransform:"uppercase", letterSpacing:1, marginBottom:18 }}>
+          How It Works
+        </h2>
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))", gap:12 }}>
+          {[
+            { step:"1", icon:"📁", title:"Connect your data",  desc:"Upload a CSV/Excel file or paste a database connection string. DynamicBI detects the schema automatically." },
+            { step:"2", icon:"⚙️", title:"AI analyses it",     desc:"10 LangGraph agents run in sequence — cleaning, anomaly detection, forecasting, profiling, and insights — all in one pipeline." },
+            { step:"3", icon:"📊", title:"Dashboard appears",  desc:"A fully interactive PowerBI-style dashboard renders with charts, KPIs, filters, and AI-written insights tailored to your data." },
+            { step:"4", icon:"💬", title:"Explore & export",   desc:"Ask questions in the AI Chat, drill down into segments, apply real-time filters, or export the whole thing as a portable JSON." },
+          ].map(s => (
+            <div key={s.step} style={{ background:"var(--bg2)", border:"1px solid var(--border)",
+              borderRadius:12, padding:"16px 18px", position:"relative", overflow:"hidden" }}>
+              <div style={{ position:"absolute", top:10, right:14, fontSize:32,
+                fontWeight:900, color:"var(--border)", lineHeight:1 }}>{s.step}</div>
+              <div style={{ fontSize:22, marginBottom:8 }}>{s.icon}</div>
+              <div style={{ fontWeight:700, fontSize:13, color:"var(--text)", marginBottom:5 }}>{s.title}</div>
+              <div style={{ fontSize:12, color:"var(--muted)", lineHeight:1.6 }}>{s.desc}</div>
             </div>
           ))}
         </div>

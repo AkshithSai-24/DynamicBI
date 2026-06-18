@@ -2,7 +2,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import FilterPanel from "./FilterPanel.jsx";
 import KpiRow from "./KpiRow.jsx";
-import AiChat from "./AiChat.jsx";
+import AiChat, { INITIAL_CHAT_MESSAGES } from "./AiChat.jsx";
 import MarkdownRenderer from "./MarkdownRenderer.jsx";
 import DrillDownModal from "./DrillDownModal.jsx";
 import GithubBadge from "./GithubBadge.jsx";
@@ -360,7 +360,7 @@ function ForecastCard({ fc }) {
           <tbody>
             {visibleRows?.map((row, i) => (
               <tr key={i} style={{ borderBottom:"1px solid #1a2235",
-                background: i % 2 === 0 ? "transparent" : "#0d1120" }}>
+                background: i % 2 === 0 ? "transparent" : "rgba(128,128,128,0.06)" }}>
                 <td style={{ padding:"4px 10px", color:"var(--text2)" }}>{row.ds}</td>
                 <td style={{ padding:"4px 10px", color:"var(--accent3)", fontWeight:600 }}>{row.yhat?.toFixed?.(2)}</td>
                 <td style={{ padding:"4px 10px", color:"var(--muted)" }}>{row.yhat_lower?.toFixed?.(2)}</td>
@@ -406,6 +406,8 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
   const [rowCount, setRowCount]         = useState(null);
   const [filtering, setFiltering]       = useState(false);
   const [drillDown, setDrillDown]       = useState(null);
+  // Chat history lives here so it survives tab switches
+  const [chatMessages, setChatMessages] = useState(INITIAL_CHAT_MESSAGES);
   const debounceRef = useRef(null);
 
   const sessionHeaders = sessionId ? { "X-Session-Id": sessionId } : {};
@@ -731,7 +733,8 @@ export default function Dashboard({ result, jobId, sourceName, onReset, isImport
             <h2 style={{ fontSize:18, fontWeight:800, marginBottom:14, color:"var(--text)" }}>🤖 AI Data Assistant</h2>
             <div style={{ flex:1, background:"var(--bg2)", border:"1px solid var(--border)",
               borderRadius:10, padding:14, display:"flex", flexDirection:"column", overflow:"hidden" }}>
-              <AiChat jobId={jobId} sessionId={sessionId} />
+              <AiChat jobId={jobId} sessionId={sessionId}
+                messages={chatMessages} setMessages={setChatMessages} />
             </div>
           </div>
         )}

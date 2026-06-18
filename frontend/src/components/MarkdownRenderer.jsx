@@ -1,42 +1,32 @@
 /**
  * MarkdownRenderer.jsx
- * Lightweight, zero-dependency Markdown → styled JSX renderer.
- * Handles: h1-h4, bold, italic, bold+italic, inline code, code blocks,
- *           bullet lists, numbered lists, horizontal rules, paragraphs.
+ * Theme-aware: all colours use CSS custom properties so every theme looks correct.
  */
 
-const ACCENT   = "#00d4ff";
-const ACCENT2  = "#7c5cfc";
-const ACCENT3  = "#00e5a0";
-const TEXT     = "#e8edf8";
-const TEXT2    = "#b0bdd4";
-const MUTED    = "#6b7a99";
-const BG3      = "#1a2030";
-const BG4      = "#0e1117";
-const BORDER   = "#1e2a40";
-const RED      = "#ff6b6b";
-const ORANGE   = "#fb923c";
+/* Read a CSS variable from :root at render time */
+function v(name) {
+  return `var(${name})`;
+}
 
-/* Heading accent colours cycling */
-const H_COLORS = [ACCENT, ACCENT2, ACCENT3, ORANGE];
+/* Heading accent colours cycling via CSS vars */
+const H_COLORS = [v("--accent"), v("--accent2"), v("--accent3"), v("--accent5")];
 
 /* ── Inline parser: bold, italic, code, links ───────────────────────────── */
 function parseInline(text) {
   if (!text) return null;
   const parts = [];
-  // Regex matches: ***bold+italic***, **bold**, *italic*, `code`
   const re = /(\*\*\*(.+?)\*\*\*|\*\*(.+?)\*\*|\*(.+?)\*|`([^`]+)`)/g;
   let last = 0, m;
   while ((m = re.exec(text)) !== null) {
     if (m.index > last) parts.push(text.slice(last, m.index));
-    if (m[2]) parts.push(<strong key={m.index} style={{ color: TEXT, fontWeight: 800 }}><em>{m[2]}</em></strong>);
-    else if (m[3]) parts.push(<strong key={m.index} style={{ color: TEXT, fontWeight: 700 }}>{m[3]}</strong>);
-    else if (m[4]) parts.push(<em key={m.index} style={{ color: TEXT2, fontStyle: "italic" }}>{m[4]}</em>);
+    if (m[2]) parts.push(<strong key={m.index} style={{ color: v("--text"), fontWeight: 800 }}><em>{m[2]}</em></strong>);
+    else if (m[3]) parts.push(<strong key={m.index} style={{ color: v("--text"), fontWeight: 700 }}>{m[3]}</strong>);
+    else if (m[4]) parts.push(<em key={m.index} style={{ color: v("--text2"), fontStyle: "italic" }}>{m[4]}</em>);
     else if (m[5]) parts.push(
       <code key={m.index} style={{
-        background: BG4, color: ACCENT3, fontFamily: "monospace",
+        background: v("--bg3"), color: v("--accent3"), fontFamily: "monospace",
         padding: "1px 5px", borderRadius: 4, fontSize: "0.88em",
-        border: `1px solid ${BORDER}`,
+        border: `1px solid ${v("--border")}`,
       }}>{m[5]}</code>
     );
     last = re.lastIndex;
@@ -70,11 +60,11 @@ export default function MarkdownRenderer({ content, style = {} }) {
       }
       nodes.push(
         <pre key={K()} style={{
-          background: BG4, border: `1px solid ${BORDER}`, borderRadius: 8,
+          background: v("--bg3"), border: `1px solid ${v("--border")}`, borderRadius: 8,
           padding: "12px 16px", overflowX: "auto", margin: "12px 0",
-          fontFamily: "monospace", fontSize: 12, color: ACCENT3, lineHeight: 1.6,
+          fontFamily: "monospace", fontSize: 12, color: v("--accent3"), lineHeight: 1.6,
         }}>
-          {lang && <span style={{ color: MUTED, fontSize: 10, display: "block", marginBottom: 4 }}>{lang}</span>}
+          {lang && <span style={{ color: v("--muted"), fontSize: 10, display: "block", marginBottom: 4 }}>{lang}</span>}
           {block.join("\n")}
         </pre>
       );
@@ -84,7 +74,7 @@ export default function MarkdownRenderer({ content, style = {} }) {
 
     // ── Horizontal rule ──────────────────────────────────────────
     if (/^(-{3,}|\*{3,}|_{3,})$/.test(line.trim())) {
-      nodes.push(<hr key={K()} style={{ border: "none", borderTop: `1px solid ${BORDER}`, margin: "14px 0" }} />);
+      nodes.push(<hr key={K()} style={{ border: "none", borderTop: `1px solid ${v("--border")}`, margin: "14px 0" }} />);
       i++; continue;
     }
 
@@ -101,7 +91,7 @@ export default function MarkdownRenderer({ content, style = {} }) {
           fontSize: sizes[level], fontWeight: 800, color,
           marginTop: mt, marginBottom: level <= 2 ? 10 : 6,
           paddingBottom: level <= 2 ? 6 : 0,
-          borderBottom: level <= 2 ? `1px solid ${BORDER}` : "none",
+          borderBottom: level <= 2 ? `1px solid ${v("--border")}` : "none",
           letterSpacing: level === 1 ? -0.3 : 0,
         }}>
           {parseInline(text)}
@@ -129,8 +119,8 @@ export default function MarkdownRenderer({ content, style = {} }) {
               display: "flex", gap: 8, marginBottom: 4,
               paddingLeft: it.indent > indent0 ? 20 : 0,
             }}>
-              <span style={{ color: ACCENT, flexShrink: 0, marginTop: 1, fontSize: 13 }}>•</span>
-              <span style={{ fontSize: 13, color: TEXT2, lineHeight: 1.65 }}>{parseInline(it.text)}</span>
+              <span style={{ color: v("--accent"), flexShrink: 0, marginTop: 1, fontSize: 13 }}>•</span>
+              <span style={{ fontSize: 13, color: v("--text2"), lineHeight: 1.65 }}>{parseInline(it.text)}</span>
             </li>
           ))}
         </ul>
@@ -149,16 +139,16 @@ export default function MarkdownRenderer({ content, style = {} }) {
         i++;
       }
       nodes.push(
-        <ol key={K()} style={{ margin: "6px 0 8px", padding: 0, listStyle: "none", counterReset: "none" }}>
+        <ol key={K()} style={{ margin: "6px 0 8px", padding: 0, listStyle: "none" }}>
           {items.map((it, idx) => (
             <li key={idx} style={{ display: "flex", gap: 10, marginBottom: 6 }}>
               <span style={{
-                background: ACCENT2, color: "#fff", borderRadius: 99,
+                background: v("--accent2"), color: "#fff", borderRadius: 99,
                 fontSize: 10, fontWeight: 800, minWidth: 20, height: 20,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 flexShrink: 0, marginTop: 2,
               }}>{it.n}</span>
-              <span style={{ fontSize: 13, color: TEXT2, lineHeight: 1.65 }}>{parseInline(it.text)}</span>
+              <span style={{ fontSize: 13, color: v("--text2"), lineHeight: 1.65 }}>{parseInline(it.text)}</span>
             </li>
           ))}
         </ol>
@@ -174,7 +164,7 @@ export default function MarkdownRenderer({ content, style = {} }) {
 
     // ── Paragraph ────────────────────────────────────────────────
     nodes.push(
-      <p key={K()} style={{ fontSize: 13, color: TEXT2, lineHeight: 1.75, margin: "3px 0 5px" }}>
+      <p key={K()} style={{ fontSize: 13, color: v("--text2"), lineHeight: 1.75, margin: "3px 0 5px" }}>
         {parseInline(line)}
       </p>
     );

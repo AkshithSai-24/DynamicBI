@@ -2,9 +2,9 @@
 
 > Upload any dataset → get a production-grade interactive dashboard in under 90 seconds.
 
-🔗 **Live Demo:** [dynamicbi.akshithsai.co.in](https://dynamicbi.akshithsai.co.in)
-👤 **Developer:** [Akshith Sai Kondamadugu](https://akshithsai.co.in)
-🐙 **GitHub:** [github.com/AkshithSai-24/DynamicBI](https://github.com/AkshithSai-24/DynamicBI)
+🔗 **Live Demo:** [dynamicbi.akshithsai.co.in](https://dynamicbi.akshithsai.co.in) \
+👤 **Developer:** [Akshith Sai Kondamadugu](https://akshithsai.co.in) 
+   
 
 ---
 
@@ -59,7 +59,7 @@ DynamicBI/
 │   │   ├── forecasting_agent.py         # Time-series forecasting
 │   │   ├── rag_profile_agent.py         # Dataset profiling
 │   │   ├── insight_agent.py             # AI business insights
-│   │   └── dashboard_schema_agent.py ⭐ # PowerBI layout + chart data
+│   │   └── dashboard_schema_agent.py    # PowerBI layout + chart data
 │   ├── graph/build_graph.py             # LangGraph pipeline
 │   ├── query/query_loop.py              # NL query engine
 │   ├── utils/                           # Source detector, helpers
@@ -71,14 +71,14 @@ DynamicBI/
 │
 ├── frontend/
 │   ├── src/
-│   │   ├── ThemeContext.jsx  ⭐          # 4-theme system + usePalette()
+│   │   ├── ThemeContext.jsx             # 4-theme system + usePalette()
 │   │   ├── App.jsx                      # App shell + session lifecycle
 │   │   ├── LandingPage.jsx              # Hero, features, pipeline, connect
 │   │   ├── index.css                    # CSS vars + responsive layout
 │   │   └── components/
 │   │       ├── Dashboard.jsx            # Main canvas + all tabs
 │   │       ├── ChartWidgets.jsx         # Theme-aware Recharts components
-│   │       ├── ThemeToggle.jsx ⭐        # Theme cycle button (icon + pill)
+│   │       ├── ThemeToggle.jsx          # Theme cycle button (icon + pill)
 │   │       ├── KpiRow.jsx               # KPI card grid
 │   │       ├── FilterPanel.jsx          # Sidebar filters
 │   │       ├── AiChat.jsx               # AI chat interface
@@ -191,7 +191,7 @@ LangGraph Pipeline (os.chdir → session dir)
   │ 7  anomaly_explanation_agent   (68%)    │
   │ 8  rag_profile_agent      (75%)         │
   │ 9  insight_agent          (83%)         │
-  │ 10 dashboard_schema_agent (92%) ⭐       │
+  │ 10 dashboard_schema_agent (92%)         │
   └─────────────────────────────────────────┘
   │
   ▼
@@ -228,14 +228,6 @@ cd frontend && npm run build
 
 ---
 
-## 🤝 Contributing
-
-1. Fork the repo
-2. Create a branch: `git checkout -b feature/my-feature`
-3. Commit and push
-4. Open a Pull Request
-
----
 
 ## 📄 License
 
@@ -243,7 +235,7 @@ MIT — see [LICENSE](LICENSE) for details.
 
 ---
 
-## 🙌 Credits
+
 
 Developed by **Akshith Sai Kondamadugu**
-🌐 [akshithsai.co.in](https://akshithsai.co.in) · 🐙 [GitHub](https://github.com/AkshithSai-24/DynamicBI)
+
